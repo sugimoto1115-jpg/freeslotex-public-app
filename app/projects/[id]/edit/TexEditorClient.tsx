@@ -82,6 +82,25 @@ function outlineIndent(level: string) {
   return 4;
 }
 
+function parseLiveOutline(tex: string): OutlineItem[] {
+  const items: OutlineItem[] = [];
+  const re = /\\(part|chapter|section|subsection|subsubsection)\*?\{([^}]*)\}/g;
+
+  for (const match of tex.matchAll(re)) {
+    const index = match.index ?? 0;
+    const before = tex.slice(0, index);
+    const line = before.length === 0 ? 1 : before.split(/\r\n|\r|\n/).length;
+
+    items.push({
+      level: match[1],
+      title: match[2],
+      line,
+    });
+  }
+
+  return items;
+}
+
 function saveErrorMessage(code: string | null | undefined) {
   if (!code) return null;
   if (code === "bad_project") return "Project ID is invalid.";
@@ -356,6 +375,8 @@ export default function TexEditorClient(props: Props) {
     const lineCount = Math.max(1, tex.split(/\r\n|\r|\n/).length);
     return Array.from({ length: lineCount }, (_, index) => String(index + 1)).join("\n");
   }, [tex]);
+
+  const liveOutline = useMemo(() => parseLiveOutline(tex), [tex]);
 
   function syncLineNumberScroll(event: import("react").UIEvent<HTMLTextAreaElement>) {
     if (lineGutterRef.current) {
@@ -763,11 +784,11 @@ export default function TexEditorClient(props: Props) {
               </div>
             </div>
 
-            {props.outline.length === 0 ? (
+            {liveOutline.length === 0 ? (
               <div className="fsx-empty-box">No outline items.</div>
             ) : (
               <div className="fsx-outline-tree" role="tree" aria-label="Document outline">
-                {props.outline.map((item, index) => (
+                {liveOutline.map((item, index) => (
                   <button
                     key={`${item.level}-${item.line}-${index}`}
                     type="button"
