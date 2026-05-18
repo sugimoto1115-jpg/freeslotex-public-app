@@ -85,7 +85,45 @@ export default function PdfPreviewClient({ projectId, pdfExists }: Props) {
       setMessage("Loading PDF...");
 
       try {
-        const loadingTask = pdfjsLib.getDocument(`/api/projects/${projectId}/pdf?inline=1&ts=${Date.now()}`);
+        const pdfUrl = `/api/projects/${projectId}/pdf?inline=1&ts=${Date.now()}`;
+        const response = await fetch(pdfUrl, {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: {
+            Accept: "application/pdf",
+          },
+        });
+
+        const contentType = response.headers.get("content-type") ?? "";
+
+        if (!response.ok) {
+          throw new Error(`PDF request failed: HTTP ${response.status}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+
+        if (arrayBuffer.byteLength < 5) {
+          throw new Error("PDF response was empty.");
+        }
+
+        const head = new TextDecoder("ascii").decode(new Uint8Array(arrayBuffer.slice(0, 5)));
+
+        if (head !== "%PDF-") {
+          const previewText = new TextDecoder("utf-8")
+            .decode(new Uint8Array(arrayBuffer.slice(0, 180)))
+            .replace(/\s+/g, " ")
+            .trim();
+
+          throw new Error(
+            `PDF API did not return a PDF. Content-Type: ${contentType || "unknown"}. ${previewText}`
+          );
+        }
+
+        const loadingTask = pdfjsLib.getDocument({
+          data: new Uint8Array(arrayBuffer),
+        });
+
         const loadedPdf = await loadingTask.promise;
 
         if (!cancelled) {
@@ -95,7 +133,9 @@ export default function PdfPreviewClient({ projectId, pdfExists }: Props) {
       } catch (error) {
         if (!cancelled) {
           console.error(error);
-          setMessage("PDF preview failed to load.");
+          const detail = error instanceof Error ? error.message : String(error);
+          setPdf(null);
+          setMessage(`PDF preview failed to load. ${detail}`);
         }
       }
     }
