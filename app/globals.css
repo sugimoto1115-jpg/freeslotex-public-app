@@ -810,3 +810,21 @@ a {
 .fsx-hero .fsx-actions {
   align-items: center;
 }
+
+/* FreeSloTeX left-aligned global topbar */
+.fsx-topbar-inner {
+  width: calc(100vw - 56px);
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: space-between;
+}
+
+.fsx-topbar-inner > div:first-child {
+  text-align: left;
+}
+
+.fsx-topbar-inner form,
+.fsx-topbar-inner .fsx-actions {
+  margin-left: auto;
+}
