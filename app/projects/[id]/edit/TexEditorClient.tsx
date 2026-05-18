@@ -188,6 +188,7 @@ export default function TexEditorClient(props: Props) {
   const [editorHeight, setEditorHeight] = useState(620);
   const [terminalHeight, setTerminalHeight] = useState(320);
   const [copySummaryStatus, setCopySummaryStatus] = useState("");
+  const [editorPreferencesLoaded, setEditorPreferencesLoaded] = useState(false);
 
   const MIN_LEFT_WIDTH = 180;
   const MIN_EDITOR_WIDTH = 360;
@@ -272,6 +273,45 @@ export default function TexEditorClient(props: Props) {
   );
   const editorBodyWidth = "100%";
   const lineNumberFontSize = Math.max(10, editorFontSize - 3);
+
+  useEffect(() => {
+    try {
+      const rawFontSize = window.localStorage.getItem("freeslotex.editorFontSize");
+      const parsedFontSize = Number(rawFontSize);
+
+      if ([12, 14, 16, 18, 20].includes(parsedFontSize)) {
+        setEditorFontSize(parsedFontSize);
+      }
+
+      const rawSoftWrap = window.localStorage.getItem("freeslotex.softWrap");
+      if (rawSoftWrap === "1") setSoftWrap(true);
+      if (rawSoftWrap === "0") setSoftWrap(false);
+    } catch {
+      // Ignore storage errors. The editor still works with default settings.
+    } finally {
+      setEditorPreferencesLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!editorPreferencesLoaded) return;
+
+    try {
+      window.localStorage.setItem("freeslotex.editorFontSize", String(editorFontSize));
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [editorPreferencesLoaded, editorFontSize]);
+
+  useEffect(() => {
+    if (!editorPreferencesLoaded) return;
+
+    try {
+      window.localStorage.setItem("freeslotex.softWrap", softWrap ? "1" : "0");
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [editorPreferencesLoaded, softWrap]);
 
   const lineNumberText = useMemo(() => {
     const lineCount = Math.max(1, tex.split(/\r\n|\r|\n/).length);
