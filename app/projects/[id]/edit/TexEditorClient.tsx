@@ -968,8 +968,15 @@ export default function TexEditorClient(props: Props) {
                     </span>
                   )}
 
-                  {compileStatusMessage ? (
-                    <span className="fsx-muted" style={{ fontSize: 12, fontWeight: 700 }}>
+                  {isCompiling ? (
+                    <span className="fsx-compile-progress" role="status" aria-live="polite">
+                      <span className="fsx-compile-spinner" aria-hidden="true">
+                        ⏳
+                      </span>
+                      <span>Compiling...</span>
+                    </span>
+                  ) : compileStatusMessage ? (
+                    <span className="fsx-compile-status" role="status" aria-live="polite">
                       {compileStatusMessage}
                     </span>
                   ) : null}

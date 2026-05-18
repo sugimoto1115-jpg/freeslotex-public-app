@@ -643,3 +643,49 @@ a {
   font-size: 11px;
   text-align: right;
 }
+
+/* FreeSloTeX compile progress indicator */
+.fsx-compile-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #f59e0b;
+  border-radius: 999px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.fsx-compile-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  transform-origin: center;
+  animation: fsx-compile-spin 0.95s linear infinite;
+}
+
+.fsx-compile-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+@keyframes fsx-compile-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
