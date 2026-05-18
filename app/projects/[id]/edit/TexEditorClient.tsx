@@ -569,10 +569,34 @@ export default function TexEditorClient(props: Props) {
     if (!textarea) return;
 
     const lines = tex.split(/\r\n|\r|\n/);
-    const pos = lines.slice(0, Math.max(0, line - 1)).join("\n").length + (line > 1 ? 1 : 0);
+    const safeLine = Math.min(Math.max(1, line), lines.length);
+    const pos =
+      lines.slice(0, Math.max(0, safeLine - 1)).join("\n").length +
+      (safeLine > 1 ? 1 : 0);
 
-    textarea.focus();
+    const lineHeightPx = editorFontSize * 1.55;
+    const targetScrollTop = Math.max(
+      0,
+      (safeLine - 1) * lineHeightPx - editorHeight * 0.35
+    );
+
+    textarea.focus({ preventScroll: true });
     textarea.setSelectionRange(pos, pos);
+    textarea.scrollTop = targetScrollTop;
+
+    if (lineGutterRef.current) {
+      lineGutterRef.current.scrollTop = targetScrollTop;
+    }
+
+    window.requestAnimationFrame(() => {
+      textarea.focus({ preventScroll: true });
+      textarea.setSelectionRange(pos, pos);
+      textarea.scrollTop = targetScrollTop;
+
+      if (lineGutterRef.current) {
+        lineGutterRef.current.scrollTop = targetScrollTop;
+      }
+    });
   }
 
   return (
@@ -792,6 +816,7 @@ export default function TexEditorClient(props: Props) {
                   <button
                     key={`${item.level}-${item.line}-${index}`}
                     type="button"
+                    onMouseDown={(event) => event.preventDefault()}
                     onClick={() => goToLine(item.line)}
                     className="fsx-outline-row"
                     style={{ paddingLeft: 6 + outlineIndent(item.level) }}
