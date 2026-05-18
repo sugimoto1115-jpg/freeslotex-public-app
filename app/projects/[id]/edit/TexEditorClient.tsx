@@ -82,6 +82,27 @@ function outlineIndent(level: string) {
   return 4;
 }
 
+function isTextOpenablePath(relativePath: string) {
+  const name = relativePath.split("/").pop() ?? relativePath;
+  const lower = relativePath.toLowerCase();
+
+  if (name === ".gitignore") return true;
+  if (lower.endsWith(".fdb_latexmk")) return true;
+  if (lower.endsWith(".code-workspace")) return true;
+
+  return /\.(tex|bib|sty|cls|md|txt|log|aux|out|fls|json|csv|tsv|ya?ml)$/i.test(relativePath);
+}
+
+function isEditableTextPath(relativePath: string) {
+  const name = relativePath.split("/").pop() ?? relativePath;
+  const lower = relativePath.toLowerCase();
+
+  if (name === ".gitignore") return true;
+  if (lower.endsWith(".code-workspace")) return true;
+
+  return /\.(tex|bib|sty|cls|md|txt|json|csv|tsv|ya?ml)$/i.test(relativePath);
+}
+
 function parseLiveOutline(tex: string): OutlineItem[] {
   const items: OutlineItem[] = [];
   const re = /\\(part|chapter|section|subsection|subsubsection)\*?\{([^}]*)\}/g;
@@ -225,6 +246,10 @@ const snippetGroups: SnippetGroup[] = [
 
 export default function TexEditorClient(props: Props) {
   const [tex, setTex] = useState(props.mainTex);
+  const [currentFilePath, setCurrentFilePath] = useState("main.tex");
+  const [fileActionMessage, setFileActionMessage] = useState("");
+  const [isFileLoading, setIsFileLoading] = useState(false);
+  const [isSavingFile, setIsSavingFile] = useState(false);
   const [activeSnippetGroup, setActiveSnippetGroup] = useState("TeX Insert");
   const [editorFontSize, setEditorFontSize] = useState(14);
   const [softWrap, setSoftWrap] = useState(false);
@@ -377,6 +402,8 @@ export default function TexEditorClient(props: Props) {
   }, [tex]);
 
   const liveOutline = useMemo(() => parseLiveOutline(tex), [tex]);
+  const currentFileDisplayName = currentFilePath || "main.tex";
+  const currentFileCanBeSaved = props.canEdit && isEditableTextPath(currentFilePath);
 
   function syncLineNumberScroll(event: import("react").UIEvent<HTMLTextAreaElement>) {
     if (lineGutterRef.current) {
@@ -419,8 +446,110 @@ export default function TexEditorClient(props: Props) {
     window.setTimeout(() => setCopySummaryStatus(""), 1800);
   }
 
+  async function runSaveCurrentFile(options: { silent?: boolean } = {}) {
+    if (!props.canEdit) return false;
+
+    if (!isEditableTextPath(currentFilePath)) {
+      if (!options.silent) {
+        setFileActionMessage(`${currentFilePath} is read-only in this editor.`);
+      }
+      return true;
+    }
+
+    setIsSavingFile(true);
+    if (!options.silent) {
+      setFileActionMessage(`Saving ${currentFilePath}...`);
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${props.projectId}/files/save`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          relativePath: currentFilePath,
+          content: tex,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error ?? `Save failed with HTTP ${response.status}`);
+      }
+
+      if (!options.silent) {
+        setFileActionMessage(data.message ?? `Saved ${currentFilePath}.`);
+      }
+
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setFileActionMessage(`Save failed: ${message}`);
+      return false;
+    } finally {
+      setIsSavingFile(false);
+    }
+  }
+
+  async function openExplorerFile(entry: WorkspaceEntry) {
+    if (entry.kind !== "file") return;
+
+    if (!isTextOpenablePath(entry.relativePath)) {
+      setFileActionMessage(`${entry.name} is not opened as text. Use PDF Preview or Download when appropriate.`);
+      return;
+    }
+
+    setIsFileLoading(true);
+    setFileActionMessage(`Opening ${entry.relativePath}...`);
+
+    try {
+      const response = await fetch(
+        `/api/projects/${props.projectId}/files/read?path=${encodeURIComponent(entry.relativePath)}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        }
+      );
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.ok || typeof data.content !== "string") {
+        throw new Error(data?.message ?? data?.error ?? `Open failed with HTTP ${response.status}`);
+      }
+
+      setTex(data.content);
+      setCurrentFilePath(data.relativePath ?? entry.relativePath);
+      setFileActionMessage(`Opened ${data.relativePath ?? entry.relativePath}.`);
+
+      window.requestAnimationFrame(() => {
+        textareaRef.current?.focus({ preventScroll: true });
+        if (textareaRef.current) {
+          textareaRef.current.scrollTop = 0;
+          textareaRef.current.setSelectionRange(0, 0);
+        }
+        if (lineGutterRef.current) {
+          lineGutterRef.current.scrollTop = 0;
+        }
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setFileActionMessage(`Open failed: ${message}`);
+    } finally {
+      setIsFileLoading(false);
+    }
+  }
+
   async function runSmartCompile() {
     if (!props.canEdit || isCompiling) return;
+
+    const saved = await runSaveCurrentFile({ silent: true });
+    if (!saved) return;
 
     setIsCompiling(true);
     setCompileStatusMessage("Compiling...");
@@ -435,7 +564,7 @@ export default function TexEditorClient(props: Props) {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ content: tex }),
+        body: JSON.stringify({}),
       });
 
       const data = (await response.json().catch(() => null)) as LiveCompileResponse | null;
@@ -760,44 +889,54 @@ export default function TexEditorClient(props: Props) {
         }}
       >
         <aside style={{ display: "grid", gap: 16 }}>
-          <section className="fsx-panel" style={{ padding: 16, order: 2 }}>
-            <div className="fsx-panel-head">
+          <section className="fsx-panel fsx-explorer-panel" style={{ padding: 12, order: 2 }}>
+            <div className="fsx-panel-head" style={{ marginBottom: 6 }}>
               <div>
                 <h2 className="fsx-panel-title">Explorer</h2>
-                <p className="fsx-panel-note">Project files</p>
+                <p className="fsx-panel-note">Project files / click text files to open</p>
               </div>
             </div>
 
-            <div style={{ marginTop: 12, display: "grid", gap: 4 }}>
-              {props.files.length === 0 ? (
-                <div className="fsx-empty-box">No files found.</div>
-              ) : (
-                props.files.map((entry) => (
-                  <div
-                    key={entry.relativePath}
-                    className="fsx-meta"
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "42px minmax(0, 1fr)",
-                      gap: 6,
-                      padding: "5px 6px",
-                      borderRadius: 8,
-                      background: entry.name === "main.tex" ? "#eff6ff" : "transparent",
-                      paddingLeft: 6 + entry.depth * 14,
-                    }}
-                    title={entry.relativePath}
-                  >
-                    <span style={{ fontSize: 11, fontWeight: 700 }}>{fileIcon(entry)}</span>
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {entry.name}
-                      {entry.kind === "file" && entry.size !== null ? (
-                        <span className="fsx-muted"> · {formatBytes(entry.size)}</span>
-                      ) : null}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
+            {props.files.length === 0 ? (
+              <div className="fsx-empty-box">No files found.</div>
+            ) : (
+              <div className="fsx-explorer-tree" role="tree" aria-label="Project files">
+                {props.files.map((entry) => {
+                  const openable = entry.kind === "file" && isTextOpenablePath(entry.relativePath);
+                  const active = entry.relativePath === currentFilePath;
+
+                  return (
+                    <button
+                      key={entry.relativePath}
+                      type="button"
+                      className={active ? "fsx-explorer-row fsx-explorer-row-active" : "fsx-explorer-row"}
+                      onClick={() => openExplorerFile(entry)}
+                      disabled={!openable || isFileLoading}
+                      style={{ paddingLeft: 6 + entry.depth * 14 }}
+                      title={
+                        openable
+                          ? `Open ${entry.relativePath}`
+                          : `${entry.relativePath} cannot be opened as text`
+                      }
+                    >
+                      <span className="fsx-explorer-icon" aria-hidden="true">
+                        {fileIcon(entry)}
+                      </span>
+                      <span className="fsx-explorer-name">{entry.name}</span>
+                      <span className="fsx-explorer-meta">
+                        {entry.kind === "file" && entry.size !== null ? formatBytes(entry.size) : ""}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {fileActionMessage ? (
+              <div className="fsx-explorer-message" role="status">
+                {fileActionMessage}
+              </div>
+            ) : null}
           </section>
 
           <section className="fsx-panel fsx-outline-panel" style={{ padding: 12, order: 1 }}>
@@ -852,11 +991,13 @@ export default function TexEditorClient(props: Props) {
           <section className="fsx-panel">
             <div className="fsx-panel-head">
               <div>
-                <h2 className="fsx-panel-title">main.tex</h2>
+                <h2 className="fsx-panel-title">{currentFileDisplayName}</h2>
                 <p className="fsx-panel-note">
                   Role: <strong>{props.roleLabel}</strong>
                   {" / "}
                   Mode: <strong>{props.canEdit ? "editable" : "viewer only"}</strong>
+                  {" / "}
+                  File: <strong>{currentFileCanBeSaved ? "editable" : "read-only"}</strong>
                 </p>
               </div>
             </div>
@@ -929,17 +1070,18 @@ export default function TexEditorClient(props: Props) {
                 </div>
 
                 <div className="fsx-actions" style={{ marginTop: 12, marginBottom: 12 }}>
-                  {props.canEdit ? (
+                  {currentFileCanBeSaved ? (
                     <button
-                      type="submit"
-                      form={`save-form-${props.projectId}`}
+                      type="button"
+                      onClick={() => runSaveCurrentFile()}
+                      disabled={isSavingFile}
                       className="fsx-button fsx-button-primary"
                     >
-                      Save main.tex
+                      {isSavingFile ? "Saving..." : `Save ${currentFileDisplayName}`}
                     </button>
                   ) : (
                     <span className="fsx-button" aria-disabled="true">
-                      Viewer cannot save
+                      {props.canEdit ? "Read-only file" : "Viewer cannot save"}
                     </span>
                   )}
 
@@ -1018,6 +1160,8 @@ export default function TexEditorClient(props: Props) {
                     >
                       {lineNumberText}
                     </div>
+
+                    <input type="hidden" name="relativePath" value={currentFilePath} />
 
                     <textarea
                       ref={textareaRef}

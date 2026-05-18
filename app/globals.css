@@ -689,3 +689,83 @@ a {
     transform: rotate(360deg);
   }
 }
+
+/* FreeSloTeX functional explorer */
+.fsx-explorer-panel {
+  overflow: hidden;
+}
+
+.fsx-explorer-tree {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+  max-height: min(72vh, 760px);
+  overflow: auto;
+  padding: 2px;
+}
+
+.fsx-explorer-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 28px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #0f172a;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.fsx-explorer-row:hover:not(:disabled) {
+  background: #eef6ff;
+  color: #1d4ed8;
+}
+
+.fsx-explorer-row:disabled {
+  cursor: default;
+  opacity: 0.52;
+}
+
+.fsx-explorer-row-active {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.fsx-explorer-icon {
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.fsx-explorer-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fsx-explorer-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #94a3b8;
+  font-size: 11px;
+  text-align: right;
+}
+
+.fsx-explorer-message {
+  margin-top: 8px;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.35;
+}
