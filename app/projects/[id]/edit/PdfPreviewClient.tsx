@@ -15,6 +15,12 @@ type PdfDoc = Awaited<ReturnType<typeof pdfjsLib.getDocument>> extends { promise
   ? T
   : any;
 
+type PdfScrollState = {
+  pageNumber: number;
+  offsetWithinPage: number;
+  scrollRatio: number;
+};
+
 const zoomOptions = [
   { label: "Fit width", value: "fit" },
   { label: "75%", value: "0.75" },
@@ -36,6 +42,68 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
 
   function clamp(value: number, min: number, max: number) {
     return Math.min(Math.max(value, min), Math.max(min, max));
+  }
+
+  function capturePdfScrollPosition(): PdfScrollState | null {
+    const container = containerRef.current;
+    const host = canvasHostRef.current;
+
+    if (!container || !host) return null;
+
+    const canvases = Array.from(
+      host.querySelectorAll<HTMLCanvasElement>("canvas[data-page-number]")
+    );
+
+    if (canvases.length === 0) return null;
+
+    const maxScroll = Math.max(1, container.scrollHeight - container.clientHeight);
+    const scrollRatio = container.scrollTop / maxScroll;
+    const containerTop = container.getBoundingClientRect().top;
+
+    let targetCanvas = canvases[0];
+
+    for (const canvas of canvases) {
+      const rect = canvas.getBoundingClientRect();
+
+      if (rect.bottom >= containerTop + 10) {
+        targetCanvas = canvas;
+        break;
+      }
+    }
+
+    const pageNumber = Number(targetCanvas.dataset.pageNumber ?? "1") || 1;
+
+    return {
+      pageNumber,
+      offsetWithinPage: container.scrollTop - targetCanvas.offsetTop,
+      scrollRatio,
+    };
+  }
+
+  function restorePdfScrollPosition(scrollState: PdfScrollState | null) {
+    if (!scrollState) return;
+
+    const container = containerRef.current;
+    const host = canvasHostRef.current;
+
+    if (!container || !host) return;
+
+    const targetCanvas = host.querySelector<HTMLCanvasElement>(
+      `canvas[data-page-number="${scrollState.pageNumber}"]`
+    );
+
+    const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+
+    if (targetCanvas) {
+      container.scrollTop = clamp(
+        targetCanvas.offsetTop + scrollState.offsetWithinPage,
+        0,
+        maxScroll
+      );
+      return;
+    }
+
+    container.scrollTop = clamp(scrollState.scrollRatio * maxScroll, 0, maxScroll);
   }
 
   useEffect(() => {
@@ -182,6 +250,8 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
 
       if (!host || !container || !pdf) return;
 
+      const scrollState = capturePdfScrollPosition();
+
       host.innerHTML = "";
       setMessage("Rendering PDF...");
 
@@ -205,6 +275,8 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
 
           if (!context) continue;
 
+          canvas.dataset.pageNumber = String(pageNumber);
+
           const deviceScale = window.devicePixelRatio || 1;
 
           canvas.width = Math.floor(viewport.width * deviceScale);
@@ -227,7 +299,15 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
           }).promise;
         }
 
-        if (!cancelled) setMessage("");
+        if (!cancelled) {
+          setMessage("");
+
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+              restorePdfScrollPosition(scrollState);
+            });
+          });
+        }
       } catch (error) {
         if (!cancelled) {
           console.error(error);
