@@ -64,6 +64,24 @@ function fileIcon(entry: WorkspaceEntry) {
   return "FILE";
 }
 
+function outlineIcon(level: string) {
+  if (level === "part") return "◆";
+  if (level === "chapter") return "▣";
+  if (level === "section") return "§";
+  if (level === "subsection") return "¶";
+  if (level === "subsubsection") return "•";
+  return "–";
+}
+
+function outlineIndent(level: string) {
+  if (level === "part") return 0;
+  if (level === "chapter") return 0;
+  if (level === "section") return 4;
+  if (level === "subsection") return 20;
+  if (level === "subsubsection") return 36;
+  return 4;
+}
+
 function saveErrorMessage(code: string | null | undefined) {
   if (!code) return null;
   if (code === "bad_project") return "Project ID is invalid.";
@@ -737,39 +755,36 @@ export default function TexEditorClient(props: Props) {
             </div>
           </section>
 
-          <section className="fsx-panel" style={{ padding: 16, order: 1 }}>
-            <div className="fsx-panel-head">
+          <section className="fsx-panel fsx-outline-panel" style={{ padding: 12, order: 1 }}>
+            <div className="fsx-panel-head" style={{ marginBottom: 6 }}>
               <div>
                 <h2 className="fsx-panel-title">Outline</h2>
-                <p className="fsx-panel-note">Click to jump</p>
+                <p className="fsx-panel-note">Explorer style / click to jump</p>
               </div>
             </div>
 
-            <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
-              {props.outline.length === 0 ? (
-                <div className="fsx-empty-box">No outline items.</div>
-              ) : (
-                props.outline.map((item, index) => (
+            {props.outline.length === 0 ? (
+              <div className="fsx-empty-box">No outline items.</div>
+            ) : (
+              <div className="fsx-outline-tree" role="tree" aria-label="Document outline">
+                {props.outline.map((item, index) => (
                   <button
                     key={`${item.level}-${item.line}-${index}`}
                     type="button"
                     onClick={() => goToLine(item.line)}
-                    className="fsx-button"
-                    style={{
-                      justifyContent: "flex-start",
-                      textAlign: "left",
-                      padding: "7px 9px",
-                      fontSize: 13,
-                      width: "100%",
-                    }}
-                    title={`line ${item.line}`}
+                    className="fsx-outline-row"
+                    style={{ paddingLeft: 6 + outlineIndent(item.level) }}
+                    title={`line ${item.line}: ${item.title}`}
                   >
-                    <span style={{ opacity: 0.7, marginRight: 6 }}>{item.level}</span>
-                    {item.title}
+                    <span className="fsx-outline-icon" aria-hidden="true">
+                      {outlineIcon(item.level)}
+                    </span>
+                    <span className="fsx-outline-title">{item.title}</span>
+                    <span className="fsx-outline-line">{item.line}</span>
                   </button>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </section>
         </aside>
 
