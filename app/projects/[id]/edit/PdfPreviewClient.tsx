@@ -8,6 +8,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.mjs";
 type Props = {
   projectId: number;
   pdfExists: boolean;
+  refreshKey?: number;
 };
 
 type PdfDoc = Awaited<ReturnType<typeof pdfjsLib.getDocument>> extends { promise: Promise<infer T> }
@@ -23,7 +24,7 @@ const zoomOptions = [
   { label: "200%", value: "2" },
 ];
 
-export default function PdfPreviewClient({ projectId, pdfExists }: Props) {
+export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
 
@@ -170,7 +171,7 @@ export default function PdfPreviewClient({ projectId, pdfExists }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [projectId, pdfExists]);
+  }, [projectId, pdfExists, refreshKey]);
 
   useEffect(() => {
     let cancelled = false;

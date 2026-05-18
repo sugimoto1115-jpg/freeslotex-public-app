@@ -1189,7 +1189,7 @@ export default function TexEditorClient(props: Props) {
               </div>
             </div>
 
-            <PdfPreviewClient key={pdfRefreshKey} projectId={props.projectId} pdfExists={livePdfExists} />
+            <PdfPreviewClient projectId={props.projectId} pdfExists={livePdfExists} refreshKey={pdfRefreshKey} />
           </section>
         </aside>
 
