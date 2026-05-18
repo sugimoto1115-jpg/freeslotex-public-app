@@ -178,7 +178,7 @@ const snippetGroups: SnippetGroup[] = [
 export default function TexEditorClient(props: Props) {
   const [tex, setTex] = useState(props.mainTex);
   const [activeSnippetGroup, setActiveSnippetGroup] = useState("TeX Insert");
-  const [editorLineWidth, setEditorLineWidth] = useState("full");
+  const [editorFontSize, setEditorFontSize] = useState(14);
   const [softWrap, setSoftWrap] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lineGutterRef = useRef<HTMLDivElement | null>(null);
@@ -269,8 +269,8 @@ export default function TexEditorClient(props: Props) {
     () => snippetGroups.find((group) => group.label === activeSnippetGroup) ?? snippetGroups[0],
     [activeSnippetGroup]
   );
-  const editorBodyWidth =
-    editorLineWidth === "full" ? "100%" : `${editorLineWidth}ch`;
+  const editorBodyWidth = "100%";
+  const lineNumberFontSize = Math.max(10, editorFontSize - 3);
 
   const lineNumberText = useMemo(() => {
     const lineCount = Math.max(1, tex.split(/\r\n|\r|\n/).length);
@@ -661,23 +661,18 @@ export default function TexEditorClient(props: Props) {
                   }}
                 >
                   <span className="fsx-muted" style={{ fontWeight: 700 }}>
-                    Editor width
+                    Font size
                   </span>
 
-                  {[
-                    ["full", "Full"],
-                    ["80", "80ch"],
-                    ["100", "100ch"],
-                    ["120", "120ch"],
-                  ].map(([value, label]) => (
+                  {([12, 14, 16, 18, 20] as const).map((value) => (
                     <button
                       key={value}
                       type="button"
-                      className={editorLineWidth === value ? "fsx-button fsx-button-primary" : "fsx-button"}
-                      onClick={() => setEditorLineWidth(value)}
+                      className={editorFontSize === value ? "fsx-button fsx-button-primary" : "fsx-button"}
+                      onClick={() => setEditorFontSize(value)}
                       style={{ padding: "6px 9px", fontSize: 12 }}
                     >
-                      {label}
+                      {value}px
                     </button>
                   ))}
 
@@ -781,7 +776,7 @@ export default function TexEditorClient(props: Props) {
                         textAlign: "right",
                         fontFamily:
                           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-                        fontSize: 11,
+                        fontSize: lineNumberFontSize,
                         lineHeight: 1.55,
                         whiteSpace: "pre",
                         overflow: "hidden",
@@ -810,7 +805,7 @@ export default function TexEditorClient(props: Props) {
                         outline: "none",
                         fontFamily:
                           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-                        fontSize: 14,
+                        fontSize: editorFontSize,
                         lineHeight: 1.55,
                         whiteSpace: softWrap ? "pre-wrap" : "pre",
                         overflowX: softWrap ? "hidden" : "auto",
