@@ -82,15 +82,109 @@ function detectCompileScript(tex: string) {
 function extractLatexErrorSummary(text: string) {
   const lines = text.split(/\r\n|\r|\n/);
 
+  function excerpt(index: number, before = 8, after = 24) {
+    const start = Math.max(0, index - before);
+    const end = Math.min(lines.length, index + after);
+    return lines.slice(start, end);
+  }
+
+  function findLineNumberAfter(index: number) {
+    for (let i = index; i < Math.min(lines.length, index + 12); i++) {
+      const match = lines[i].match(/^l\.(\d+)\s*(.*)$/);
+      if (match) {
+        const continuation = lines[i + 1] ?? "";
+        const offending = `${match[2] ?? ""} ${continuation}`.trim();
+        return {
+          index: i,
+          lineNumber: match[1],
+          offending,
+        };
+      }
+    }
+
+    return null;
+  }
+
+  function firstCommand(text: string) {
+    return text.match(/\\[A-Za-z@]+|\\./)?.[0] ?? text.trim();
+  }
+
+  const undefinedIndex = lines.findIndex((line) =>
+    line.includes("Undefined control sequence")
+  );
+
+  if (undefinedIndex >= 0) {
+    const lineInfo = findLineNumberAfter(undefinedIndex);
+    const command = lineInfo ? firstCommand(lineInfo.offending) : "";
+
+    return [
+      "FreeSloTeX compile error summary",
+      "",
+      "原因: 未定義コマンド (Undefined control sequence)",
+      `場所: main.tex ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
+      `問題: ${command || "TeXが知らない命令があります。"}`,
+      "",
+      "対処:",
+      "・コマンド名の誤字を直す",
+      "・必要なパッケージを \\usepackage{...} で追加する",
+      "・不要なテスト用コマンドなら削除またはコメントアウトする",
+      "・自作コマンドなら \\newcommand などで定義する",
+      "",
+      "該当ログ:",
+      "",
+      ...excerpt(lineInfo?.index ?? undefinedIndex),
+    ].join("\n").slice(0, 16000);
+  }
+
+  const fileNotFoundIndex = lines.findIndex((line) =>
+    /File .* not found/.test(line) || /LaTeX Error: File .* not found/.test(line)
+  );
+
+  if (fileNotFoundIndex >= 0) {
+    return [
+      "FreeSloTeX compile error summary",
+      "",
+      "原因: ファイルが見つかりません (File not found)",
+      "",
+      "対処:",
+      "・\\usepackage{...} のパッケージ名が正しいか確認する",
+      "・\\includegraphics{...} の画像ファイル名・拡張子・置き場所を確認する",
+      "・参照している .bib, .sty, .cls, 画像ファイルなどがプロジェクト内にあるか確認する",
+      "",
+      "該当ログ:",
+      "",
+      ...excerpt(fileNotFoundIndex),
+    ].join("\n").slice(0, 16000);
+  }
+
+  const latexErrorIndex = lines.findIndex((line) =>
+    /^! LaTeX Error:/.test(line) || /LaTeX Error:/.test(line) || /Package .* Error:/.test(line)
+  );
+
+  if (latexErrorIndex >= 0) {
+    const lineInfo = findLineNumberAfter(latexErrorIndex);
+
+    return [
+      "FreeSloTeX compile error summary",
+      "",
+      "原因: LaTeX エラー",
+      `場所: main.tex ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
+      "",
+      "対処:",
+      "・最初の `! LaTeX Error:` または `! Package ... Error:` の行を確認する",
+      "・近くの `l.<number>` が，TeX が止まった行番号である",
+      "",
+      "該当ログ:",
+      "",
+      ...excerpt(lineInfo?.index ?? latexErrorIndex),
+    ].join("\n").slice(0, 16000);
+  }
+
   const patterns = [
     /^! /,
-    /LaTeX Error:/,
-    /Package .* Error:/,
-    /Undefined control sequence/,
     /Emergency stop/,
     /Fatal error occurred/,
     /Missing .* inserted/,
-    /File .* not found/,
     /Runaway argument/,
     /No pages of output/,
     /Command .* returned with error/,
@@ -99,29 +193,31 @@ function extractLatexErrorSummary(text: string) {
   const hit = lines.findIndex((line) => patterns.some((pattern) => pattern.test(line)));
 
   if (hit >= 0) {
-    const start = Math.max(0, hit - 8);
-    const end = Math.min(lines.length, hit + 24);
     return [
       "FreeSloTeX compile error summary",
       "",
-      "First likely error:",
+      "原因: TeX コンパイルエラー",
       "",
-      ...lines.slice(start, end),
+      "対処:",
+      "・最初に出ている `!` で始まる行を確認する",
+      "・近くの `l.<number>` が止まった位置である",
       "",
-      "Hint:",
-      "Check the line beginning with `!` and the nearby `l.<number>` line.",
+      "該当ログ:",
+      "",
+      ...excerpt(hit),
     ].join("\n").slice(0, 16000);
   }
 
   return [
     "FreeSloTeX compile error summary",
     "",
-    "No standard LaTeX error pattern was found.",
-    "Showing the last part of the compile output:",
+    "原因: 標準的な LaTeX エラーパターンを検出できませんでした。",
+    "最後のコンパイル出力を表示します。",
     "",
     ...lines.slice(-120),
   ].join("\n").slice(0, 16000);
 }
+
 
 async function getProjectForEdit(projectId: number, currentUserId: number) {
   const projectResult = await query<ProjectAccessRow>(
