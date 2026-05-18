@@ -38,6 +38,17 @@ type Props = {
   texLogTail: string;
 };
 
+type LiveCompileResponse = {
+  ok: boolean;
+  engine?: string;
+  compileError?: string | null;
+  compileErrorSummary?: string;
+  fsxLogTail?: string;
+  texLogTail?: string;
+  pdfExists?: boolean;
+  message?: string;
+};
+
 function formatBytes(value: number | null) {
   if (value === null) return "";
   if (value < 1024) return `${value} B`;
@@ -188,6 +199,16 @@ export default function TexEditorClient(props: Props) {
   const [editorHeight, setEditorHeight] = useState(620);
   const [terminalHeight, setTerminalHeight] = useState(320);
   const [copySummaryStatus, setCopySummaryStatus] = useState("");
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [liveCompileError, setLiveCompileError] = useState<string | null>(props.compileError ?? null);
+  const [liveCompileErrorSummary, setLiveCompileErrorSummary] = useState(props.compileErrorSummary);
+  const [liveFsxLogTail, setLiveFsxLogTail] = useState(props.fsxLogTail);
+  const [liveTexLogTail, setLiveTexLogTail] = useState(props.texLogTail);
+  const [livePdfExists, setLivePdfExists] = useState(props.pdfExists);
+  const [liveCompiled, setLiveCompiled] = useState(props.compiled);
+  const [liveEngine, setLiveEngine] = useState(props.engine ?? "");
+  const [compileStatusMessage, setCompileStatusMessage] = useState("");
+  const [pdfRefreshKey, setPdfRefreshKey] = useState(0);
   const [editorPreferencesLoaded, setEditorPreferencesLoaded] = useState(false);
 
   const MIN_LEFT_WIDTH = 180;
@@ -265,7 +286,7 @@ export default function TexEditorClient(props: Props) {
   }
 
   const saveError = saveErrorMessage(props.saveError);
-  const compileError = compileErrorMessage(props.compileError);
+  const compileError = compileErrorMessage(liveCompileError);
   const texAdvice = useMemo(() => detectTexAdvice(tex), [tex]);
   const currentSnippetGroup = useMemo(
     () => snippetGroups.find((group) => group.label === activeSnippetGroup) ?? snippetGroups[0],
@@ -325,7 +346,7 @@ export default function TexEditorClient(props: Props) {
   }
 
   async function copyCompileErrorSummary() {
-    const text = props.compileErrorSummary;
+    const text = liveCompileErrorSummary;
     if (!text) return;
 
     try {
@@ -357,6 +378,67 @@ export default function TexEditorClient(props: Props) {
     }
 
     window.setTimeout(() => setCopySummaryStatus(""), 1800);
+  }
+
+  async function runSmartCompile() {
+    if (!props.canEdit || isCompiling) return;
+
+    setIsCompiling(true);
+    setCompileStatusMessage("Compiling...");
+    setLiveCompileError(null);
+    setLiveCompileErrorSummary("");
+    setCopySummaryStatus("");
+
+    try {
+      const response = await fetch(`/api/projects/${props.projectId}/compile/live`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ content: tex }),
+      });
+
+      const data = (await response.json().catch(() => null)) as LiveCompileResponse | null;
+
+      if (!data) {
+        throw new Error(`Compile API returned ${response.status}`);
+      }
+
+      setLiveCompiled(Boolean(data.ok));
+      setLiveEngine(data.engine ?? "");
+      setLiveCompileError(data.ok ? null : data.compileError ?? "failed");
+      setLiveCompileErrorSummary(data.compileErrorSummary ?? "");
+      setLiveFsxLogTail(data.fsxLogTail ?? "");
+      setLiveTexLogTail(data.texLogTail ?? "");
+      setLivePdfExists(Boolean(data.pdfExists));
+      setPdfRefreshKey((value) => value + 1);
+      setCompileStatusMessage(
+        data.message ??
+          (data.ok ? "Compiled successfully." : "Compile failed. Check the terminal below.")
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      setLiveCompiled(false);
+      setLiveEngine("");
+      setLiveCompileError("failed");
+      setLiveCompileErrorSummary(
+        [
+          "FreeSloTeX compile error summary",
+          "",
+          "Compile request failed before TeX started.",
+          "",
+          message,
+        ].join("\n")
+      );
+      setLiveFsxLogTail("");
+      setLiveTexLogTail("");
+      setLivePdfExists(false);
+      setCompileStatusMessage("Compile request failed.");
+    } finally {
+      setIsCompiling(false);
+    }
   }
 
   function startResizeVertical(event: import("react").MouseEvent<HTMLDivElement>) {
@@ -472,7 +554,7 @@ export default function TexEditorClient(props: Props) {
           <a href="/workspace" className="fsx-button">
             My workspace
           </a>
-          {props.pdfExists ? (
+          {livePdfExists ? (
             <a href={`/api/projects/${props.projectId}/pdf`} className="fsx-button fsx-button-primary">
               Download PDF
             </a>
@@ -486,9 +568,9 @@ export default function TexEditorClient(props: Props) {
         </section>
       ) : null}
 
-      {props.compiled ? (
+      {liveCompiled ? (
         <section className="fsx-card" style={{ borderColor: "#16a34a", marginBottom: 16 }}>
-          <strong>Compiled.</strong> PDF was generated successfully{props.engine ? ` by ${props.engine}` : ""}.
+          <strong>Compiled.</strong> PDF was generated successfully{liveEngine ? ` by ${liveEngine}` : ""}.
         </section>
       ) : null}
 
@@ -802,11 +884,12 @@ export default function TexEditorClient(props: Props) {
 
                   {props.canEdit ? (
                     <button
-                      type="submit"
-                      form={`compile-form-${props.projectId}`}
+                      type="button"
+                      onClick={runSmartCompile}
+                      disabled={isCompiling}
                       className="fsx-button fsx-button-primary"
                     >
-                      Smart Compile
+                      {isCompiling ? "Compiling..." : "Smart Compile"}
                     </button>
                   ) : (
                     <span className="fsx-button" aria-disabled="true">
@@ -814,7 +897,7 @@ export default function TexEditorClient(props: Props) {
                     </span>
                   )}
 
-                  {props.pdfExists ? (
+                  {livePdfExists ? (
                     <a href={`/api/projects/${props.projectId}/pdf`} className="fsx-button">
                       Download PDF
                     </a>
@@ -823,6 +906,12 @@ export default function TexEditorClient(props: Props) {
                       PDF not generated yet
                     </span>
                   )}
+
+                  {compileStatusMessage ? (
+                    <span className="fsx-muted" style={{ fontSize: 12, fontWeight: 700 }}>
+                      {compileStatusMessage}
+                    </span>
+                  ) : null}
                 </div>
 
                 <form id={`save-form-${props.projectId}`} action={`/api/projects/${props.projectId}/files/save`} method="post">
@@ -927,7 +1016,7 @@ export default function TexEditorClient(props: Props) {
                 </p>
               </div>
 
-              {props.compileErrorSummary ? (
+              {liveCompileErrorSummary ? (
                 <div
                   style={{
                     display: "flex",
@@ -955,7 +1044,7 @@ export default function TexEditorClient(props: Props) {
               ) : null}
             </div>
 
-            {props.compileErrorSummary ? (
+            {liveCompileErrorSummary ? (
               <div
                 style={{
                   marginTop: 12,
@@ -982,12 +1071,12 @@ export default function TexEditorClient(props: Props) {
                     maxHeight: 260,
                   }}
                 >
-                  {props.compileErrorSummary}
+                  {liveCompileErrorSummary}
                 </pre>
               </div>
             ) : null}
 
-            {props.fsxLogTail || props.texLogTail ? (
+            {liveFsxLogTail || liveTexLogTail ? (
               <div
                 style={{
                   marginTop: 12,
@@ -1005,8 +1094,8 @@ export default function TexEditorClient(props: Props) {
                   whiteSpace: "pre-wrap",
                 }}
               >
-                {props.fsxLogTail ? `===== FreeSloTeX compile log =====\n${props.fsxLogTail}\n\n` : ""}
-                {props.texLogTail ? `===== TeX log tail =====\n${props.texLogTail}` : ""}
+                {liveFsxLogTail ? `===== FreeSloTeX compile log =====\n${liveFsxLogTail}\n\n` : ""}
+                {liveTexLogTail ? `===== TeX log tail =====\n${liveTexLogTail}` : ""}
               </div>
             ) : (
               <div className="fsx-empty-box">No compile log yet.</div>
@@ -1039,7 +1128,7 @@ export default function TexEditorClient(props: Props) {
               </div>
             </div>
 
-            <PdfPreviewClient projectId={props.projectId} pdfExists={props.pdfExists} />
+            <PdfPreviewClient key={pdfRefreshKey} projectId={props.projectId} pdfExists={livePdfExists} />
           </section>
         </aside>
 
