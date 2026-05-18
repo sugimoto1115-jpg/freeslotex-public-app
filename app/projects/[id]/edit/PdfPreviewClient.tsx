@@ -29,12 +29,37 @@ export default function PdfPreviewClient({ projectId, pdfExists }: Props) {
 
   const [pdf, setPdf] = useState<PdfDoc | null>(null);
   const [zoom, setZoom] = useState("fit");
+  const [zoomPreferencesLoaded, setZoomPreferencesLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [previewHeight, setPreviewHeight] = useState(720);
 
   function clamp(value: number, min: number, max: number) {
     return Math.min(Math.max(value, min), Math.max(min, max));
   }
+
+  useEffect(() => {
+    try {
+      const savedZoom = window.localStorage.getItem("freeslotex.pdfZoom");
+
+      if (savedZoom && zoomOptions.some((item) => item.value === savedZoom)) {
+        setZoom(savedZoom);
+      }
+    } catch {
+      // Ignore storage errors. PDF preview still works with Fit width.
+    } finally {
+      setZoomPreferencesLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!zoomPreferencesLoaded) return;
+
+    try {
+      window.localStorage.setItem("freeslotex.pdfZoom", zoom);
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [zoomPreferencesLoaded, zoom]);
 
   useEffect(() => {
     const fitToViewport = () => {
