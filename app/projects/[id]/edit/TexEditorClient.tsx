@@ -187,6 +187,7 @@ export default function TexEditorClient(props: Props) {
   const [rightWidth, setRightWidth] = useState(430);
   const [editorHeight, setEditorHeight] = useState(620);
   const [terminalHeight, setTerminalHeight] = useState(320);
+  const [copySummaryStatus, setCopySummaryStatus] = useState("");
 
   const MIN_LEFT_WIDTH = 180;
   const MIN_EDITOR_WIDTH = 360;
@@ -281,6 +282,41 @@ export default function TexEditorClient(props: Props) {
     if (lineGutterRef.current) {
       lineGutterRef.current.scrollTop = event.currentTarget.scrollTop;
     }
+  }
+
+  async function copyCompileErrorSummary() {
+    const text = props.compileErrorSummary;
+    if (!text) return;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        throw new Error("Clipboard API is unavailable");
+      }
+
+      setCopySummaryStatus("Copied");
+    } catch {
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "true");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        textarea.style.top = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+
+        setCopySummaryStatus("Copied");
+      } catch {
+        setCopySummaryStatus("Copy failed");
+      }
+    }
+
+    window.setTimeout(() => setCopySummaryStatus(""), 1800);
   }
 
   function startResizeVertical(event: import("react").MouseEvent<HTMLDivElement>) {
@@ -850,6 +886,33 @@ export default function TexEditorClient(props: Props) {
                   Read-only compile output. FreeSloTeX does not expose arbitrary shell commands.
                 </p>
               </div>
+
+              {props.compileErrorSummary ? (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {copySummaryStatus ? (
+                    <span className="fsx-muted" style={{ fontSize: 12, fontWeight: 700 }}>
+                      {copySummaryStatus}
+                    </span>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="fsx-button fsx-button-primary"
+                    onClick={copyCompileErrorSummary}
+                    style={{ padding: "6px 10px", fontSize: 12 }}
+                  >
+                    Copy error summary
+                  </button>
+                </div>
+              ) : null}
             </div>
 
             {props.compileErrorSummary ? (
