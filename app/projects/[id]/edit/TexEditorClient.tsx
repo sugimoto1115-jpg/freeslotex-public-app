@@ -979,12 +979,6 @@ export default function TexEditorClient(props: Props) {
         </section>
       ) : null}
 
-      {liveCompiled ? (
-        <section className="fsx-card" style={{ borderColor: "#16a34a", marginBottom: 16 }}>
-          <strong>Compiled.</strong> PDF was generated successfully{liveEngine ? ` by ${liveEngine}` : ""}.
-        </section>
-      ) : null}
-
       {texAdvice ? (
         <section className="fsx-card" style={{ borderColor: "#f59e0b", marginBottom: 16 }}>
           <strong>TeX advice.</strong> {texAdvice}
@@ -1134,6 +1128,12 @@ export default function TexEditorClient(props: Props) {
                   {" / "}
                   File: <strong>{currentFileCanBeSaved ? "editable" : "read-only"}</strong>
                 </p>
+
+                {liveCompiled ? (
+                  <span className="fsx-inline-compile-ok">
+                    Compiled. PDF was generated successfully{liveEngine ? ` by ${liveEngine}` : ""}.
+                  </span>
+                ) : null}
               </div>
             </div>
 
