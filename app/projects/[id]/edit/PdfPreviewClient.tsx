@@ -364,10 +364,6 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
         <p className="fsx-panel-note">Preview of the latest compiled PDF.</p>
       </div>
 
-      <span className="fsx-muted" style={{ fontWeight: 700, marginRight: 4 }}>
-        Zoom
-      </span>
-
       <div className="fsx-pdf-zoom-group" aria-label="PDF zoom controls">
         <button
           type="button"
