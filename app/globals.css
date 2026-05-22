@@ -990,3 +990,47 @@ a {
   font-weight: 800;
   white-space: nowrap;
 }
+
+/* FreeSloTeX compact editor toolbar buttons */
+.fsx-editor-header-tools .fsx-button,
+.fsx-editor-global-actions .fsx-button,
+.fsx-editor-pref-actions .fsx-button,
+.fsx-editor-command-bar .fsx-button,
+.fsx-pdf-toolbar .fsx-button {
+  min-height: 24px;
+  padding: 3px 8px !important;
+  font-size: 12px !important;
+  line-height: 1.05;
+  border-radius: 10px;
+}
+
+.fsx-editor-pref-actions,
+.fsx-editor-command-bar,
+.fsx-pdf-toolbar {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.fsx-editor-header-tools .fsx-editor-command-bar {
+  min-height: 28px;
+}
+
+.fsx-helper-toggle {
+  min-height: 24px;
+  padding: 3px 8px !important;
+}
+
+.fsx-compile-progress {
+  padding: 4px 8px;
+  font-size: 13px;
+  gap: 6px;
+}
+
+.fsx-compile-spinner {
+  font-size: 15px;
+}
+
+.fsx-compile-status {
+  padding: 4px 8px;
+  font-size: 12px;
+}
