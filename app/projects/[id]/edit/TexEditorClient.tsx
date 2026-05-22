@@ -258,7 +258,7 @@ export default function TexEditorClient(props: Props) {
   const lineGutterRef = useRef<HTMLDivElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
   const [leftWidth, setLeftWidth] = useState(280);
-  const [rightWidth, setRightWidth] = useState(430);
+  const [rightWidth, setRightWidth] = useState(640);
   const [editorHeight, setEditorHeight] = useState(620);
   const [terminalHeight, setTerminalHeight] = useState(320);
   const [copySummaryStatus, setCopySummaryStatus] = useState("");
@@ -273,6 +273,7 @@ export default function TexEditorClient(props: Props) {
   const [compileStatusMessage, setCompileStatusMessage] = useState("");
   const [pdfRefreshKey, setPdfRefreshKey] = useState(0);
   const [editorPreferencesLoaded, setEditorPreferencesLoaded] = useState(false);
+  const [layoutPreferencesLoaded, setLayoutPreferencesLoaded] = useState(false);
 
   const MIN_LEFT_WIDTH = 180;
   const MIN_EDITOR_WIDTH = 360;
@@ -294,6 +295,58 @@ export default function TexEditorClient(props: Props) {
   function getMaxRightWidth(currentLeftWidth = leftWidth) {
     return getGridWidth() - currentLeftWidth - MIN_EDITOR_WIDTH - SPLITTER_TOTAL_WIDTH;
   }
+
+  useEffect(() => {
+    try {
+      const rawLayout = window.localStorage.getItem("freeslotex.editorLayout");
+      const saved = rawLayout ? JSON.parse(rawLayout) : null;
+
+      if (saved && typeof saved === "object") {
+        const savedLeftWidth = Number(saved.leftWidth);
+        const savedRightWidth = Number(saved.rightWidth);
+        const savedEditorHeight = Number(saved.editorHeight);
+        const savedTerminalHeight = Number(saved.terminalHeight);
+
+        if (Number.isFinite(savedLeftWidth)) {
+          setLeftWidth(clamp(savedLeftWidth, MIN_LEFT_WIDTH, 620));
+        }
+
+        if (Number.isFinite(savedRightWidth)) {
+          setRightWidth(clamp(savedRightWidth, MIN_RIGHT_WIDTH, 1100));
+        }
+
+        if (Number.isFinite(savedEditorHeight)) {
+          setEditorHeight(clamp(savedEditorHeight, 260, 1400));
+        }
+
+        if (Number.isFinite(savedTerminalHeight)) {
+          setTerminalHeight(clamp(savedTerminalHeight, 160, 900));
+        }
+      }
+    } catch {
+      // Ignore storage errors. The editor still works with default layout.
+    } finally {
+      setLayoutPreferencesLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!layoutPreferencesLoaded) return;
+
+    try {
+      window.localStorage.setItem(
+        "freeslotex.editorLayout",
+        JSON.stringify({
+          leftWidth,
+          rightWidth,
+          editorHeight,
+          terminalHeight,
+        })
+      );
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [layoutPreferencesLoaded, leftWidth, rightWidth, editorHeight, terminalHeight]);
 
   useEffect(() => {
     const onResize = () => {

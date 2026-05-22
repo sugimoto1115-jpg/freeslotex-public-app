@@ -32,7 +32,8 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
   const [zoom, setZoom] = useState("fit");
   const [zoomPreferencesLoaded, setZoomPreferencesLoaded] = useState(false);
   const [message, setMessage] = useState("");
-  const [previewHeight, setPreviewHeight] = useState(720);
+  const [previewHeight, setPreviewHeight] = useState(820);
+  const [previewHeightPreferencesLoaded, setPreviewHeightPreferencesLoaded] = useState(false);
 
   function clamp(value: number, min: number, max: number) {
     return Math.min(Math.max(value, min), Math.max(min, max));
@@ -99,6 +100,30 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
 
     container.scrollTop = clamp(scrollState.scrollRatio * maxScroll, 0, maxScroll);
   }
+
+  useEffect(() => {
+    try {
+      const savedHeight = Number(window.localStorage.getItem("freeslotex.pdfPreviewHeight"));
+
+      if (Number.isFinite(savedHeight)) {
+        setPreviewHeight(clamp(savedHeight, 300, Math.max(420, window.innerHeight - 80)));
+      }
+    } catch {
+      // Ignore storage errors. PDF preview still works with default height.
+    } finally {
+      setPreviewHeightPreferencesLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!previewHeightPreferencesLoaded) return;
+
+    try {
+      window.localStorage.setItem("freeslotex.pdfPreviewHeight", String(previewHeight));
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [previewHeightPreferencesLoaded, previewHeight]);
 
   useEffect(() => {
     try {
