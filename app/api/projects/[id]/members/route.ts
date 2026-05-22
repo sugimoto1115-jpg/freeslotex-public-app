@@ -18,12 +18,30 @@ type ProjectAccessRow = {
   my_role: string | null;
 };
 
+function makeUrl(request: NextRequest, pathname: string) {
+  const rawHost =
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    "labtex.freeslot-schedule.com";
+
+  const host =
+    rawHost.includes("localhost") || rawHost.includes("127.0.0.1")
+      ? "labtex.freeslot-schedule.com"
+      : rawHost;
+
+  const proto =
+    request.headers.get("x-forwarded-proto") ??
+    (host.includes("freeslot-schedule.com") ? "https" : "http");
+
+  return new URL(pathname, `${proto}://${host}`);
+}
+
 function redirectToProject(
   request: NextRequest,
   projectId: string,
   search: Record<string, string>,
 ) {
-  const url = new URL(`/projects/${projectId}`, request.url);
+  const url = makeUrl(request, `/projects/${projectId}`);
   for (const [key, value] of Object.entries(search)) {
     url.searchParams.set(key, value);
   }
@@ -40,7 +58,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    return NextResponse.redirect(new URL("/login", request.url), 303);
+    return NextResponse.redirect(makeUrl(request, "/login"), 303);
   }
 
   const currentUserResult = await query<UserRow>(
