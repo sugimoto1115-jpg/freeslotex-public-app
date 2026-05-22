@@ -828,3 +828,20 @@ a {
 .fsx-topbar-inner .fsx-actions {
   margin-left: auto;
 }
+
+/* FreeSloTeX editor actions in hero header */
+.fsx-editor-global-actions {
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fsx-editor-global-actions .fsx-button {
+  white-space: nowrap;
+}
+
+.fsx-editor-global-actions .fsx-compile-progress,
+.fsx-editor-global-actions .fsx-compile-status {
+  white-space: nowrap;
+}

@@ -739,17 +739,62 @@ export default function TexEditorClient(props: Props) {
           </p>
         </div>
 
-        <div className="fsx-actions">
+        <div className="fsx-actions fsx-editor-global-actions">
           <a href={`/projects/${props.projectId}`} className="fsx-button">
             Back to Project
           </a>
+
           <a href="/workspace" className="fsx-button">
             My workspace
           </a>
+
+          {currentFileCanBeSaved ? (
+            <button
+              type="button"
+              onClick={() => runSaveCurrentFile()}
+              disabled={isSavingFile}
+              className="fsx-button fsx-button-primary"
+            >
+              {isSavingFile ? "Saving..." : `Save ${currentFileDisplayName}`}
+            </button>
+          ) : (
+            <span className="fsx-button" aria-disabled="true">
+              {props.canEdit ? "Read-only file" : "Viewer cannot save"}
+            </span>
+          )}
+
+          {props.canEdit ? (
+            <button
+              type="button"
+              onClick={runSmartCompile}
+              disabled={isCompiling}
+              className="fsx-button fsx-button-primary"
+            >
+              {isCompiling ? "Compiling..." : "Smart Compile"}
+            </button>
+          ) : (
+            <span className="fsx-button" aria-disabled="true">
+              Viewer cannot compile
+            </span>
+          )}
+
           {livePdfExists ? (
             <a href={`/api/projects/${props.projectId}/pdf`} className="fsx-button fsx-button-primary">
               Download PDF
             </a>
+          ) : null}
+
+          {isCompiling ? (
+            <span className="fsx-compile-progress" role="status" aria-live="polite">
+              <span className="fsx-compile-spinner" aria-hidden="true">
+                ⏳
+              </span>
+              <span>Compiling...</span>
+            </span>
+          ) : compileStatusMessage ? (
+            <span className="fsx-compile-status" role="status" aria-live="polite">
+              {compileStatusMessage}
+            </span>
           ) : null}
         </div>
       </section>
@@ -1067,61 +1112,6 @@ export default function TexEditorClient(props: Props) {
                   >
                     On
                   </button>
-                </div>
-
-                <div className="fsx-actions" style={{ marginTop: 12, marginBottom: 12 }}>
-                  {currentFileCanBeSaved ? (
-                    <button
-                      type="button"
-                      onClick={() => runSaveCurrentFile()}
-                      disabled={isSavingFile}
-                      className="fsx-button fsx-button-primary"
-                    >
-                      {isSavingFile ? "Saving..." : `Save ${currentFileDisplayName}`}
-                    </button>
-                  ) : (
-                    <span className="fsx-button" aria-disabled="true">
-                      {props.canEdit ? "Read-only file" : "Viewer cannot save"}
-                    </span>
-                  )}
-
-                  {props.canEdit ? (
-                    <button
-                      type="button"
-                      onClick={runSmartCompile}
-                      disabled={isCompiling}
-                      className="fsx-button fsx-button-primary"
-                    >
-                      {isCompiling ? "Compiling..." : "Smart Compile"}
-                    </button>
-                  ) : (
-                    <span className="fsx-button" aria-disabled="true">
-                      Viewer cannot compile
-                    </span>
-                  )}
-
-                  {livePdfExists ? (
-                    <a href={`/api/projects/${props.projectId}/pdf`} className="fsx-button">
-                      Download PDF
-                    </a>
-                  ) : (
-                    <span className="fsx-button" aria-disabled="true">
-                      PDF not generated yet
-                    </span>
-                  )}
-
-                  {isCompiling ? (
-                    <span className="fsx-compile-progress" role="status" aria-live="polite">
-                      <span className="fsx-compile-spinner" aria-hidden="true">
-                        ⏳
-                      </span>
-                      <span>Compiling...</span>
-                    </span>
-                  ) : compileStatusMessage ? (
-                    <span className="fsx-compile-status" role="status" aria-live="polite">
-                      {compileStatusMessage}
-                    </span>
-                  ) : null}
                 </div>
 
                 <form id={`save-form-${props.projectId}`} action={`/api/projects/${props.projectId}/files/save`} method="post">
