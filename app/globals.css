@@ -845,3 +845,23 @@ a {
 .fsx-editor-global-actions .fsx-compile-status {
   white-space: nowrap;
 }
+
+/* FreeSloTeX editor preferences in project header */
+.fsx-editor-pref-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f8fafc;
+  white-space: nowrap;
+}
+
+.fsx-editor-pref-actions .fsx-muted {
+  font-size: 12px;
+}
+
+.fsx-editor-pref-actions .fsx-button {
+  min-height: 30px;
+}

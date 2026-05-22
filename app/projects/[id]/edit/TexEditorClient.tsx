@@ -740,6 +740,56 @@ export default function TexEditorClient(props: Props) {
         </div>
 
         <div className="fsx-actions fsx-editor-global-actions">
+          <div className="fsx-editor-pref-actions" aria-label="Editor preferences">
+            <span className="fsx-muted" style={{ fontWeight: 700 }}>
+              Font size
+            </span>
+
+            {([12, 14, 16, 18, 20] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                className={editorFontSize === value ? "fsx-button fsx-button-primary" : "fsx-button"}
+                onClick={() => setEditorFontSize(value)}
+                style={{ padding: "6px 9px", fontSize: 12 }}
+              >
+                {value}px
+              </button>
+            ))}
+
+            <span
+              aria-hidden="true"
+              style={{
+                width: 1,
+                height: 24,
+                background: "#cbd5e1",
+                margin: "0 4px",
+              }}
+            />
+
+            <span className="fsx-muted" style={{ fontWeight: 700 }}>
+              Wrap
+            </span>
+
+            <button
+              type="button"
+              className={!softWrap ? "fsx-button fsx-button-primary" : "fsx-button"}
+              onClick={() => setSoftWrap(false)}
+              style={{ padding: "6px 9px", fontSize: 12 }}
+            >
+              Off
+            </button>
+
+            <button
+              type="button"
+              className={softWrap ? "fsx-button fsx-button-primary" : "fsx-button"}
+              onClick={() => setSoftWrap(true)}
+              style={{ padding: "6px 9px", fontSize: 12 }}
+            >
+              On
+            </button>
+          </div>
+
           {currentFileCanBeSaved ? (
             <button
               type="button"
@@ -1051,69 +1101,6 @@ export default function TexEditorClient(props: Props) {
               <div className="fsx-empty-box">{props.fileMessage}</div>
             ) : (
               <>
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 8,
-                    alignItems: "center",
-                    marginTop: 10,
-                    marginBottom: 10,
-                    padding: 8,
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 14,
-                    background: "#f8fafc",
-                  }}
-                >
-                  <span className="fsx-muted" style={{ fontWeight: 700 }}>
-                    Font size
-                  </span>
-
-                  {([12, 14, 16, 18, 20] as const).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      className={editorFontSize === value ? "fsx-button fsx-button-primary" : "fsx-button"}
-                      onClick={() => setEditorFontSize(value)}
-                      style={{ padding: "6px 9px", fontSize: 12 }}
-                    >
-                      {value}px
-                    </button>
-                  ))}
-
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      width: 1,
-                      height: 24,
-                      background: "#cbd5e1",
-                      margin: "0 4px",
-                    }}
-                  />
-
-                  <span className="fsx-muted" style={{ fontWeight: 700 }}>
-                    Wrap
-                  </span>
-
-                  <button
-                    type="button"
-                    className={!softWrap ? "fsx-button fsx-button-primary" : "fsx-button"}
-                    onClick={() => setSoftWrap(false)}
-                    style={{ padding: "6px 9px", fontSize: 12 }}
-                  >
-                    Off
-                  </button>
-
-                  <button
-                    type="button"
-                    className={softWrap ? "fsx-button fsx-button-primary" : "fsx-button"}
-                    onClick={() => setSoftWrap(true)}
-                    style={{ padding: "6px 9px", fontSize: 12 }}
-                  >
-                    On
-                  </button>
-                </div>
-
                 <form id={`save-form-${props.projectId}`} action={`/api/projects/${props.projectId}/files/save`} method="post">
                   <div
                     style={{
