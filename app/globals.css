@@ -1049,3 +1049,22 @@ a {
   line-height: 1.1;
   white-space: nowrap;
 }
+
+/* FreeSloTeX left-align editor controls in project header */
+.fsx-editor-header-tools {
+  align-items: flex-start;
+}
+
+.fsx-editor-header-tools .fsx-editor-command-bar {
+  align-self: flex-start;
+  justify-content: flex-start;
+}
+
+.fsx-editor-header-tools .fsx-editor-global-actions {
+  align-self: flex-start;
+  justify-content: flex-start;
+}
+
+.fsx-editor-pref-actions {
+  justify-content: flex-start;
+}
