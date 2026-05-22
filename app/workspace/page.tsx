@@ -46,6 +46,19 @@ function roleClass(role: string) {
   return "fsx-pill";
 }
 
+function sortProjectsByUpdatedDesc(projects: ProjectRow[]) {
+  return [...projects].sort((a, b) => {
+    const at = new Date(a.updated_at).getTime();
+    const bt = new Date(b.updated_at).getTime();
+
+    if (Number.isFinite(at) && Number.isFinite(bt) && at !== bt) {
+      return bt - at;
+    }
+
+    return b.id - a.id;
+  });
+}
+
 function workspacesRoot() {
   return process.env.LABTEX_WORKSPACES_ROOT || "/home/tomoyuki/labtex/workspaces";
 }
@@ -231,10 +244,14 @@ export default async function WorkspacePage() {
     [userId]
   );
 
-  const projects = projectsResult.rows;
+  const projects = sortProjectsByUpdatedDesc(projectsResult.rows);
   const root = await refreshUserWorkspace(userId, projects);
-  const privateProjects = projects.filter((p) => p.folder_kind === "private");
-  const sharedProjects = projects.filter((p) => p.folder_kind === "shared");
+  const privateProjects = sortProjectsByUpdatedDesc(
+    projects.filter((p) => p.folder_kind === "private")
+  );
+  const sharedProjects = sortProjectsByUpdatedDesc(
+    projects.filter((p) => p.folder_kind === "shared")
+  );
 
   return (
     <main className="fsx-main">
