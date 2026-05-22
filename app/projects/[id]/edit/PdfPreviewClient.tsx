@@ -360,8 +360,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
   const pdfToolbar = (
     <div className="fsx-pdf-toolbar" aria-label="PDF preview controls">
       <div className="fsx-pdf-title-line">
-        <h2 className="fsx-panel-title">PDF Preview</h2>
-        <p className="fsx-panel-note">Preview of the latest compiled PDF.</p>
+        <h2 className="fsx-panel-title">PDF</h2>
       </div>
 
       <div className="fsx-pdf-zoom-group" aria-label="PDF zoom controls">

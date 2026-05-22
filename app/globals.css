@@ -1098,3 +1098,12 @@ a {
   font-weight: 800;
   text-align: center;
 }
+
+/* FreeSloTeX compact PDF title */
+.fsx-pdf-title-line {
+  margin-right: 4px;
+}
+
+.fsx-pdf-title-line .fsx-panel-title {
+  font-size: 18px;
+}
