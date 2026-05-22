@@ -19,7 +19,7 @@ const zoomSteps = ["0.75", "1", "1.25", "1.5", "2"];
 const zoomValues = ["fit", ...zoomSteps];
 
 function zoomLabel(value: string) {
-  if (value === "fit") return "Fit width";
+  if (value === "fit") return "Fit";
 
   const numericValue = Number(value);
   return Number.isFinite(numericValue) ? `${Math.round(numericValue * 100)}%` : value;

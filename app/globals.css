@@ -1107,3 +1107,32 @@ a {
 .fsx-pdf-title-line .fsx-panel-title {
   font-size: 18px;
 }
+
+/* FreeSloTeX narrower PDF pane / compact PDF toolbar */
+.fsx-pdf-toolbar {
+  gap: 4px;
+  padding: 3px 5px;
+}
+
+.fsx-pdf-title-line {
+  margin-right: 2px;
+}
+
+.fsx-pdf-title-line .fsx-panel-title {
+  font-size: 16px;
+}
+
+.fsx-pdf-zoom-group {
+  gap: 3px;
+  padding: 1px 3px;
+}
+
+.fsx-pdf-zoom-value {
+  min-width: 30px;
+  padding: 0 2px;
+}
+
+.fsx-pdf-toolbar .fsx-button {
+  min-height: 22px;
+  padding: 2px 7px !important;
+}
