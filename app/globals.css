@@ -865,3 +865,47 @@ a {
 .fsx-editor-pref-actions .fsx-button {
   min-height: 30px;
 }
+
+/* FreeSloTeX two-row editor tools in project header */
+.fsx-hero {
+  align-items: flex-start;
+}
+
+.fsx-editor-header-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fsx-editor-header-tools .fsx-editor-command-bar {
+  order: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 auto;
+  width: min(100%, 1100px);
+  max-width: 100%;
+  margin-top: 0;
+  padding: 5px 7px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f8fafc;
+  overflow-x: auto;
+  white-space: nowrap;
+  align-self: flex-end;
+  justify-content: flex-end;
+}
+
+.fsx-editor-header-tools .fsx-editor-global-actions {
+  order: 2;
+  align-self: flex-end;
+  justify-content: flex-end;
+}
+
+.fsx-editor-header-tools .fsx-button {
+  white-space: nowrap;
+}
