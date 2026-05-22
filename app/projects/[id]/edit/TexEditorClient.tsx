@@ -417,7 +417,7 @@ export default function TexEditorClient(props: Props) {
       const rawFontSize = window.localStorage.getItem("freeslotex.editorFontSize");
       const parsedFontSize = Number(rawFontSize);
 
-      if ([12, 14, 16, 18, 20].includes(parsedFontSize)) {
+      if ([12, 14, 16, 18, 20, 22, 24].includes(parsedFontSize)) {
         setEditorFontSize(parsedFontSize);
       }
 
@@ -918,7 +918,7 @@ export default function TexEditorClient(props: Props) {
               Font size
             </span>
 
-            {([12, 14, 16, 18, 20] as const).map((value) => (
+            {([12, 14, 16, 18, 20, 22, 24] as const).map((value) => (
               <button
                 key={value}
                 type="button"
