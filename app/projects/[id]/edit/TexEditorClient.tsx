@@ -770,9 +770,6 @@ export default function TexEditorClient(props: Props) {
         <div>
           <div className="fsx-eyebrow">FreeSloTeX built-in editor</div>
           <h1 className="fsx-title">{props.projectName}</h1>
-          <p className="fsx-subtitle">
-            VSCode-like layout: Explorer, Outline, TeX helper buttons, editor, compile terminal, and PDF download.
-          </p>
         </div>
 
         <div className="fsx-editor-header-tools">
