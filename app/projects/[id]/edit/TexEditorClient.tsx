@@ -703,28 +703,36 @@ export default function TexEditorClient(props: Props) {
       lines.slice(0, Math.max(0, safeLine - 1)).join("\n").length +
       (safeLine > 1 ? 1 : 0);
 
-    const lineHeightPx = editorFontSize * 1.55;
+    const computedStyle = window.getComputedStyle(textarea);
+    const parsedLineHeight = Number.parseFloat(computedStyle.lineHeight);
+    const lineHeightPx = Number.isFinite(parsedLineHeight)
+      ? parsedLineHeight
+      : editorFontSize * 1.55;
+    const paddingTop = Number.parseFloat(computedStyle.paddingTop) || 0;
+
     const targetScrollTop = Math.max(
       0,
-      (safeLine - 1) * lineHeightPx - 4
+      paddingTop + (safeLine - 1) * lineHeightPx - 2
     );
 
-    textarea.focus({ preventScroll: true });
-    textarea.setSelectionRange(pos, pos);
-    textarea.scrollTop = targetScrollTop;
-
-    if (lineGutterRef.current) {
-      lineGutterRef.current.scrollTop = targetScrollTop;
-    }
-
-    window.requestAnimationFrame(() => {
-      textarea.focus({ preventScroll: true });
-      textarea.setSelectionRange(pos, pos);
+    const applyScroll = () => {
       textarea.scrollTop = targetScrollTop;
 
       if (lineGutterRef.current) {
         lineGutterRef.current.scrollTop = targetScrollTop;
       }
+    };
+
+    textarea.focus({ preventScroll: true });
+    textarea.setSelectionRange(pos, pos);
+    applyScroll();
+
+    window.requestAnimationFrame(() => {
+      applyScroll();
+
+      window.setTimeout(applyScroll, 0);
+      window.setTimeout(applyScroll, 50);
+      window.setTimeout(applyScroll, 120);
     });
   }
 
