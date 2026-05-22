@@ -1071,9 +1071,18 @@ export default function TexEditorClient(props: Props) {
         <section style={{ display: "grid", gap: 16, minWidth: 0 }}>
           <section className="fsx-panel">
             <div className="fsx-panel-head">
-              <div>
-                <h2 className="fsx-panel-title">{currentFileDisplayName}</h2>
-                <p className="fsx-panel-note">
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: 14,
+                  flexWrap: "wrap",
+                }}
+              >
+                <h2 className="fsx-panel-title" style={{ margin: 0 }}>
+                  {currentFileDisplayName}
+                </h2>
+                <p className="fsx-panel-note" style={{ margin: 0 }}>
                   Role: <strong>{props.roleLabel}</strong>
                   {" / "}
                   Mode: <strong>{props.canEdit ? "editable" : "viewer only"}</strong>
