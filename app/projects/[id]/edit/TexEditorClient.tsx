@@ -355,6 +355,7 @@ export default function TexEditorClient(props: Props) {
     [activeSnippetGroup]
   );
   const editorBodyWidth = "100%";
+  const editorLineHeightPx = editorFontSize * 1.55;
   const lineNumberFontSize = Math.max(10, editorFontSize - 3);
 
   useEffect(() => {
@@ -703,16 +704,9 @@ export default function TexEditorClient(props: Props) {
       lines.slice(0, Math.max(0, safeLine - 1)).join("\n").length +
       (safeLine > 1 ? 1 : 0);
 
-    const computedStyle = window.getComputedStyle(textarea);
-    const parsedLineHeight = Number.parseFloat(computedStyle.lineHeight);
-    const lineHeightPx = Number.isFinite(parsedLineHeight)
-      ? parsedLineHeight
-      : editorFontSize * 1.55;
-    const paddingTop = Number.parseFloat(computedStyle.paddingTop) || 0;
-
     const targetScrollTop = Math.max(
       0,
-      paddingTop + (safeLine - 1) * lineHeightPx - 2
+      (safeLine - 1) * editorLineHeightPx
     );
 
     const applyScroll = () => {
@@ -1132,7 +1126,7 @@ export default function TexEditorClient(props: Props) {
                         fontFamily:
                           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
                         fontSize: lineNumberFontSize,
-                        lineHeight: 1.55,
+                        lineHeight: `${editorLineHeightPx}px`,
                         whiteSpace: "pre",
                         overflow: "hidden",
                         userSelect: "none",
@@ -1163,7 +1157,7 @@ export default function TexEditorClient(props: Props) {
                         fontFamily:
                           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
                         fontSize: editorFontSize,
-                        lineHeight: 1.55,
+                        lineHeight: `${editorLineHeightPx}px`,
                         whiteSpace: softWrap ? "pre-wrap" : "pre",
                         overflowX: softWrap ? "hidden" : "auto",
                         overflowY: "auto",
