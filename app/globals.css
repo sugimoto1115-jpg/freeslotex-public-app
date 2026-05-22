@@ -964,3 +964,29 @@ a {
   margin: 0;
   line-height: 1;
 }
+
+/* FreeSloTeX collapsible TeX helper toolbar */
+.fsx-editor-header-tools .fsx-editor-command-bar {
+  gap: 6px;
+  padding: 4px 6px;
+  min-height: 34px;
+}
+
+.fsx-editor-header-tools .fsx-editor-command-bar-collapsed {
+  flex: 0 0 auto;
+  width: auto;
+  border-radius: 999px;
+}
+
+.fsx-editor-header-tools .fsx-editor-command-bar-open {
+  flex: 0 1 auto;
+  width: min(100%, 1100px);
+  border-radius: 14px;
+}
+
+.fsx-helper-toggle {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}

@@ -251,6 +251,7 @@ export default function TexEditorClient(props: Props) {
   const [isFileLoading, setIsFileLoading] = useState(false);
   const [isSavingFile, setIsSavingFile] = useState(false);
   const [activeSnippetGroup, setActiveSnippetGroup] = useState("TeX Insert");
+  const [showTexHelpers, setShowTexHelpers] = useState(false);
   const [editorFontSize, setEditorFontSize] = useState(14);
   const [softWrap, setSoftWrap] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -775,81 +776,90 @@ export default function TexEditorClient(props: Props) {
         </div>
 
         <div className="fsx-editor-header-tools">
-        <div className="fsx-editor-command-bar">
-          <span
-          className="fsx-muted"
-          style={{
-            fontWeight: 700,
-            padding: "0 8px",
-          }}
-        >
-          TeX
-        </span>
-
         <div
-          role="tablist"
-          aria-label="TeX command categories"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            flex: "0 0 auto",
-          }}
+          className={
+            showTexHelpers
+              ? "fsx-editor-command-bar fsx-editor-command-bar-open"
+              : "fsx-editor-command-bar fsx-editor-command-bar-collapsed"
+          }
         >
-          {snippetGroups.map((group) => {
-            const active = group.label === activeSnippetGroup;
-            return (
-              <button
-                key={group.label}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                className={active ? "fsx-button fsx-button-primary" : "fsx-button"}
-                onClick={() => setActiveSnippetGroup(group.label)}
+          <button
+            type="button"
+            className="fsx-button fsx-helper-toggle"
+            onClick={() => setShowTexHelpers((value) => !value)}
+            aria-expanded={showTexHelpers}
+          >
+            {showTexHelpers ? "TeX helpers ▾" : "TeX helpers ▸"}
+          </button>
+
+          {showTexHelpers ? (
+            <>
+              <div
+                role="tablist"
+                aria-label="TeX command categories"
                 style={{
-                  padding: "7px 11px",
-                  fontSize: 13,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  flex: "0 0 auto",
                 }}
               >
-                {group.label}
-              </button>
-            );
-          })}
-        </div>
+                {snippetGroups.map((group) => {
+                  const active = group.label === activeSnippetGroup;
+                  return (
+                    <button
+                      key={group.label}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      className={active ? "fsx-button fsx-button-primary" : "fsx-button"}
+                      onClick={() => setActiveSnippetGroup(group.label)}
+                      style={{
+                        padding: "6px 9px",
+                        fontSize: 12,
+                      }}
+                    >
+                      {group.label}
+                    </button>
+                  );
+                })}
+              </div>
 
-        <span
-          aria-hidden="true"
-          style={{
-            width: 1,
-            height: 28,
-            background: "#cbd5e1",
-            flex: "0 0 auto",
-          }}
-        />
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 1,
+                  height: 24,
+                  background: "#cbd5e1",
+                  flex: "0 0 auto",
+                }}
+              />
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            flex: "0 0 auto",
-          }}
-        >
-          {currentSnippetGroup?.items.map((item) => (
-            <button
-              key={`${currentSnippetGroup.label}-${item.label}`}
-              type="button"
-              className="fsx-button"
-              onClick={() => applySnippetItem(item)}
-              style={{
-                padding: "7px 10px",
-                fontSize: 13,
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  flex: "0 0 auto",
+                }}
+              >
+                {currentSnippetGroup?.items.map((item) => (
+                  <button
+                    key={`${currentSnippetGroup.label}-${item.label}`}
+                    type="button"
+                    className="fsx-button"
+                    onClick={() => applySnippetItem(item)}
+                    style={{
+                      padding: "6px 8px",
+                      fontSize: 12,
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
 
         <div className="fsx-actions fsx-editor-global-actions">
