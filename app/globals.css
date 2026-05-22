@@ -1136,3 +1136,16 @@ a {
   min-height: 22px;
   padding: 2px 7px !important;
 }
+
+/* FreeSloTeX shrink PDF toolbar to content width */
+.fsx-pdf-toolbar {
+  width: fit-content;
+  max-width: 100%;
+  flex: 0 0 auto;
+}
+
+.fsx-pdf-toolbar .fsx-pdf-title-line,
+.fsx-pdf-toolbar .fsx-pdf-zoom-group,
+.fsx-pdf-toolbar .fsx-button {
+  flex: 0 0 auto;
+}
