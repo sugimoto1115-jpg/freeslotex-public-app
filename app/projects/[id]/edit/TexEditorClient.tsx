@@ -740,14 +740,6 @@ export default function TexEditorClient(props: Props) {
         </div>
 
         <div className="fsx-actions fsx-editor-global-actions">
-          <a href={`/projects/${props.projectId}`} className="fsx-button">
-            Back to Project
-          </a>
-
-          <a href="/workspace" className="fsx-button">
-            My workspace
-          </a>
-
           {currentFileCanBeSaved ? (
             <button
               type="button"
@@ -796,6 +788,14 @@ export default function TexEditorClient(props: Props) {
               {compileStatusMessage}
             </span>
           ) : null}
+
+          <a href={`/projects/${props.projectId}`} className="fsx-button">
+            Back to Project
+          </a>
+
+          <a href="/workspace" className="fsx-button">
+            My workspace
+          </a>
         </div>
       </section>
 
