@@ -277,7 +277,7 @@ export default function TexEditorClient(props: Props) {
 
   const MIN_LEFT_WIDTH = 180;
   const MIN_EDITOR_WIDTH = 360;
-  const MIN_RIGHT_WIDTH = 260;
+  const MIN_RIGHT_WIDTH = 200;
   const SPLITTER_TOTAL_WIDTH = 24;
 
   function clamp(value: number, min: number, max: number) {
