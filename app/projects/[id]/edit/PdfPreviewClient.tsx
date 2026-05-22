@@ -15,14 +15,15 @@ type PdfScrollState = {
   scrollRatio: number;
 };
 
-const zoomOptions = [
-  { label: "Fit width", value: "fit" },
-  { label: "75%", value: "0.75" },
-  { label: "100%", value: "1" },
-  { label: "125%", value: "1.25" },
-  { label: "150%", value: "1.5" },
-  { label: "200%", value: "2" },
-];
+const zoomSteps = ["0.75", "1", "1.25", "1.5", "2"];
+const zoomValues = ["fit", ...zoomSteps];
+
+function zoomLabel(value: string) {
+  if (value === "fit") return "Fit width";
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? `${Math.round(numericValue * 100)}%` : value;
+}
 
 export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -129,7 +130,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
     try {
       const savedZoom = window.localStorage.getItem("freeslotex.pdfZoom");
 
-      if (savedZoom && zoomOptions.some((item) => item.value === savedZoom)) {
+      if (savedZoom && zoomValues.includes(savedZoom)) {
         setZoom(savedZoom);
       }
     } catch {
@@ -345,6 +346,17 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
     };
   }, [pdf, zoom]);
 
+  const currentZoomStepIndex = zoomSteps.indexOf(zoom);
+  const effectiveZoomStepIndex =
+    currentZoomStepIndex >= 0 ? currentZoomStepIndex : zoomSteps.indexOf("1");
+  const canZoomOut = effectiveZoomStepIndex > 0;
+  const canZoomIn = effectiveZoomStepIndex < zoomSteps.length - 1;
+
+  function applyZoomDelta(delta: number) {
+    const nextIndex = clamp(effectiveZoomStepIndex + delta, 0, zoomSteps.length - 1);
+    setZoom(zoomSteps[nextIndex]);
+  }
+
   const pdfToolbar = (
     <div className="fsx-pdf-toolbar" aria-label="PDF preview controls">
       <div className="fsx-pdf-title-line">
@@ -356,17 +368,42 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
         Zoom
       </span>
 
-      {zoomOptions.map((item) => (
+      <div className="fsx-pdf-zoom-group" aria-label="PDF zoom controls">
         <button
-          key={item.value}
           type="button"
-          className={zoom === item.value ? "fsx-button fsx-button-primary" : "fsx-button"}
-          onClick={() => setZoom(item.value)}
+          className={zoom === "fit" ? "fsx-button fsx-button-primary" : "fsx-button"}
+          onClick={() => setZoom("fit")}
           style={{ padding: "6px 9px", fontSize: 12 }}
         >
-          {item.label}
+          Fit width
         </button>
-      ))}
+
+        <button
+          type="button"
+          className="fsx-button fsx-pdf-zoom-step"
+          onClick={() => applyZoomDelta(-1)}
+          disabled={!canZoomOut}
+          aria-label="Zoom out"
+          title="Zoom out"
+        >
+          −
+        </button>
+
+        <span className="fsx-pdf-zoom-value" aria-label={`Current zoom: ${zoomLabel(zoom)}`}>
+          {zoomLabel(zoom)}
+        </span>
+
+        <button
+          type="button"
+          className="fsx-button fsx-pdf-zoom-step"
+          onClick={() => applyZoomDelta(1)}
+          disabled={!canZoomIn}
+          aria-label="Zoom in"
+          title="Zoom in"
+        >
+          +
+        </button>
+      </div>
 
       {pdfExists ? (
         <>

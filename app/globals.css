@@ -1068,3 +1068,33 @@ a {
 .fsx-editor-pref-actions {
   justify-content: flex-start;
 }
+
+/* FreeSloTeX compact PDF zoom controls */
+.fsx-pdf-zoom-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+  white-space: nowrap;
+}
+
+.fsx-pdf-zoom-step {
+  width: 26px;
+  min-width: 26px;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center;
+  font-weight: 900;
+}
+
+.fsx-pdf-zoom-value {
+  min-width: 48px;
+  padding: 0 4px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
