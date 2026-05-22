@@ -1,19 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import * as pdfjsLib from "pdfjs-dist";
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.mjs";
-
 type Props = {
   projectId: number;
   pdfExists: boolean;
   refreshKey?: number;
 };
 
-type PdfDoc = Awaited<ReturnType<typeof pdfjsLib.getDocument>> extends { promise: Promise<infer T> }
-  ? T
-  : any;
+type PdfDoc = any;
 
 type PdfScrollState = {
   pageNumber: number;
@@ -213,6 +207,9 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
             `PDF API did not return a PDF. Content-Type: ${contentType || "unknown"}. ${previewText}`
           );
         }
+
+        const pdfjsLib = await import("pdfjs-dist");
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.mjs";
 
         const loadingTask = pdfjsLib.getDocument({
           data: new Uint8Array(arrayBuffer),
