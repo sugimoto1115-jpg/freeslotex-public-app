@@ -706,7 +706,7 @@ export default function TexEditorClient(props: Props) {
     const lineHeightPx = editorFontSize * 1.55;
     const targetScrollTop = Math.max(
       0,
-      (safeLine - 1) * lineHeightPx - editorHeight * 0.35
+      (safeLine - 1) * lineHeightPx - 4
     );
 
     textarea.focus({ preventScroll: true });
