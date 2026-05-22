@@ -698,35 +698,68 @@ export default function TexEditorClient(props: Props) {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
+    const targetTextarea: HTMLTextAreaElement = textarea;
     const lines = tex.split(/\r\n|\r|\n/);
     const safeLine = Math.min(Math.max(1, line), lines.length);
     const pos =
       lines.slice(0, Math.max(0, safeLine - 1)).join("\n").length +
       (safeLine > 1 ? 1 : 0);
 
-    const targetScrollTop = Math.max(
-      0,
-      (safeLine - 1) * editorLineHeightPx
-    );
+    function measureTargetScrollTop() {
+      const computedStyle = window.getComputedStyle(targetTextarea);
+      const mirror = document.createElement("div");
+      const marker = document.createElement("span");
+
+      mirror.style.position = "absolute";
+      mirror.style.visibility = "hidden";
+      mirror.style.pointerEvents = "none";
+      mirror.style.left = "-10000px";
+      mirror.style.top = "0";
+      mirror.style.width = `${targetTextarea.clientWidth}px`;
+      mirror.style.boxSizing = "border-box";
+      mirror.style.padding = computedStyle.padding;
+      mirror.style.border = "0";
+      mirror.style.fontFamily = computedStyle.fontFamily;
+      mirror.style.fontSize = computedStyle.fontSize;
+      mirror.style.fontWeight = computedStyle.fontWeight;
+      mirror.style.letterSpacing = computedStyle.letterSpacing;
+      mirror.style.lineHeight = computedStyle.lineHeight;
+      mirror.style.tabSize = computedStyle.tabSize;
+      mirror.style.whiteSpace = softWrap ? "pre-wrap" : "pre";
+      mirror.style.overflowWrap = softWrap ? "break-word" : "normal";
+      mirror.style.wordBreak = computedStyle.wordBreak;
+
+      mirror.textContent = tex.slice(0, pos) || "\u200b";
+      marker.textContent = "\u200b";
+      mirror.appendChild(marker);
+      document.body.appendChild(mirror);
+
+      const measuredTop = marker.offsetTop;
+      mirror.remove();
+
+      return Math.max(0, measuredTop - 2);
+    }
+
+    const targetScrollTop = measureTargetScrollTop();
 
     const applyScroll = () => {
-      textarea.scrollTop = targetScrollTop;
+      targetTextarea.scrollTop = targetScrollTop;
 
       if (lineGutterRef.current) {
         lineGutterRef.current.scrollTop = targetScrollTop;
       }
     };
 
-    textarea.focus({ preventScroll: true });
-    textarea.setSelectionRange(pos, pos);
+    targetTextarea.focus({ preventScroll: true });
+    targetTextarea.setSelectionRange(pos, pos);
     applyScroll();
 
     window.requestAnimationFrame(() => {
       applyScroll();
-
       window.setTimeout(applyScroll, 0);
       window.setTimeout(applyScroll, 50);
       window.setTimeout(applyScroll, 120);
+      window.setTimeout(applyScroll, 250);
     });
   }
 
