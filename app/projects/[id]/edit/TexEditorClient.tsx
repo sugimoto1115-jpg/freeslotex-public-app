@@ -1303,15 +1303,6 @@ export default function TexEditorClient(props: Props) {
 
         <aside style={{ display: "grid", gap: 16, minWidth: 0 }}>
           <section className="fsx-panel" style={{ padding: 16, position: "sticky", top: 16 }}>
-            <div className="fsx-panel-head">
-              <div>
-                <h2 className="fsx-panel-title">PDF Preview</h2>
-                <p className="fsx-panel-note">
-                  Preview of the latest compiled PDF.
-                </p>
-              </div>
-            </div>
-
             <PdfPreviewClient projectId={props.projectId} pdfExists={livePdfExists} refreshKey={pdfRefreshKey} />
           </section>
         </aside>

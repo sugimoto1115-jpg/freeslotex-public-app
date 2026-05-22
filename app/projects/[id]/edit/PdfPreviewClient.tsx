@@ -323,60 +323,71 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
     };
   }, [pdf, zoom]);
 
+  const pdfToolbar = (
+    <div className="fsx-pdf-toolbar" aria-label="PDF preview controls">
+      <div className="fsx-pdf-title-line">
+        <h2 className="fsx-panel-title">PDF Preview</h2>
+        <p className="fsx-panel-note">Preview of the latest compiled PDF.</p>
+      </div>
+
+      <span className="fsx-muted" style={{ fontWeight: 700, marginRight: 4 }}>
+        Zoom
+      </span>
+
+      {zoomOptions.map((item) => (
+        <button
+          key={item.value}
+          type="button"
+          className={zoom === item.value ? "fsx-button fsx-button-primary" : "fsx-button"}
+          onClick={() => setZoom(item.value)}
+          style={{ padding: "6px 9px", fontSize: 12 }}
+        >
+          {item.label}
+        </button>
+      ))}
+
+      {pdfExists ? (
+        <>
+          <a
+            href={`/api/projects/${projectId}/pdf?inline=1`}
+            target="_blank"
+            rel="noreferrer"
+            className="fsx-button"
+            style={{ padding: "6px 9px", fontSize: 12 }}
+          >
+            Open full viewer
+          </a>
+
+          <a
+            href={`/api/projects/${projectId}/pdf`}
+            className="fsx-button fsx-button-primary"
+            style={{ padding: "6px 9px", fontSize: 12 }}
+          >
+            Download PDF
+          </a>
+        </>
+      ) : (
+        <span className="fsx-button" aria-disabled="true" style={{ padding: "6px 9px", fontSize: 12 }}>
+          PDF not generated yet
+        </span>
+      )}
+    </div>
+  );
+
   if (!pdfExists) {
     return (
-      <div className="fsx-empty-box" style={{ marginTop: 12 }}>
-        PDF is not generated yet. Run Smart Compile first.
-      </div>
+      <>
+        {pdfToolbar}
+        <div className="fsx-empty-box" style={{ marginTop: 8 }}>
+          PDF is not generated yet. Run Smart Compile first.
+        </div>
+      </>
     );
   }
 
   return (
     <>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 6,
-          marginTop: 12,
-          marginBottom: 10,
-          alignItems: "center",
-        }}
-      >
-        <span className="fsx-muted" style={{ fontWeight: 700, marginRight: 4 }}>
-          Zoom
-        </span>
-
-        {zoomOptions.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            className={zoom === item.value ? "fsx-button fsx-button-primary" : "fsx-button"}
-            onClick={() => setZoom(item.value)}
-            style={{ padding: "6px 9px", fontSize: 12 }}
-          >
-            {item.label}
-          </button>
-        ))}
-
-        <a
-          href={`/api/projects/${projectId}/pdf?inline=1`}
-          target="_blank"
-          rel="noreferrer"
-          className="fsx-button"
-          style={{ padding: "6px 9px", fontSize: 12 }}
-        >
-          Open full viewer
-        </a>
-
-        <a
-          href={`/api/projects/${projectId}/pdf`}
-          className="fsx-button fsx-button-primary"
-          style={{ padding: "6px 9px", fontSize: 12 }}
-        >
-          Download PDF
-        </a>
-      </div>
+      {pdfToolbar}
 
       {message ? (
         <div className="fsx-empty-box" style={{ marginBottom: 10 }}>
