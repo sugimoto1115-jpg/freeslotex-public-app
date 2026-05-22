@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ArchiveProjectButton from "./ArchiveProjectButton";
 import path from "node:path";
 import { mkdir, readdir, rm, symlink, lstat, writeFile } from "node:fs/promises";
 import { requireUser } from "@/lib/auth";
@@ -166,6 +167,10 @@ function ProjectCard({ project }: { project: ProjectRow }) {
           <Link href={`/projects/${project.id}`} className="fsx-button fsx-button-primary">
             Open
           </Link>
+
+          {project.role === "owner" ? (
+            <ArchiveProjectButton projectId={project.id} projectName={project.name} />
+          ) : null}
         </div>
       </div>
     </section>

@@ -1149,3 +1149,16 @@ a {
 .fsx-pdf-toolbar .fsx-button {
   flex: 0 0 auto;
 }
+
+/* FreeSloTeX archive button */
+.fsx-button-danger {
+  border-color: #fecaca;
+  background: #fff7f7;
+  color: #b91c1c;
+}
+
+.fsx-button-danger:hover {
+  border-color: #fca5a5;
+  background: #fee2e2;
+  color: #991b1b;
+}
