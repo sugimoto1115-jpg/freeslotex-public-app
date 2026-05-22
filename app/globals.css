@@ -944,3 +944,23 @@ a {
   font-size: 12px;
   white-space: nowrap;
 }
+
+/* FreeSloTeX inline topbar identity */
+.fsx-topbar-inner > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.fsx-topbar-inner > div:first-child > :first-child {
+  margin: 0;
+  line-height: 1;
+}
+
+.fsx-topbar-inner > div:first-child > :nth-child(2) {
+  margin: 0;
+  line-height: 1;
+}
