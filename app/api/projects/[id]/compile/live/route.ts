@@ -45,7 +45,28 @@ function tail(text: string, lines = 140) {
   return xs.slice(Math.max(0, xs.length - lines)).join("\n");
 }
 
-function detectCompileScript(tex: string) {
+function shellQuote(value: string) {
+  return "'" + value.replace(/'/g, "'\\''") + "'";
+}
+
+function normalizeRootFile(value: unknown) {
+  const raw = String(value ?? "main.tex").trim().replace(/\\/g, "/").replace(/^\/+/, "");
+  const parts = raw.split("/");
+
+  if (
+    !raw ||
+    !raw.endsWith(".tex") ||
+    raw.includes("\\0") ||
+    parts.some((part) => !part || part === "." || part === "..")
+  ) {
+    throw new Error("invalid_root_file");
+  }
+
+  return raw;
+}
+
+function detectCompileScript(tex: string, rootFile = "main.tex") {
+  const qRootFile = shellQuote(rootFile);
   const cls = tex.match(/\\documentclass(?:\[[^\]]*\])?\{([^}]+)\}/)?.[1] ?? "";
 
   const hasJapaneseOrFullwidth =
@@ -54,7 +75,7 @@ function detectCompileScript(tex: string) {
   if (/^ltjs(article|book|report)$/.test(cls) || tex.includes("\\usepackage{luatexja}")) {
     return {
       engine: "lualatex",
-      script: "latexmk -C || true; latexmk -lualatex -interaction=nonstopmode -halt-on-error main.tex",
+      script: `latexmk -C || true; latexmk -jobname=main -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
     };
   }
 
@@ -62,24 +83,24 @@ function detectCompileScript(tex: string) {
     return {
       engine: "uplatex+dvipdfmx",
       script:
-        "latexmk -C || true; latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -dvipdf='dvipdfmx %O -o %D %S' main.tex",
+        `latexmk -C || true; latexmk -jobname=main -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -dvipdf='dvipdfmx %O -o %D %S' ${qRootFile}`,
     };
   }
 
   if (hasJapaneseOrFullwidth) {
     return {
       engine: "lualatex-auto-unicode",
-      script: "latexmk -C || true; latexmk -lualatex -interaction=nonstopmode -halt-on-error main.tex",
+      script: `latexmk -C || true; latexmk -jobname=main -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
     };
   }
 
   return {
     engine: "pdflatex",
-    script: "latexmk -C || true; latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex",
+    script: `latexmk -C || true; latexmk -jobname=main -pdf -interaction=nonstopmode -halt-on-error ${qRootFile}`,
   };
 }
 
-function extractLatexErrorSummary(text: string) {
+function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
   const lines = text.split(/\r\n|\r|\n/);
 
   function excerpt(index: number, before = 8, after = 24) {
@@ -121,7 +142,7 @@ function extractLatexErrorSummary(text: string) {
       "FreeSloTeX compile error summary",
       "",
       "原因: 未定義コマンド (Undefined control sequence)",
-      `場所: main.tex ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
+      `場所: ${rootFile} ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
       `問題: ${command || "TeXが知らない命令があります。"}`,
       "",
       "対処:",
@@ -168,7 +189,7 @@ function extractLatexErrorSummary(text: string) {
       "FreeSloTeX compile error summary",
       "",
       "原因: LaTeX エラー",
-      `場所: main.tex ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
+      `場所: ${rootFile} ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
       "",
       "対処:",
       "・最初の `! LaTeX Error:` または `! Package ... Error:` の行を確認する",
@@ -337,7 +358,19 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const projectDir = resolveProjectDir(project.storage_path);
-  const mainTexPath = path.join(projectDir, "main.tex");
+
+  let rootFile = "main.tex";
+  try {
+    const url = new URL(request.url);
+    rootFile = normalizeRootFile(url.searchParams.get("rootFile") ?? "main.tex");
+  } catch {
+    return NextResponse.json(
+      { ok: false, compileError: "invalid_root_file", message: "Invalid root TeX file." },
+      { status: 400 }
+    );
+  }
+
+  const rootTexPath = path.join(projectDir, rootFile);
 
   let tex = await readPostedContent(request);
 
@@ -349,13 +382,13 @@ export async function POST(request: NextRequest, { params }: Params) {
       );
     }
 
-    await writeFile(mainTexPath, tex, "utf8");
+    await writeFile(rootTexPath, tex, "utf8");
   } else {
     try {
-      tex = await readFile(mainTexPath, "utf8");
+      tex = await readFile(rootTexPath, "utf8");
     } catch {
       return NextResponse.json(
-        { ok: false, compileError: "missing_main", message: "main.tex was not found." },
+        { ok: false, compileError: "missing_main", message: `${rootFile} was not found.` },
         { status: 404 }
       );
     }
@@ -370,7 +403,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     [projectId]
   );
 
-  const { engine, script } = detectCompileScript(tex);
+  const { engine, script } = detectCompileScript(tex, rootFile);
 
   await rm(path.join(projectDir, "main.pdf"), { force: true }).catch(() => {});
   await rm(path.join(projectDir, "freeslotex-error-summary.txt"), { force: true }).catch(() => {});

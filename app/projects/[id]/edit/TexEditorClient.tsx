@@ -613,7 +613,7 @@ export default function TexEditorClient(props: Props) {
     setCopySummaryStatus("");
 
     try {
-      const response = await fetch(`/api/projects/${props.projectId}/compile/live`, {
+      const response = await fetch(`/api/projects/${props.projectId}/compile/live?rootFile=${encodeURIComponent(currentFilePath)}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1268,6 +1268,7 @@ export default function TexEditorClient(props: Props) {
                   method="post"
                   style={{ display: "none" }}
                 />
+                  <input type="hidden" name="rootFile" value={currentFilePath} />
               </>
             )}
           </section>

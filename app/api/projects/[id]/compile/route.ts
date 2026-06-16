@@ -62,7 +62,28 @@ function redirectToEdit(request: NextRequest, projectId: string, search: Record<
   return NextResponse.redirect(url, 303);
 }
 
-function detectCompileScript(tex: string) {
+function shellQuote(value: string) {
+  return "'" + value.replace(/'/g, "'\\''") + "'";
+}
+
+function normalizeRootFile(value: unknown) {
+  const raw = String(value ?? "main.tex").trim().replace(/\\/g, "/").replace(/^\/+/, "");
+  const parts = raw.split("/");
+
+  if (
+    !raw ||
+    !raw.endsWith(".tex") ||
+    raw.includes("\\0") ||
+    parts.some((part) => !part || part === "." || part === "..")
+  ) {
+    throw new Error("invalid_root_file");
+  }
+
+  return raw;
+}
+
+function detectCompileScript(tex: string, rootFile = "main.tex") {
+  const qRootFile = shellQuote(rootFile);
   const cls = tex.match(/\\documentclass(?:\[[^\]]*\])?\{([^}]+)\}/)?.[1] ?? "";
 
   const hasJapaneseOrFullwidth =
@@ -71,7 +92,7 @@ function detectCompileScript(tex: string) {
   if (/^ltjs(article|book|report)$/.test(cls) || tex.includes("\\usepackage{luatexja}")) {
     return {
       engine: "lualatex",
-      script: "latexmk -C || true; latexmk -lualatex -interaction=nonstopmode -halt-on-error main.tex",
+      script: `latexmk -C || true; latexmk -jobname=main -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
     };
   }
 
@@ -79,26 +100,26 @@ function detectCompileScript(tex: string) {
     return {
       engine: "uplatex+dvipdfmx",
       script:
-        "latexmk -C || true; latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -dvipdf='dvipdfmx %O -o %D %S' main.tex",
+        `latexmk -C || true; latexmk -jobname=main -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -dvipdf='dvipdfmx %O -o %D %S' ${qRootFile}`,
     };
   }
 
   if (hasJapaneseOrFullwidth) {
     return {
       engine: "lualatex-auto-unicode",
-      script: "latexmk -C || true; latexmk -lualatex -interaction=nonstopmode -halt-on-error main.tex",
+      script: `latexmk -C || true; latexmk -jobname=main -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
     };
   }
 
   return {
     engine: "pdflatex",
-    script: "latexmk -C || true; latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex",
+    script: `latexmk -C || true; latexmk -jobname=main -pdf -interaction=nonstopmode -halt-on-error ${qRootFile}`,
   };
 }
 
 
 
-function extractLatexErrorSummary(text: string) {
+function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
   const lines = text.split(/\r\n|\r|\n/);
 
   function excerpt(index: number, before = 8, after = 24) {
@@ -140,7 +161,7 @@ function extractLatexErrorSummary(text: string) {
       "FreeSloTeX compile error summary",
       "",
       "原因: 未定義コマンド (Undefined control sequence)",
-      `場所: main.tex ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
+      `場所: ${rootFile} ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
       `問題: ${command || "TeXが知らない命令があります。"}`,
       "",
       "対処:",
@@ -187,7 +208,7 @@ function extractLatexErrorSummary(text: string) {
       "FreeSloTeX compile error summary",
       "",
       "原因: LaTeX エラー",
-      `場所: main.tex ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
+      `場所: ${rootFile} ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
       "",
       "対処:",
       "・最初の `! LaTeX Error:` または `! Package ... Error:` の行を確認する",
@@ -306,17 +327,28 @@ export async function POST(request: NextRequest, { params }: Params) {
     return redirectToEdit(request, id, { compile_error: "readonly" });
   }
 
-  const projectDir = resolveProjectDir(project.storage_path);
-  const mainTexPath = path.join(projectDir, "main.tex");
+    const projectDir = resolveProjectDir(project.storage_path);
 
-  let tex = "";
-  try {
-    tex = await readFile(mainTexPath, "utf8");
-  } catch {
-    return redirectToEdit(request, id, { compile_error: "missing_main" });
-  }
+    let rootFile = "main.tex";
+    try {
+      const formData = await request.formData().catch(() => null);
+      rootFile = normalizeRootFile(
+        formData?.get("rootFile") ?? formData?.get("relativePath") ?? "main.tex"
+      );
+    } catch {
+      return redirectToEdit(request, id, { compile_error: "invalid_root_file" });
+    }
 
-  const { engine, script } = detectCompileScript(tex);
+    const rootTexPath = path.join(projectDir, rootFile);
+
+    let tex = "";
+    try {
+      tex = await readFile(rootTexPath, "utf8");
+    } catch {
+      return redirectToEdit(request, id, { compile_error: "missing_main", rootFile });
+    }
+
+    const { engine, script } = detectCompileScript(tex, rootFile);
 
   // Remove stale PDF before compile so a failed compile never leaves an old PDF visible.
   await rm(path.join(projectDir, "main.pdf"), { force: true }).catch(() => {});
