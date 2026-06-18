@@ -76,10 +76,10 @@ function outlineIcon(level: string) {
 function outlineIndent(level: string) {
   if (level === "part") return 0;
   if (level === "chapter") return 0;
-  if (level === "section") return 4;
-  if (level === "subsection") return 20;
-  if (level === "subsubsection") return 36;
-  return 4;
+  if (level === "section") return 1;
+  if (level === "subsection") return 7;
+  if (level === "subsubsection") return 12;
+  return 1;
 }
 
 function isTextOpenablePath(relativePath: string) {
@@ -259,7 +259,7 @@ export default function TexEditorClient(props: Props) {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const [leftWidth, setLeftWidth] = useState(280);
   const [rightWidth, setRightWidth] = useState(640);
-  const [editorHeight, setEditorHeight] = useState(620);
+  const [editorHeight, setEditorHeight] = useState(180);
   const [terminalHeight, setTerminalHeight] = useState(320);
   const [copySummaryStatus, setCopySummaryStatus] = useState("");
   const [isCompiling, setIsCompiling] = useState(false);
@@ -316,7 +316,7 @@ export default function TexEditorClient(props: Props) {
         }
 
         if (Number.isFinite(savedEditorHeight)) {
-          setEditorHeight(clamp(savedEditorHeight, 260, 1400));
+          setEditorHeight(clamp(savedEditorHeight, 120, 220));
         }
 
         if (Number.isFinite(savedTerminalHeight)) {
@@ -458,6 +458,8 @@ export default function TexEditorClient(props: Props) {
 
   const liveOutline = useMemo(() => parseLiveOutline(tex), [tex]);
   const currentFileDisplayName = currentFilePath || "main.tex";
+  const currentPdfFile = currentFilePath.replace(/\.tex$/i, ".pdf");
+  const encodedCurrentPdfFile = encodeURIComponent(currentPdfFile);
   const currentFileCanBeSaved = props.canEdit && isEditableTextPath(currentFilePath);
 
   function syncLineNumberScroll(event: import("react").UIEvent<HTMLTextAreaElement>) {
@@ -674,7 +676,7 @@ export default function TexEditorClient(props: Props) {
     const onMove = (moveEvent: MouseEvent) => {
       const dy = moveEvent.clientY - startY;
 
-      setEditorHeight(clamp(startEditorHeight + dy, 260, Math.max(360, window.innerHeight - 220)));
+      setEditorHeight(clamp(startEditorHeight + dy, 120, Math.max(360, window.innerHeight - 220)));
       setTerminalHeight(clamp(startTerminalHeight - dy, 160, Math.max(220, window.innerHeight - 260)));
     };
 
@@ -818,7 +820,7 @@ export default function TexEditorClient(props: Props) {
   }
 
   return (
-    <main className="fsx-main" style={{ maxWidth: "none", width: "calc(100vw - 32px)", margin: "0 auto" }}>
+    <main className="fsx-main fsx-editor-main" style={{ maxWidth: "none", width: "calc(100vw - 4px)", margin: "0 auto", padding: "1px 2px 0" }}>
       <section className="fsx-hero">
         <div>
           <div className="fsx-eyebrow">FreeSloTeX built-in editor</div>
@@ -994,7 +996,7 @@ export default function TexEditorClient(props: Props) {
           )}
 
           {livePdfExists ? (
-            <a href={`/api/projects/${props.projectId}/pdf`} className="fsx-button fsx-button-primary">
+            <a href={`/api/projects/${props.projectId}/pdf?file=${encodedCurrentPdfFile}`} className="fsx-button fsx-button-primary">
               Download PDF
             </a>
           ) : null}
@@ -1024,25 +1026,25 @@ export default function TexEditorClient(props: Props) {
       </section>
 
       {props.saved ? (
-        <section className="fsx-card" style={{ borderColor: "#16a34a", marginBottom: 16 }}>
+        <section className="fsx-card" style={{ borderColor: "#16a34a", marginBottom: 4 }}>
           <strong>Saved.</strong> main.tex has been updated.
         </section>
       ) : null}
 
       {texAdvice ? (
-        <section className="fsx-card" style={{ borderColor: "#f59e0b", marginBottom: 16 }}>
+        <section className="fsx-card" style={{ borderColor: "#f59e0b", marginBottom: 4 }}>
           <strong>TeX advice.</strong> {texAdvice}
         </section>
       ) : null}
 
       {saveError ? (
-        <section className="fsx-card" style={{ borderColor: "#dc2626", marginBottom: 16 }}>
+        <section className="fsx-card" style={{ borderColor: "#dc2626", marginBottom: 4 }}>
           <strong>Save error.</strong> {saveError}
         </section>
       ) : null}
 
       {compileError ? (
-        <section className="fsx-card" style={{ borderColor: "#dc2626", marginBottom: 16 }}>
+        <section className="fsx-card" style={{ borderColor: "#dc2626", marginBottom: 4 }}>
           <strong>Compile error.</strong> {compileError}
         </section>
       ) : null}
@@ -1051,15 +1053,15 @@ export default function TexEditorClient(props: Props) {
         ref={gridRef}
         style={{
           display: "grid",
-          gridTemplateColumns: `${leftWidth}px 12px minmax(0, 1fr) 12px ${rightWidth}px`,
-          gap: 10,
+          gridTemplateColumns: `${leftWidth}px 2px minmax(0, 1fr) 2px ${rightWidth}px`,
+          gap: 1,
           alignItems: "stretch",
           width: "100%",
           minWidth: 0,
         }}
       >
-        <aside style={{ display: "grid", gap: 16 }}>
-          <section className="fsx-panel fsx-explorer-panel" style={{ padding: 12, order: 2 }}>
+        <aside style={{ display: "grid", gap: 1 }}>
+          <section className="fsx-panel fsx-explorer-panel" style={{ padding: 6, order: 2 }}>
             <div className="fsx-panel-head" style={{ marginBottom: 6 }}>
               <div>
                 <h2 className="fsx-panel-title">Explorer</h2>
@@ -1109,7 +1111,7 @@ export default function TexEditorClient(props: Props) {
             ) : null}
           </section>
 
-          <section className="fsx-panel fsx-outline-panel" style={{ padding: 12, order: 1 }}>
+          <section className="fsx-panel fsx-outline-panel" style={{ padding: 6, order: 1 }}>
             <div className="fsx-panel-head" style={{ marginBottom: 6 }}>
               <div>
                 <h2 className="fsx-panel-title">Outline</h2>
@@ -1157,14 +1159,14 @@ export default function TexEditorClient(props: Props) {
           }}
         />
 
-        <section style={{ display: "grid", gap: 16, minWidth: 0 }}>
-          <section className="fsx-panel">
-            <div className="fsx-panel-head">
+        <section style={{ display: "grid", gap: 1, minWidth: 0 }}>
+          <section className="fsx-panel" style={{ padding: 6 }}>
+            <div className="fsx-panel-head" style={{ marginBottom: 4 }}>
               <div
                 style={{
                   display: "flex",
                   alignItems: "baseline",
-                  gap: 14,
+                  gap: 6,
                   flexWrap: "wrap",
                 }}
               >
@@ -1191,15 +1193,15 @@ export default function TexEditorClient(props: Props) {
               <div className="fsx-empty-box">{props.fileMessage}</div>
             ) : (
               <>
-                <form id={`save-form-${props.projectId}`} action={`/api/projects/${props.projectId}/files/save`} method="post">
+                <form id={`save-form-${props.projectId}`} action={`/api/projects/${props.projectId}/files/save`} method="post" style={{ margin: 0 }}>
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "44px minmax(0, 1fr)",
+                      gridTemplateColumns: "30px minmax(0, 1fr)",
                       width: editorBodyWidth,
                       maxWidth: "100%",
-                      height: `${editorHeight}px`,
-                      minHeight: 260,
+                      height: `${editorHeight + 200}px`,
+                      minHeight: 120,
                       resize: "none",
                       overflow: "hidden",
                       borderRadius: 16,
@@ -1211,7 +1213,7 @@ export default function TexEditorClient(props: Props) {
                       ref={lineGutterRef}
                       aria-hidden="true"
                       style={{
-                        padding: "16px 8px 16px 6px",
+                        padding: "4px 3px 4px 2px",
                         borderRight: "1px solid #e5e7eb",
                         background: "#f8fafc",
                         color: "#94a3b8",
@@ -1244,7 +1246,7 @@ export default function TexEditorClient(props: Props) {
                         minHeight: 0,
                         minWidth: 0,
                         resize: "none",
-                        padding: 16,
+                        padding: 4,
                         border: "none",
                         outline: "none",
                         fontFamily:
@@ -1267,8 +1269,9 @@ export default function TexEditorClient(props: Props) {
                   action={`/api/projects/${props.projectId}/compile`}
                   method="post"
                   style={{ display: "none" }}
-                />
+                >
                   <input type="hidden" name="rootFile" value={currentFilePath} />
+                </form>
               </>
             )}
           </section>
@@ -1280,15 +1283,15 @@ export default function TexEditorClient(props: Props) {
             onMouseDown={startResizeVertical}
             style={{
               cursor: "row-resize",
-              height: 12,
+              height: 2,
               borderRadius: 999,
               background: "linear-gradient(180deg, transparent, #cbd5e1, transparent)",
-              margin: "-2px 8px",
+              margin: "-1px 1px",
             }}
           />
 
-          <section className="fsx-panel">
-            <div className="fsx-panel-head">
+          <section className="fsx-panel" style={{ padding: 6 }}>
+            <div className="fsx-panel-head" style={{ marginBottom: 4 }}>
               <div>
                 <h2 className="fsx-panel-title">Compile Terminal</h2>
                 <p className="fsx-panel-note">
@@ -1327,13 +1330,13 @@ export default function TexEditorClient(props: Props) {
             {liveCompileErrorSummary ? (
               <div
                 style={{
-                  marginTop: 12,
-                  marginBottom: 12,
+                  marginTop: 4,
+                  marginBottom: 4,
                   border: "1px solid #fca5a5",
                   background: "#fff7ed",
                   color: "#7f1d1d",
                   borderRadius: 16,
-                  padding: 14,
+                  padding: 6,
                 }}
               >
                 <div style={{ fontWeight: 800, marginBottom: 8 }}>
@@ -1359,11 +1362,11 @@ export default function TexEditorClient(props: Props) {
             {liveFsxLogTail || liveTexLogTail ? (
               <div
                 style={{
-                  marginTop: 12,
+                  marginTop: 4,
                   background: "#0f172a",
                   color: "#e5e7eb",
                   borderRadius: 16,
-                  padding: 14,
+                  padding: 6,
                   fontFamily:
                     'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
                   fontSize: 12,
@@ -1397,9 +1400,14 @@ export default function TexEditorClient(props: Props) {
           }}
         />
 
-        <aside style={{ display: "grid", gap: 16, minWidth: 0 }}>
-          <section className="fsx-panel" style={{ padding: 16, position: "sticky", top: 16 }}>
-            <PdfPreviewClient projectId={props.projectId} pdfExists={livePdfExists} refreshKey={pdfRefreshKey} />
+        <aside style={{ display: "grid", gap: 1, minWidth: 0 }}>
+          <section className="fsx-panel" style={{ padding: 1, position: "sticky", top: 1 }}>
+            <PdfPreviewClient
+              projectId={props.projectId}
+              pdfExists={livePdfExists}
+              refreshKey={pdfRefreshKey}
+              pdfFile={currentPdfFile}
+            />
           </section>
         </aside>
 

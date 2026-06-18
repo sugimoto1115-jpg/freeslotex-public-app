@@ -1162,3 +1162,320 @@ a {
   background: #fee2e2;
   color: #991b1b;
 }
+
+/* FreeSloTeX ultra compact topbar */
+.fsx-topbar-inner {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+.fsx-topbar {
+  min-height: 0 !important;
+}
+
+.fsx-main {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+.fsx-detail-hero {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  margin-bottom: 4px !important;
+}
+
+.fsx-detail-title {
+  margin-top: 2px !important;
+  line-height: 1.05 !important;
+}
+
+.fsx-detail-subtitle {
+  display: none !important;
+}
+
+/* FreeSloTeX editor ultra compact titlebar */
+.fsx-editor-main {
+  padding-top: 1px !important;
+}
+
+.fsx-editor-main .fsx-detail-hero {
+  padding: 3px 8px !important;
+  margin-bottom: 3px !important;
+  border-radius: 10px !important;
+}
+
+.fsx-editor-main .fsx-detail-head {
+  gap: 6px !important;
+  align-items: center !important;
+}
+
+.fsx-editor-main .fsx-eyebrow {
+  display: none !important;
+}
+
+.fsx-editor-main .fsx-detail-title {
+  font-size: 18px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+.fsx-editor-main .fsx-detail-subtitle {
+  display: none !important;
+}
+
+.fsx-editor-main .fsx-actions {
+  gap: 4px !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+.fsx-editor-main .fsx-button {
+  padding: 2px 7px !important;
+  min-height: 24px !important;
+  line-height: 1.1 !important;
+}
+
+.fsx-editor-main .fsx-panel-note {
+  line-height: 1.1 !important;
+}
+
+.fsx-editor-main .fsx-compile-status,
+.fsx-editor-main .fsx-compile-progress {
+  padding: 2px 7px !important;
+  min-height: 24px !important;
+  line-height: 1.1 !important;
+}
+
+/* FreeSloTeX remove editor titlecard vertical blank */
+.fsx-editor-main .fsx-detail-hero {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+  margin-bottom: 1px !important;
+}
+
+.fsx-editor-main .fsx-detail-head {
+  align-items: flex-start !important;
+  gap: 4px !important;
+}
+
+.fsx-editor-main .fsx-actions {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.fsx-editor-main .fsx-detail-head > div:first-child {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+.fsx-editor-main .fsx-detail-title {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* FreeSloTeX editor toolbar row gap zero */
+.fsx-editor-main .fsx-actions {
+  row-gap: 0 !important;
+  column-gap: 4px !important;
+  align-content: flex-start !important;
+  align-items: flex-start !important;
+}
+
+.fsx-editor-main .fsx-actions details {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
+
+.fsx-editor-main .fsx-actions summary {
+  margin: 0 !important;
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+  min-height: 18px !important;
+  line-height: 1 !important;
+}
+
+.fsx-editor-main .fsx-actions > * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.fsx-editor-main .fsx-detail-hero {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* FreeSloTeX real editor toolbar gap zero */
+.fsx-editor-main .fsx-hero {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+  margin-bottom: 1px !important;
+  min-height: 0 !important;
+  align-items: flex-start !important;
+}
+
+.fsx-editor-main .fsx-title {
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+
+.fsx-editor-main .fsx-eyebrow {
+  display: none !important;
+}
+
+.fsx-editor-main .fsx-editor-header-tools {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  row-gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+}
+
+.fsx-editor-main .fsx-editor-command-bar {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  line-height: 1 !important;
+}
+
+.fsx-editor-main .fsx-editor-global-actions {
+  margin-top: -4px !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  min-height: 0 !important;
+  row-gap: 0 !important;
+}
+
+.fsx-editor-main .fsx-editor-pref-actions {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  row-gap: 0 !important;
+}
+
+.fsx-editor-main .fsx-helper-toggle {
+  margin: 0 !important;
+}
+
+/* FreeSloTeX smaller editor project title */
+.fsx-editor-main .fsx-title {
+  font-size: 22px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  letter-spacing: -0.02em !important;
+  white-space: nowrap !important;
+}
+
+/* FreeSloTeX remove editor form bottom gap */
+.fsx-editor-main form[id^="save-form-"] {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.fsx-editor-main form[id^="compile-form-"] {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.fsx-editor-main textarea {
+  margin-bottom: 0 !important;
+}
+
+/* FreeSloTeX compact outline */
+.fsx-editor-main .fsx-outline-panel {
+  padding: 4px !important;
+}
+
+.fsx-editor-main .fsx-outline-panel .fsx-panel-head {
+  margin-bottom: 2px !important;
+}
+
+.fsx-editor-main .fsx-outline-panel .fsx-panel-title {
+  font-size: 22px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+}
+
+.fsx-editor-main .fsx-outline-panel .fsx-panel-note {
+  font-size: 12px !important;
+  line-height: 1.1 !important;
+  margin: 2px 0 4px 0 !important;
+}
+
+.fsx-editor-main .fsx-outline-panel button,
+.fsx-editor-main .fsx-outline-panel a,
+.fsx-editor-main .fsx-outline-panel [role="button"] {
+  font-size: 12px !important;
+  line-height: 1.12 !important;
+  min-height: 18px !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  padding-right: 5px !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.fsx-editor-main .fsx-outline-panel button span,
+.fsx-editor-main .fsx-outline-panel a span,
+.fsx-editor-main .fsx-outline-panel [role="button"] span {
+  font-size: 12px !important;
+  line-height: 1.12 !important;
+}
+
+.fsx-editor-main .fsx-outline-panel .fsx-code {
+  font-size: 11px !important;
+}
+
+/* FreeSloTeX tiny outline icon-title gap */
+.fsx-editor-main .fsx-outline-row {
+  column-gap: 2px !important;
+  gap: 2px !important;
+}
+
+.fsx-editor-main .fsx-outline-icon {
+  margin-right: 0 !important;
+  width: 12px !important;
+  min-width: 12px !important;
+}
+
+.fsx-editor-main .fsx-outline-title {
+  margin-left: 0 !important;
+}
+
+/* FreeSloTeX narrow outline icon column */
+.fsx-editor-main .fsx-outline-row {
+  grid-template-columns: 9px minmax(0, 1fr) 28px !important;
+  column-gap: 1px !important;
+  gap: 1px !important;
+}
+
+.fsx-editor-main .fsx-outline-icon {
+  width: 9px !important;
+  min-width: 9px !important;
+  max-width: 9px !important;
+  justify-self: start !important;
+  text-align: left !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.fsx-editor-main .fsx-outline-title {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.fsx-editor-main .fsx-outline-line {
+  justify-self: end !important;
+}
+

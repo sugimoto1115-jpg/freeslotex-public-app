@@ -423,14 +423,38 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               <h2 className="fsx-panel-title">Workspace files</h2>
               <p className="fsx-panel-note">Files in this project workspace.</p>
             </div>
-            <Link
-              href={editorUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="fsx-button fsx-button-primary"
-            >
-              Edit main.tex
-            </Link>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <form
+                  action={`/api/projects/${id}/files/upload`}
+                  method="post"
+                  encType="multipart/form-data"
+                  style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
+                >
+                  <input
+                    type="file"
+                    name="file"
+                    accept=".tex,.bib,.sty,.cls,.md,.txt,.json,.csv,.tsv,.yml,.yaml,.png,.jpg,.jpeg,.pdf,.eps,.svg"
+                    className="fsx-button"
+                    required
+                  />
+                  <label className="fsx-panel-note" style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                    <input type="checkbox" name="overwrite" value="1" />
+                    overwrite
+                  </label>
+                  <button type="submit" className="fsx-button">
+                    Upload file
+                  </button>
+                </form>
+
+                <Link
+                  href={editorUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="fsx-button fsx-button-primary"
+                >
+                  Edit main.tex
+                </Link>
+              </div>
           </div>
 
           {workspaceError ? (
@@ -450,6 +474,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                       <th>Type</th>
                       <th>Size</th>
                       <th>Updated</th>
+                        <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -467,6 +492,18 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                         <td>{entry.kind}</td>
                         <td>{formatBytes(entry.size)}</td>
                         <td>{formatDate(entry.updatedAt)}</td>
+                          <td>
+                            {entry.kind === "file" ? (
+                              <form action={`/api/projects/${id}/files/delete`} method="post">
+                                <input type="hidden" name="relativePath" value={entry.relativePath} />
+                                <button type="submit" className="fsx-button" style={{ padding: "4px 8px", fontSize: 12 }}>
+                                  Delete
+                                </button>
+                              </form>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
                       </tr>
                     ))}
                   </tbody>

@@ -75,7 +75,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex") {
   if (/^ltjs(article|book|report)$/.test(cls) || tex.includes("\\usepackage{luatexja}")) {
     return {
       engine: "lualatex",
-      script: `latexmk -C || true; latexmk -jobname=main -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
+      script: `latexmk -C || true; latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
     };
   }
 
@@ -83,20 +83,20 @@ function detectCompileScript(tex: string, rootFile = "main.tex") {
     return {
       engine: "uplatex+dvipdfmx",
       script:
-        `latexmk -C || true; latexmk -jobname=main -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -dvipdf='dvipdfmx %O -o %D %S' ${qRootFile}`,
+        `latexmk -C || true; latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -dvipdf='dvipdfmx %O -o %D %S' ${qRootFile}`,
     };
   }
 
   if (hasJapaneseOrFullwidth) {
     return {
       engine: "lualatex-auto-unicode",
-      script: `latexmk -C || true; latexmk -jobname=main -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
+      script: `latexmk -C || true; latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
     };
   }
 
   return {
     engine: "pdflatex",
-    script: `latexmk -C || true; latexmk -jobname=main -pdf -interaction=nonstopmode -halt-on-error ${qRootFile}`,
+    script: `latexmk -C || true; latexmk -pdf -interaction=nonstopmode -halt-on-error ${qRootFile}`,
   };
 }
 
@@ -269,15 +269,16 @@ async function getProjectForEdit(projectId: number, currentUserId: number) {
   return projectResult.rows[0] ?? null;
 }
 
-async function readArtifacts(projectDir: string) {
+async function readArtifacts(projectDir: string, pdfFile = "main.pdf", logFile = "main.log") {
   const fsxLog = await readFile(path.join(projectDir, "freeslotex-compile.log"), "utf8").catch(() => "");
-  const texLog = await readFile(path.join(projectDir, "main.log"), "utf8").catch(() => "");
-  const pdfExists = await stat(path.join(projectDir, "main.pdf")).then(() => true).catch(() => false);
+  const texLog = await readFile(path.join(projectDir, logFile), "utf8").catch(() => "");
+  const pdfExists = await stat(path.join(projectDir, pdfFile)).then(() => true).catch(() => false);
 
   return {
     fsxLogTail: tail(fsxLog),
     texLogTail: tail(texLog),
     pdfExists,
+    pdfFile,
   };
 }
 
@@ -371,6 +372,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const rootTexPath = path.join(projectDir, rootFile);
+  const rootPdfFile = rootFile.replace(/\.tex$/i, ".pdf");
+  const rootLogFile = rootFile.replace(/\.tex$/i, ".log");
 
   let tex = await readPostedContent(request);
 
@@ -405,7 +408,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const { engine, script } = detectCompileScript(tex, rootFile);
 
-  await rm(path.join(projectDir, "main.pdf"), { force: true }).catch(() => {});
+  await rm(path.join(projectDir, rootPdfFile), { force: true }).catch(() => {});
   await rm(path.join(projectDir, "freeslotex-error-summary.txt"), { force: true }).catch(() => {});
 
   const uid = typeof process.getuid === "function" ? process.getuid() : 1000;
@@ -455,7 +458,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     await writeFile(path.join(projectDir, "freeslotex-compile.log"), log, "utf8");
     await rm(path.join(projectDir, "freeslotex-error-summary.txt"), { force: true }).catch(() => {});
 
-    const artifacts = await readArtifacts(projectDir);
+    const artifacts = await readArtifacts(projectDir, rootPdfFile, rootLogFile);
 
     return NextResponse.json({
       ok: true,
@@ -484,7 +487,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     await writeFile(path.join(projectDir, "freeslotex-compile.log"), log, "utf8").catch(() => {});
 
-    const texLogAfterFailure = await readFile(path.join(projectDir, "main.log"), "utf8").catch(() => "");
+    const texLogAfterFailure = await readFile(path.join(projectDir, rootLogFile), "utf8").catch(() => "");
     const errorSummary = extractLatexErrorSummary(
       [
         String(error?.stdout ?? ""),
@@ -499,9 +502,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       "utf8"
     ).catch(() => {});
 
-    await rm(path.join(projectDir, "main.pdf"), { force: true }).catch(() => {});
+    await rm(path.join(projectDir, rootPdfFile), { force: true }).catch(() => {});
 
-    const artifacts = await readArtifacts(projectDir);
+    const artifacts = await readArtifacts(projectDir, rootPdfFile, rootLogFile);
     const compileError = String(error?.message ?? "").includes("timed out") ? "timeout" : "failed";
 
     return NextResponse.json({

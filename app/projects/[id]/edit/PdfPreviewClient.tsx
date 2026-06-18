@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 type Props = {
   projectId: number;
   pdfExists: boolean;
+  pdfFile?: string;
   refreshKey?: number;
 };
 
@@ -25,7 +26,7 @@ function zoomLabel(value: string) {
   return Number.isFinite(numericValue) ? `${Math.round(numericValue * 100)}%` : value;
 }
 
-export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 }: Props) {
+export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main.pdf", refreshKey = 0 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
 
@@ -187,6 +188,8 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
     window.addEventListener("mouseup", onUp);
   }
 
+  const encodedPdfFile = encodeURIComponent(pdfFile);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -199,7 +202,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
       setMessage("Loading PDF...");
 
       try {
-        const pdfUrl = `/api/projects/${projectId}/pdf?inline=1&ts=${Date.now()}`;
+        const pdfUrl = `/api/projects/${projectId}/pdf?inline=1&file=${encodedPdfFile}&ts=${Date.now()}`;
         const response = await fetch(pdfUrl, {
           method: "GET",
           credentials: "same-origin",
@@ -403,7 +406,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
       {pdfExists ? (
         <>
           <a
-            href={`/api/projects/${projectId}/pdf?inline=1`}
+            href={`/api/projects/${projectId}/pdf?inline=1&file=${encodedPdfFile}`}
             target="_blank"
             rel="noreferrer"
             className="fsx-button"
@@ -413,7 +416,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, refreshKey = 0 
           </a>
 
           <a
-            href={`/api/projects/${projectId}/pdf`}
+            href={`/api/projects/${projectId}/pdf?file=${encodedPdfFile}`}
             className="fsx-button fsx-button-primary"
             style={{ padding: "6px 9px", fontSize: 12 }}
           >

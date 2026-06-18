@@ -53,6 +53,22 @@ function safeFilename(name: string) {
   return name.replace(/[^\w.\-]+/g, "_").slice(0, 80) || "main";
 }
 
+function normalizePdfFile(value: unknown) {
+  const raw = String(value ?? "main.pdf").trim().replace(/\\/g, "/").replace(/^\/+/, "");
+  const parts = raw.split("/");
+
+  if (
+    !raw ||
+    !raw.endsWith(".pdf") ||
+    raw.includes("\0") ||
+    parts.some((part) => !part || part === "." || part === "..")
+  ) {
+    throw new Error("invalid_pdf_file");
+  }
+
+  return raw;
+}
+
 export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const projectId = Number(id);
@@ -108,7 +124,15 @@ export async function GET(request: NextRequest, { params }: Params) {
   }
 
   const project = projectResult.rows[0];
-  const pdfPath = path.join(resolveProjectDir(project.storage_path), "main.pdf");
+
+  let pdfFile = "main.pdf";
+  try {
+    pdfFile = normalizePdfFile(request.nextUrl.searchParams.get("file") ?? "main.pdf");
+  } catch {
+    return new NextResponse("Bad PDF file", { status: 400 });
+  }
+
+  const pdfPath = path.join(resolveProjectDir(project.storage_path), pdfFile);
 
   let pdf: Buffer;
   try {

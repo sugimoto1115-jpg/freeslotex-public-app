@@ -92,7 +92,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex") {
   if (/^ltjs(article|book|report)$/.test(cls) || tex.includes("\\usepackage{luatexja}")) {
     return {
       engine: "lualatex",
-      script: `latexmk -C || true; latexmk -jobname=main -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
+      script: `latexmk -C || true; latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
     };
   }
 
@@ -100,20 +100,20 @@ function detectCompileScript(tex: string, rootFile = "main.tex") {
     return {
       engine: "uplatex+dvipdfmx",
       script:
-        `latexmk -C || true; latexmk -jobname=main -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -dvipdf='dvipdfmx %O -o %D %S' ${qRootFile}`,
+        `latexmk -C || true; latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -dvipdf='dvipdfmx %O -o %D %S' ${qRootFile}`,
     };
   }
 
   if (hasJapaneseOrFullwidth) {
     return {
       engine: "lualatex-auto-unicode",
-      script: `latexmk -C || true; latexmk -jobname=main -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
+      script: `latexmk -C || true; latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
     };
   }
 
   return {
     engine: "pdflatex",
-    script: `latexmk -C || true; latexmk -jobname=main -pdf -interaction=nonstopmode -halt-on-error ${qRootFile}`,
+    script: `latexmk -C || true; latexmk -pdf -interaction=nonstopmode -halt-on-error ${qRootFile}`,
   };
 }
 
@@ -340,6 +340,8 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
 
     const rootTexPath = path.join(projectDir, rootFile);
+    const rootPdfFile = rootFile.replace(/\.tex$/i, ".pdf");
+    const rootLogFile = rootFile.replace(/\.tex$/i, ".log");
 
     let tex = "";
     try {
@@ -351,7 +353,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     const { engine, script } = detectCompileScript(tex, rootFile);
 
   // Remove stale PDF before compile so a failed compile never leaves an old PDF visible.
-  await rm(path.join(projectDir, "main.pdf"), { force: true }).catch(() => {});
+  await rm(path.join(projectDir, rootPdfFile), { force: true }).catch(() => {});
 
   const uid = typeof process.getuid === "function" ? process.getuid() : 1000;
   const gid = typeof process.getgid === "function" ? process.getgid() : 1000;
@@ -429,7 +431,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     await writeFile(path.join(projectDir, "freeslotex-compile.log"), log, "utf8").catch(() => {});
 
-    const texLogAfterFailure = await readFile(path.join(projectDir, "main.log"), "utf8").catch(() => "");
+    const texLogAfterFailure = await readFile(path.join(projectDir, rootLogFile), "utf8").catch(() => "");
     const errorSummary = extractLatexErrorSummary(
       [
         String(error?.stdout ?? ""),
@@ -445,7 +447,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     ).catch(() => {});
 
     // Ensure stale PDF is not downloadable after failed compile.
-    await rm(path.join(projectDir, "main.pdf"), { force: true }).catch(() => {});
+    await rm(path.join(projectDir, rootPdfFile), { force: true }).catch(() => {});
 
     if (String(error?.message ?? "").includes("timed out")) {
       return redirectToEdit(request, id, { compile_error: "timeout" });
