@@ -6,6 +6,7 @@ import { requireUser, getCurrentUser as getLabtexCurrentUser } from "@/lib/auth"
 import { query } from "@/lib/db";
 import { fsPlanLabel } from "@/lib/freeslotex/entitlements";
 import { getEffectiveFsPlanForEmail } from "@/lib/freeslotex/serverPlan";
+import { getCompileQuotaForEmail } from "@/lib/freeslotex/compileQuota";
 
 export const runtime = "nodejs";
 
@@ -192,6 +193,25 @@ function ProjectCard({ project }: { project: ProjectRow }) {
   );
 }
 
+
+type WorkspaceCompileQuota = {
+  ok?: boolean;
+  plan?: string;
+  usedToday?: number;
+  freeDailyLimit?: number | null;
+};
+
+function formatWorkspaceCompileQuota(quota: WorkspaceCompileQuota) {
+  if (quota.ok !== true) return "";
+  if (quota.plan !== "free") return "";
+  if (typeof quota.freeDailyLimit !== "number") return "";
+
+  const usedToday = Number(quota.usedToday ?? 0);
+  if (!Number.isFinite(usedToday)) return "";
+
+  return `Free plan: Today ${usedToday}/${quota.freeDailyLimit} compiles`;
+}
+
 export default async function WorkspacePage() {
   const user = await requireUser();
 
@@ -259,6 +279,8 @@ export default async function WorkspacePage() {
   const fsAccountEmail = fsAccount?.email ?? "";
   const fsPlan = await getEffectiveFsPlanForEmail(fsAccountEmail);
   const fsPlanText = fsPlanLabel(fsPlan);
+  const compileQuota = await getCompileQuotaForEmail(fsAccountEmail);
+  const compileQuotaText = formatWorkspaceCompileQuota(compileQuota);
 
 
   return (
@@ -273,6 +295,11 @@ export default async function WorkspacePage() {
             </span>
           </div>
           <p className="fsx-account-line">{fsAccountEmail || "Unknown account"}</p>
+          {compileQuotaText ? (
+            <p className="fsx-panel-note" style={{ marginTop: 4 }}>
+              {compileQuotaText}
+            </p>
+          ) : null}
             <p className="fsx-panel-note" style={{ marginTop: 4 }}>
               <Link href="/account/password">Change password</Link>
             </p>
