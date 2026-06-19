@@ -177,6 +177,7 @@ export default async function FreeSloTeXAdminPage({
                         aria-label={`Plan for ${user.email}`}
                       >
                         <option value="free">Free</option>
+                        <option value="student">Student</option>
                         <option value="paid">Paid</option>
                         <option value="admin">Admin</option>
                       </select>

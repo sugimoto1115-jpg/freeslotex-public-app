@@ -49,7 +49,7 @@ export async function ensureFsPlanTable() {
       await query(`
         create table if not exists freeslotex_user_plans (
           email text primary key,
-          plan text not null check (plan in ('free', 'paid', 'admin')),
+          plan text not null check (plan in ('free', 'student', 'paid', 'admin')),
           note text not null default '',
           set_by_email text not null default '',
           created_at timestamptz not null default now(),

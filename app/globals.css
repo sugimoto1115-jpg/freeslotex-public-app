@@ -1684,3 +1684,26 @@ a {
   background: #fef2f2;
   color: #991b1b;
 }
+
+
+/* FreeSloTeX student plan badge */
+.fsx-plan-student {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+/* FreeSloTeX admin link emphasis */
+.fsx-admin-mini-link {
+  border-color: #2563eb !important;
+  background: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.28);
+}
+
+.fsx-admin-mini-link:hover {
+  background: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}

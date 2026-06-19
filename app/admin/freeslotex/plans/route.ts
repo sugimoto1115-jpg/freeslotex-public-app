@@ -13,18 +13,31 @@ type UserRow = {
   email: string;
 };
 
+function makeUrl(request: NextRequest, path: string) {
+  const host =
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    "labtex.freeslot-schedule.com";
+
+  const proto =
+    request.headers.get("x-forwarded-proto") ??
+    "https";
+
+  return new URL(path, `${proto}://${host}`);
+}
+
 function redirectToAdmin(request: NextRequest, params: Record<string, string>) {
-  const url = new URL("/admin/freeslotex", request.url);
+  const url = makeUrl(request, "/admin/freeslotex");
 
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
   }
 
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(url, 303);
 }
 
 function isFsPlan(value: string): value is FsPlan {
-  return value === "free" || value === "paid" || value === "admin";
+  return value === "free" || value === "student" || value === "paid" || value === "admin";
 }
 
 export async function POST(request: NextRequest) {
