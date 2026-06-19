@@ -5,7 +5,7 @@ import { mkdir, readdir, rm, symlink, lstat, writeFile } from "node:fs/promises"
 import { requireUser, getCurrentUser as getLabtexCurrentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { fsPlanLabel } from "@/lib/freeslotex/entitlements";
-import { getFsPlanForEmail } from "@/lib/freeslotex/serverPlan";
+import { getEffectiveFsPlanForEmail } from "@/lib/freeslotex/serverPlan";
 
 export const runtime = "nodejs";
 
@@ -257,7 +257,7 @@ export default async function WorkspacePage() {
 
   const fsAccount = await getLabtexCurrentUser();
   const fsAccountEmail = fsAccount?.email ?? "";
-  const fsPlan = getFsPlanForEmail(fsAccountEmail);
+  const fsPlan = await getEffectiveFsPlanForEmail(fsAccountEmail);
   const fsPlanText = fsPlanLabel(fsPlan);
 
 

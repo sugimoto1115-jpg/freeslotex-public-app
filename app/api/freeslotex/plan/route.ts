@@ -1,9 +1,24 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { fsPlanLabel } from "@/lib/freeslotex/entitlements";
-import { canUseFsFeature, getFsPlanForEmail } from "@/lib/freeslotex/serverPlan";
+import { fsPlanLabel, type FsFeature } from "@/lib/freeslotex/entitlements";
+import {
+  canUseFsFeatureForEmail,
+  getEffectiveFsPlanForEmail,
+} from "@/lib/freeslotex/serverPlan";
 
 export const runtime = "nodejs";
+
+const FEATURES: FsFeature[] = [
+  "edit",
+  "save",
+  "compile",
+  "upload",
+  "deleteFile",
+  "historyRestore",
+  "checkpoint",
+  "restoreDeletedFile",
+  "labMembers",
+];
 
 export async function GET() {
   const currentUser = await getCurrentUser();
@@ -15,23 +30,20 @@ export async function GET() {
     );
   }
 
-  const plan = getFsPlanForEmail(currentUser.email);
+  const plan = await getEffectiveFsPlanForEmail(currentUser.email);
+
+  const featureEntries = await Promise.all(
+    FEATURES.map(async (feature) => {
+      const gate = await canUseFsFeatureForEmail(currentUser.email, feature);
+      return [feature, gate.allowed] as const;
+    }),
+  );
 
   return NextResponse.json({
     ok: true,
     email: currentUser.email,
     plan,
     planLabel: fsPlanLabel(plan),
-    features: {
-      edit: canUseFsFeature(currentUser.email, "edit").allowed,
-      save: canUseFsFeature(currentUser.email, "save").allowed,
-      compile: canUseFsFeature(currentUser.email, "compile").allowed,
-      upload: canUseFsFeature(currentUser.email, "upload").allowed,
-      deleteFile: canUseFsFeature(currentUser.email, "deleteFile").allowed,
-      historyRestore: canUseFsFeature(currentUser.email, "historyRestore").allowed,
-      checkpoint: canUseFsFeature(currentUser.email, "checkpoint").allowed,
-      restoreDeletedFile: canUseFsFeature(currentUser.email, "restoreDeletedFile").allowed,
-      labMembers: canUseFsFeature(currentUser.email, "labMembers").allowed,
-    },
+    features: Object.fromEntries(featureEntries),
   });
 }

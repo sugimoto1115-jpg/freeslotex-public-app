@@ -1628,3 +1628,59 @@ a {
   border-color: #a5b4fc;
   color: #1e1b4b;
 }
+
+/* FreeSloTeX admin plan editing */
+.fsx-plan-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fsx-plan-select {
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fsx-plan-save {
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fsx-plan-save:hover {
+  background: #eef2ff;
+  border-color: #a5b4fc;
+  color: #1e1b4b;
+}
+
+.fsx-admin-flash {
+  margin: 10px 0 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.fsx-admin-flash-ok {
+  border: 1px solid #86efac;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.fsx-admin-flash-error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}

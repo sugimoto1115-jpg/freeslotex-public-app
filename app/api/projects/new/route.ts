@@ -4,8 +4,11 @@ import { join } from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { pool } from "@/lib/db";
+import { getEffectiveFsPlanForEmail } from "@/lib/freeslotex/serverPlan";
 
 export const runtime = "nodejs";
+
+const FREE_PROJECT_LIMIT = 10;
 
 function makeUrl(request: NextRequest, path: string) {
   const host =
@@ -171,6 +174,30 @@ export async function POST(request: NextRequest) {
     }
 
     const ownerUserId = userResult.rows[0].id;
+    const fsPlan = await getEffectiveFsPlanForEmail(currentUser.email);
+
+    if (fsPlan === "free") {
+      const quotaResult = await client.query<{ count: string }>(
+        `
+        SELECT count(*)::text AS count
+        FROM projects
+        WHERE owner_user_id = $1
+          AND coalesce(status, 'active') <> 'archived'
+        `,
+        [ownerUserId]
+      );
+
+      const activeProjectCount = Number(quotaResult.rows[0]?.count ?? "0");
+
+      if (activeProjectCount >= FREE_PROJECT_LIMIT) {
+        await client.query("ROLLBACK");
+        return redirectWithError(
+          request,
+          `Freeプランでは作成できるプロジェクト数は${FREE_PROJECT_LIMIT}個までです。現在 ${activeProjectCount} 個あります。`
+        );
+      }
+    }
+
     const storagePath = `projects/${ownerUserId}/${Date.now()}-${randomUUID()}`;
 
     const projectResult = await client.query<{ id: number }>(

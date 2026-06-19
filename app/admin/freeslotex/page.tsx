@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { fsPlanLabel } from "@/lib/freeslotex/entitlements";
-import { getFsPlanForEmail } from "@/lib/freeslotex/serverPlan";
+import { getEffectiveFsPlanForEmail } from "@/lib/freeslotex/serverPlan";
 
 export const runtime = "nodejs";
 
@@ -32,7 +32,11 @@ function fmtDate(value: unknown) {
   }).format(date);
 }
 
-export default async function FreeSloTeXAdminPage() {
+export default async function FreeSloTeXAdminPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const currentUser = await getCurrentUser();
 
   if (!currentUser?.email) {
@@ -49,7 +53,7 @@ export default async function FreeSloTeXAdminPage() {
     );
   }
 
-  const currentPlan = getFsPlanForEmail(currentUser.email);
+  const currentPlan = await getEffectiveFsPlanForEmail(currentUser.email);
 
   if (currentPlan !== "admin") {
     return (
@@ -70,6 +74,10 @@ export default async function FreeSloTeXAdminPage() {
     );
   }
 
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const updated = resolvedSearchParams.updated;
+  const error = resolvedSearchParams.error;
+
   const usersResult = await query<UserJsonRow>(`
     select to_jsonb(u) as user_json
     from users u
@@ -77,22 +85,24 @@ export default async function FreeSloTeXAdminPage() {
     limit 200
   `);
 
-  const users = usersResult.rows.map((row) => {
-    const user = row.user_json ?? {};
-    const email = textField(user, "email");
-    const plan = getFsPlanForEmail(email);
+  const users = await Promise.all(
+    usersResult.rows.map(async (row) => {
+      const user = row.user_json ?? {};
+      const email = textField(user, "email");
+      const plan = await getEffectiveFsPlanForEmail(email);
 
-    return {
-      id: textField(user, "id"),
-      email,
-      status: textField(user, "status") || "-",
-      displayName: textField(user, "display_name"),
-      createdAt: textField(user, "created_at"),
-      updatedAt: textField(user, "updated_at"),
-      plan,
-      planText: fsPlanLabel(plan),
-    };
-  });
+      return {
+        id: textField(user, "id"),
+        email,
+        status: textField(user, "status") || "-",
+        displayName: textField(user, "display_name"),
+        createdAt: textField(user, "created_at"),
+        updatedAt: textField(user, "updated_at"),
+        plan,
+        planText: fsPlanLabel(plan),
+      };
+    }),
+  );
 
   return (
     <main className="fsx-main">
@@ -112,10 +122,21 @@ export default async function FreeSloTeXAdminPage() {
           </Link>
         </div>
 
+        {updated ? (
+          <div className="fsx-admin-flash fsx-admin-flash-ok">
+            Plan updated: {Array.isArray(updated) ? updated[0] : updated}
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="fsx-admin-flash fsx-admin-flash-error">
+            Error: {Array.isArray(error) ? error[0] : error}
+          </div>
+        ) : null}
+
         <div className="fsx-admin-note">
-          Plan is currently determined by <code>.env.local</code>:{" "}
-          <code>FREESLOTEX_ADMIN_EMAILS</code> and{" "}
-          <code>FREESLOTEX_PAID_EMAILS</code>.
+          Plan can now be changed from this page. Emails listed in{" "}
+          <code>FREESLOTEX_ADMIN_EMAILS</code> still remain Admin for safety.
         </div>
 
         <div className="fsx-admin-table-wrap">
@@ -125,6 +146,7 @@ export default async function FreeSloTeXAdminPage() {
                 <th>ID</th>
                 <th>Email</th>
                 <th>Plan</th>
+                <th>Change plan</th>
                 <th>Status</th>
                 <th>Display name</th>
                 <th>Created</th>
@@ -140,6 +162,28 @@ export default async function FreeSloTeXAdminPage() {
                     <span className={`fsx-plan-badge fsx-plan-${user.plan}`}>
                       {user.planText}
                     </span>
+                  </td>
+                  <td>
+                    <form
+                      className="fsx-plan-form"
+                      method="post"
+                      action="/admin/freeslotex/plans"
+                    >
+                      <input type="hidden" name="email" value={user.email} />
+                      <select
+                        className="fsx-plan-select"
+                        name="plan"
+                        defaultValue={user.plan}
+                        aria-label={`Plan for ${user.email}`}
+                      >
+                        <option value="free">Free</option>
+                        <option value="paid">Paid</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      <button className="fsx-plan-save" type="submit">
+                        Save
+                      </button>
+                    </form>
                   </td>
                   <td>{user.status}</td>
                   <td>{user.displayName || "-"}</td>
