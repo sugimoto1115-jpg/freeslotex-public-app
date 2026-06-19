@@ -1543,3 +1543,62 @@ a {
   font-weight: 600;
   word-break: break-all;
 }
+
+/* FreeSloTeX admin page */
+.fsx-admin-panel {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.fsx-admin-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.fsx-admin-note {
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+}
+
+.fsx-admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.fsx-admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.fsx-admin-table th,
+.fsx-admin-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fsx-admin-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 800;
+}
+
+.fsx-admin-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.fsx-admin-email {
+  font-weight: 700;
+  color: #0f172a;
+}
