@@ -458,6 +458,9 @@ export default function TexEditorClient(props: Props) {
 
   const liveOutline = useMemo(() => parseLiveOutline(tex), [tex]);
   const currentFileDisplayName = currentFilePath || "main.tex";
+  const saveAsSuggestedPath = currentFilePath.endsWith(".tex")
+    ? currentFilePath.replace(/\.tex$/i, "_copy.tex")
+    : `${currentFilePath}_copy.tex`;
   const currentPdfFile = currentFilePath.replace(/\.tex$/i, ".pdf");
   const encodedCurrentPdfFile = encodeURIComponent(currentPdfFile);
   const currentFileCanBeSaved = props.canEdit && isEditableTextPath(currentFilePath);
@@ -546,6 +549,96 @@ export default function TexEditorClient(props: Props) {
       const message = error instanceof Error ? error.message : String(error);
       setFileActionMessage(`Save failed: ${message}`);
       return false;
+    } finally {
+      setIsSavingFile(false);
+    }
+  }
+
+  function downloadCurrentFile() {
+    const filename = currentFileDisplayName || "main.tex";
+    const blob = new Blob([tex], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function runSaveAsCurrentFile() {
+    if (!props.canEdit || isSavingFile) return;
+
+    const requestedPath = window.prompt("Save current TeX as:", saveAsSuggestedPath);
+
+    if (requestedPath === null) {
+      return;
+    }
+
+    const targetPath = requestedPath
+      .trim()
+      .replace(/\\/g, "/")
+      .replace(/^\/+/, "");
+
+    if (!targetPath) {
+      setFileActionMessage("Save as failed: file name is empty.");
+      return;
+    }
+
+    if (!targetPath.endsWith(".tex")) {
+      setFileActionMessage("Save as failed: please use a .tex file name.");
+      return;
+    }
+
+    if (
+      targetPath.includes("\\0") ||
+      targetPath.split("/").some((part) => !part || part === "." || part === "..")
+    ) {
+      setFileActionMessage("Save as failed: invalid file path.");
+      return;
+    }
+
+    const message =
+      targetPath === currentFilePath
+        ? "This is the current file. Save normally?"
+        : `Save current content as ${targetPath}? If the file already exists, it will be overwritten.`;
+
+    if (!window.confirm(message)) {
+      return;
+    }
+
+    setIsSavingFile(true);
+    setFileActionMessage(`Saving as ${targetPath}...`);
+
+    try {
+      const response = await fetch(`/api/projects/${props.projectId}/files/save`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          relativePath: targetPath,
+          content: tex,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error ?? `Save as failed with HTTP ${response.status}`);
+      }
+
+      setCurrentFilePath(targetPath);
+      setLivePdfExists(false);
+      setPdfRefreshKey((value) => value + 1);
+      setFileActionMessage(data.message ?? `Saved as ${targetPath}.`);
+      setCompileStatusMessage(`Saved as ${targetPath}. Compile to generate PDF.`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setFileActionMessage(`Save as failed: ${errorMessage}`);
     } finally {
       setIsSavingFile(false);
     }
@@ -825,6 +918,27 @@ export default function TexEditorClient(props: Props) {
         <div>
           <div className="fsx-eyebrow">FreeSloTeX built-in editor</div>
           <h1 className="fsx-title">{props.projectName}</h1>
+          <button
+            type="button"
+            className="fsx-button fsx-button-primary fsx-save-current-inline"
+            onClick={() => runSaveCurrentFile()}
+            disabled={isSavingFile || !currentFileCanBeSaved}
+            title={`Save ${currentFileDisplayName}`}
+            style={{ padding: "1px 7px", fontSize: 12, width: "fit-content" }}
+          >
+            {isSavingFile ? "Saving..." : "Save"}
+          </button>
+          <button
+            type="button"
+            className="fsx-button fsx-save-as-inline"
+            onClick={runSaveAsCurrentFile}
+            disabled={isSavingFile || !props.canEdit}
+            title={`Save current content as another TeX file, e.g. ${saveAsSuggestedPath}`}
+            style={{ padding: "1px 7px", fontSize: 12, width: "fit-content" }}
+          >
+            Save as...
+          </button>
+
         </div>
 
         <div className="fsx-editor-header-tools">
@@ -965,20 +1079,14 @@ export default function TexEditorClient(props: Props) {
             </button>
           </div>
 
-          {currentFileCanBeSaved ? (
-            <button
-              type="button"
-              onClick={() => runSaveCurrentFile()}
-              disabled={isSavingFile}
-              className="fsx-button fsx-button-primary"
-            >
-              {isSavingFile ? "Saving..." : `Save ${currentFileDisplayName}`}
-            </button>
-          ) : (
-            <span className="fsx-button" aria-disabled="true">
-              {props.canEdit ? "Read-only file" : "Viewer cannot save"}
-            </span>
-          )}
+          <button
+            type="button"
+            onClick={downloadCurrentFile}
+            className="fsx-button"
+            title={`Download ${currentFileDisplayName}`}
+          >
+            Download TeX
+          </button>
 
           {props.canEdit ? (
             <button
