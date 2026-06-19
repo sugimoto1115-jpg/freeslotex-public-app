@@ -89,3 +89,51 @@ export async function getCompileQuotaForEmail(email: string | null | undefined) 
       freeDailyLimit === null ? true : usedToday < freeDailyLimit,
   };
 }
+
+export async function recordCompileUsageForEmail(email: string | null | undefined) {
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!normalizedEmail) {
+    return {
+      ok: false,
+      error: "email_required",
+    };
+  }
+
+  await ensureCompileUsageTable();
+
+  const plan = await getEffectiveFsPlanForEmail(normalizedEmail);
+
+  if (plan !== "free") {
+    return getCompileQuotaForEmail(normalizedEmail);
+  }
+
+  const result = await query<CompileUsageRow>(
+    `
+      insert into freeslotex_compile_usage (email, usage_date, compile_count)
+      values (lower($1), (timezone('Asia/Tokyo', now()))::date, 1)
+      on conflict (email, usage_date)
+      do update
+         set compile_count = freeslotex_compile_usage.compile_count + 1,
+             updated_at = now()
+      returning usage_date::text, compile_count::text
+    `,
+    [normalizedEmail],
+  );
+
+  const row = result.rows[0];
+  const usedToday = Number(row?.compile_count ?? "0");
+  const remainingToday = Math.max(0, FREE_DAILY_COMPILE_LIMIT - usedToday);
+
+  return {
+    ok: true,
+    email: normalizedEmail,
+    plan,
+    usageDate: row?.usage_date ?? "",
+    usedToday,
+    freeDailyLimit: FREE_DAILY_COMPILE_LIMIT,
+    remainingToday,
+    canCompile: usedToday < FREE_DAILY_COMPILE_LIMIT,
+  };
+}
+

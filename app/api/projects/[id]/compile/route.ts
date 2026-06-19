@@ -5,6 +5,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { getCurrentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { recordCompileUsageForEmail } from "@/lib/freeslotex/compileQuota";
 
 export const runtime = "nodejs";
 
@@ -410,6 +411,10 @@ export async function POST(request: NextRequest, { params }: Params) {
       `,
       [projectId]
     );
+
+      await recordCompileUsageForEmail(currentUser.email).catch((quotaError) => {
+        console.error("recordCompileUsageForEmail failed:", quotaError);
+      });
 
     return redirectToEdit(request, id, { compiled: "1", engine });
   } catch (error: any) {

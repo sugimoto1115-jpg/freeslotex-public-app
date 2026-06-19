@@ -5,6 +5,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { getCurrentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { recordCompileUsageForEmail } from "@/lib/freeslotex/compileQuota";
 
 export const runtime = "nodejs";
 
@@ -457,6 +458,10 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     await writeFile(path.join(projectDir, "freeslotex-compile.log"), log, "utf8");
     await rm(path.join(projectDir, "freeslotex-error-summary.txt"), { force: true }).catch(() => {});
+
+      await recordCompileUsageForEmail(currentUser.email).catch((quotaError) => {
+        console.error("recordCompileUsageForEmail failed:", quotaError);
+      });
 
     const artifacts = await readArtifacts(projectDir, rootPdfFile, rootLogFile);
 
