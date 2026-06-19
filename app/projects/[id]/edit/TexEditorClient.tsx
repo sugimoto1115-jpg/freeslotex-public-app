@@ -253,6 +253,7 @@ export default function TexEditorClient(props: Props) {
   const [activeSnippetGroup, setActiveSnippetGroup] = useState("TeX Insert");
   const [showTexHelpers, setShowTexHelpers] = useState(false);
   const [editorFontSize, setEditorFontSize] = useState(14);
+  const [showFontSizePicker, setShowFontSizePicker] = useState(false);
   const [softWrap, setSoftWrap] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lineGutterRef = useRef<HTMLDivElement | null>(null);
@@ -1030,21 +1031,35 @@ export default function TexEditorClient(props: Props) {
 
         <div className="fsx-actions fsx-editor-global-actions">
           <div className="fsx-editor-pref-actions" aria-label="Editor preferences">
-            <span className="fsx-muted" style={{ fontWeight: 700 }}>
-              Font size
-            </span>
+            <button
+              type="button"
+              className="fsx-button"
+              onClick={() => setShowFontSizePicker((value) => !value)}
+              aria-expanded={showFontSizePicker}
+              title="Show font size options"
+              style={{ padding: "6px 9px", fontSize: 12 }}
+            >
+              Font {editorFontSize}px {showFontSizePicker ? "▾" : "▸"}
+            </button>
 
-            {([12, 14, 16, 18, 20, 22, 24] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                className={editorFontSize === value ? "fsx-button fsx-button-primary" : "fsx-button"}
-                onClick={() => setEditorFontSize(value)}
-                style={{ padding: "6px 9px", fontSize: 12 }}
-              >
-                {value}px
-              </button>
-            ))}
+            {showFontSizePicker ? (
+              <>
+                {([12, 14, 16, 18, 20, 22, 24] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={editorFontSize === value ? "fsx-button fsx-button-primary" : "fsx-button"}
+                    onClick={() => {
+                      setEditorFontSize(value);
+                      setShowFontSizePicker(false);
+                    }}
+                    style={{ padding: "6px 9px", fontSize: 12 }}
+                  >
+                    {value}px
+                  </button>
+                ))}
+              </>
+            ) : null}
 
             <span
               aria-hidden="true"
