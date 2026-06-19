@@ -273,6 +273,9 @@ export default async function WorkspacePage() {
             </span>
           </div>
           <p className="fsx-account-line">{fsAccountEmail || "Unknown account"}</p>
+            <p className="fsx-panel-note" style={{ marginTop: 4 }}>
+              <Link href="/account/password">Change password</Link>
+            </p>
           {fsPlan === "admin" ? (
             <p className="fsx-admin-workspace-link">
               <Link className="fsx-admin-mini-link" href="/admin/freeslotex">
