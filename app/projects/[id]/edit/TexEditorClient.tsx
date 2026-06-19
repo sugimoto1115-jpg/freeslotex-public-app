@@ -254,6 +254,8 @@ export default function TexEditorClient(props: Props) {
   const [showTexHelpers, setShowTexHelpers] = useState(false);
   const [editorFontSize, setEditorFontSize] = useState(14);
   const [showFontSizePicker, setShowFontSizePicker] = useState(false);
+
+
   const [softWrap, setSoftWrap] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lineGutterRef = useRef<HTMLDivElement | null>(null);

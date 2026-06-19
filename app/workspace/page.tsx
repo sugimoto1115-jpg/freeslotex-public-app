@@ -2,8 +2,10 @@ import Link from "next/link";
 import ArchiveProjectButton from "./ArchiveProjectButton";
 import path from "node:path";
 import { mkdir, readdir, rm, symlink, lstat, writeFile } from "node:fs/promises";
-import { requireUser } from "@/lib/auth";
+import { requireUser, getCurrentUser as getLabtexCurrentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { fsPlanLabel } from "@/lib/freeslotex/entitlements";
+import { getFsPlanForEmail } from "@/lib/freeslotex/serverPlan";
 
 export const runtime = "nodejs";
 
@@ -253,12 +255,24 @@ export default async function WorkspacePage() {
     projects.filter((p) => p.folder_kind === "shared")
   );
 
+  const fsAccount = await getLabtexCurrentUser();
+  const fsAccountEmail = fsAccount?.email ?? "";
+  const fsPlan = getFsPlanForEmail(fsAccountEmail);
+  const fsPlanText = fsPlanLabel(fsPlan);
+
+
   return (
     <main className="fsx-main">
       <section className="fsx-hero">
         <div>
           <div className="fsx-eyebrow">FreeSloTeX</div>
-          <h1 className="fsx-title">My workspace</h1>
+          <div className="fsx-workspace-title-row">
+            <h1 className="fsx-title">My workspace</h1>
+            <span className={`fsx-plan-badge fsx-plan-${fsPlan}`} title="FreeSloTeX plan">
+              {fsPlanText}
+            </span>
+          </div>
+          <p className="fsx-account-line">{fsAccountEmail || "Unknown account"}</p>
           <p className="fsx-subtitle">
             This is your personal workspace. Private projects and shared projects
             are separated for privacy.
