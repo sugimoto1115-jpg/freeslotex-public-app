@@ -147,6 +147,7 @@ export default async function FreeSloTeXAdminPage({
                 <th>Email</th>
                 <th>Plan</th>
                 <th>Change plan</th>
+                  <th>Reset password</th>
                 <th>Status</th>
                 <th>Display name</th>
                 <th>Created</th>
@@ -186,6 +187,18 @@ export default async function FreeSloTeXAdminPage({
                       </button>
                     </form>
                   </td>
+                    <td>
+                      <form
+                        className="fsx-plan-form"
+                        method="post"
+                        action="/admin/freeslotex/reset-password"
+                      >
+                        <input type="hidden" name="email" value={user.email} />
+                        <button className="fsx-plan-save" type="submit">
+                          Reset
+                        </button>
+                      </form>
+                    </td>
                   <td>{user.status}</td>
                   <td>{user.displayName || "-"}</td>
                   <td>{fmtDate(user.createdAt)}</td>
