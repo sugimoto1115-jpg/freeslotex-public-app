@@ -138,6 +138,9 @@ function compileErrorMessage(code: string | null | undefined) {
   if (code === "readonly") return "Viewer role cannot compile this project.";
   if (code === "missing_main") return "main.tex was not found.";
   if (code === "timeout") return "Compile timed out.";
+  if (code === "quota_exceeded") {
+    return "Free plan allows 50 compiles per day. Please try again tomorrow.";
+  }
   if (code === "failed") return "Compile failed. Please check the terminal below.";
   return "Compile failed.";
 }
@@ -406,6 +409,8 @@ export default function TexEditorClient(props: Props) {
 
   const saveError = saveErrorMessage(props.saveError);
   const compileError = compileErrorMessage(liveCompileError);
+  const compileErrorTitle =
+    liveCompileError === "quota_exceeded" ? "Compile limit reached." : "Compile error.";
   const texAdvice = useMemo(() => detectTexAdvice(tex), [tex]);
   const currentSnippetGroup = useMemo(
     () => snippetGroups.find((group) => group.label === activeSnippetGroup) ?? snippetGroups[0],
@@ -1170,7 +1175,7 @@ export default function TexEditorClient(props: Props) {
 
       {compileError ? (
         <section className="fsx-card" style={{ borderColor: "#dc2626", marginBottom: 4 }}>
-          <strong>Compile error.</strong> {compileError}
+          <strong>{compileErrorTitle}</strong> {compileError}
         </section>
       ) : null}
 

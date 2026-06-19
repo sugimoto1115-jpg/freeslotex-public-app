@@ -5,7 +5,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { getCurrentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
-import { recordCompileUsageForEmail } from "@/lib/freeslotex/compileQuota";
+import { getCompileQuotaForEmail, recordCompileUsageForEmail } from "@/lib/freeslotex/compileQuota";
 
 export const runtime = "nodejs";
 
@@ -327,6 +327,15 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!canCompile) {
     return redirectToEdit(request, id, { compile_error: "readonly" });
   }
+
+    const compileQuota = await getCompileQuotaForEmail(currentUser.email).catch((quotaError) => {
+      console.error("getCompileQuotaForEmail failed:", quotaError);
+      return null;
+    });
+
+    if (compileQuota?.ok && compileQuota.canCompile === false) {
+      return redirectToEdit(request, id, { compile_error: "quota_exceeded" });
+    }
 
     const projectDir = resolveProjectDir(project.storage_path);
 

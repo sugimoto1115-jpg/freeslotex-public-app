@@ -5,7 +5,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { getCurrentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
-import { recordCompileUsageForEmail } from "@/lib/freeslotex/compileQuota";
+import { getCompileQuotaForEmail, recordCompileUsageForEmail } from "@/lib/freeslotex/compileQuota";
 
 export const runtime = "nodejs";
 
@@ -358,6 +358,25 @@ export async function POST(request: NextRequest, { params }: Params) {
       { status: 403 }
     );
   }
+
+    const compileQuota = await getCompileQuotaForEmail(currentUser.email).catch((quotaError) => {
+      console.error("getCompileQuotaForEmail failed:", quotaError);
+      return null;
+    });
+
+    if (compileQuota?.ok && compileQuota.canCompile === false) {
+      return NextResponse.json(
+        {
+          ok: false,
+          compileError: "quota_exceeded",
+          message: "Free plan daily compile limit reached. Please try again tomorrow.",
+          usedToday: compileQuota.usedToday,
+          freeDailyLimit: compileQuota.freeDailyLimit,
+          remainingToday: compileQuota.remainingToday,
+        },
+        { status: 429 }
+      );
+    }
 
   const projectDir = resolveProjectDir(project.storage_path);
 
