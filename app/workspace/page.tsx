@@ -273,6 +273,13 @@ export default async function WorkspacePage() {
             </span>
           </div>
           <p className="fsx-account-line">{fsAccountEmail || "Unknown account"}</p>
+          {fsPlan === "admin" ? (
+            <p className="fsx-admin-workspace-link">
+              <Link className="fsx-admin-mini-link" href="/admin/freeslotex">
+                FreeSloTeX Admin
+              </Link>
+            </p>
+          ) : null}
           <p className="fsx-subtitle">
             This is your personal workspace. Private projects and shared projects
             are separated for privacy.
