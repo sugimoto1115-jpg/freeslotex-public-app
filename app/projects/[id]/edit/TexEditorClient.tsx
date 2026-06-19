@@ -737,8 +737,10 @@ export default function TexEditorClient(props: Props) {
       setLiveCompileErrorSummary(data.compileErrorSummary ?? "");
       setLiveFsxLogTail(data.fsxLogTail ?? "");
       setLiveTexLogTail(data.texLogTail ?? "");
-      setLivePdfExists(Boolean(data.pdfExists));
-      setPdfRefreshKey((value) => value + 1);
+      if (data.compileError !== "quota_exceeded") {
+        setLivePdfExists(Boolean(data.pdfExists));
+        setPdfRefreshKey((value) => value + 1);
+      }
       setCompileStatusMessage(
         data.message ??
           (data.ok ? "Compiled successfully." : "Compile failed. Check the terminal below.")
