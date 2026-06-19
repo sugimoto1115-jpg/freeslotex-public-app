@@ -106,6 +106,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
               </button>
 
               <p className="fsx-panel-note" style={{ marginTop: 14 }}>
+                <Link href="/account/forgot-password">Forgot password?</Link>
+              </p>
+
+              <p className="fsx-panel-note" style={{ marginTop: 8 }}>
                 No account yet? <Link href="/register">Create account</Link>
               </p>
             </form>
