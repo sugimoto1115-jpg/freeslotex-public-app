@@ -13,6 +13,8 @@ const editorMenuItems = [
 ];
 
 const texInsertMenuItems = [
+  "見出し",
+  "箇条書き",
   "figure / table",
   "theorem / proof",
   "日本語 TeX preamble",
@@ -629,6 +631,54 @@ const accentMenuItems = [
   { label: "\\operatorname{}", snippet: "\\operatorname{%%CURSOR%%}" },
 ];
 
+const headingMenuItems = [
+  { label: "\\section{}", snippet: "\\section{%%CURSOR%%}" },
+  { label: "\\subsection{}", snippet: "\\subsection{%%CURSOR%%}" },
+  { label: "\\subsubsection{}", snippet: "\\subsubsection{%%CURSOR%%}" },
+  { label: "\\paragraph{}", snippet: "\\paragraph{%%CURSOR%%}" },
+  { label: "\\section*{}", snippet: "\\section*{%%CURSOR%%}" },
+  { label: "\\subsection*{}", snippet: "\\subsection*{%%CURSOR%%}" },
+];
+
+const listMenuItems = [
+  {
+    label: "itemize",
+    snippet: `\\begin{itemize}
+  \\item %%CURSOR%%
+\\end{itemize}`,
+  },
+  {
+    label: "itemize 2 items",
+    snippet: `\\begin{itemize}
+  \\item %%CURSOR%%
+  \\item 
+\\end{itemize}`,
+  },
+  {
+    label: "enumerate",
+    snippet: `\\begin{enumerate}
+  \\item %%CURSOR%%
+\\end{enumerate}`,
+  },
+  {
+    label: "enumerate 2 items",
+    snippet: `\\begin{enumerate}
+  \\item %%CURSOR%%
+  \\item 
+\\end{enumerate}`,
+  },
+  {
+    label: "description",
+    snippet: `\\begin{description}
+  \\item[%%CURSOR%%] 
+\\end{description}`,
+  },
+  {
+    label: "\\item",
+    snippet: "\\item %%CURSOR%%",
+  },
+];
+
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 
 type MenuPosition = {
@@ -736,6 +786,8 @@ export default function ProjectsTopMenu() {
               role="menuitem"
               onClick={(event) => {
                 if (
+                  label === "見出し" ||
+                  label === "箇条書き" ||
                   label === "figure / table" ||
                   label === "theorem / proof" ||
                   label === "日本語 TeX preamble"
@@ -1633,6 +1685,116 @@ export default function ProjectsTopMenu() {
           }}
         >
           {accentMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "見出し" ? (
+        <div
+          role="menu"
+          aria-label="見出し menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(150px, 1fr))",
+            gap: 2,
+            minWidth: 330,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {headingMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "箇条書き" ? (
+        <div
+          role="menu"
+          aria-label="箇条書き menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(170px, 1fr))",
+            gap: 2,
+            minWidth: 380,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {listMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
