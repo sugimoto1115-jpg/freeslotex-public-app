@@ -46,6 +46,33 @@ const mathModeMenuItems = [
   },
 ];
 
+const fracRootSubscriptMenuItems = [
+  {
+    label: "分数 / \\frac{}{}",
+    snippet: "\\frac{%%CURSOR%%}{}",
+  },
+  {
+    label: "平方根 / \\sqrt{}",
+    snippet: "\\sqrt{%%CURSOR%%}",
+  },
+  {
+    label: "n 乗根 / \\sqrt[]{}",
+    snippet: "\\sqrt[]{%%CURSOR%%}",
+  },
+  {
+    label: "下付き / _{}",
+    snippet: "_{%%CURSOR%%}",
+  },
+  {
+    label: "上付き / ^{}",
+    snippet: "^{%%CURSOR%%}",
+  },
+  {
+    label: "上下付き / _{}^{}",
+    snippet: "_{%%CURSOR%%}^{}",
+  },
+];
+
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 
 type MenuPosition = {
@@ -151,7 +178,7 @@ export default function ProjectsTopMenu() {
               type="button"
               role="menuitem"
               onClick={(event) => {
-                if (label === "数式モード") {
+                if (label === "数式モード" || label === "分数・根号・添字") {
                   const rect = event.currentTarget.getBoundingClientRect();
                   setSubmenuPosition({
                     top: menuPosition.top,
@@ -205,6 +232,61 @@ export default function ProjectsTopMenu() {
           }}
         >
           {mathModeMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "分数・根号・添字" ? (
+        <div
+          role="menu"
+          aria-label="分数・根号・添字 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "flex",
+            minWidth: 230,
+            flexDirection: "column",
+            gap: 2,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {fracRootSubscriptMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
