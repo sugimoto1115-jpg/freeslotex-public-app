@@ -165,6 +165,67 @@ const sumIntegralMenuItems = [
   { label: "⋁  \\bigvee", snippet: "\\bigvee %%CURSOR%%" },
 ];
 
+const casesMatrixMenuItems = [
+  {
+    label: "cases",
+    snippet: `\\begin{cases}
+%%CURSOR%%, & \\text{if } \\\\
+, & \\text{otherwise}
+\\end{cases}`,
+  },
+  {
+    label: "pmatrix 2x2",
+    snippet: `\\begin{pmatrix}
+%%CURSOR%% &  \\\\
+ & 
+\\end{pmatrix}`,
+  },
+  {
+    label: "pmatrix 3x3",
+    snippet: `\\begin{pmatrix}
+%%CURSOR%% &  &  \\\\
+ &  &  \\\\
+ &  & 
+\\end{pmatrix}`,
+  },
+  {
+    label: "bmatrix 2x2",
+    snippet: `\\begin{bmatrix}
+%%CURSOR%% &  \\\\
+ & 
+\\end{bmatrix}`,
+  },
+  {
+    label: "bmatrix 3x3",
+    snippet: `\\begin{bmatrix}
+%%CURSOR%% &  &  \\\\
+ &  &  \\\\
+ &  & 
+\\end{bmatrix}`,
+  },
+  {
+    label: "matrix 2x2",
+    snippet: `\\begin{matrix}
+%%CURSOR%% &  \\\\
+ & 
+\\end{matrix}`,
+  },
+  {
+    label: "vmatrix 2x2",
+    snippet: `\\begin{vmatrix}
+%%CURSOR%% &  \\\\
+ & 
+\\end{vmatrix}`,
+  },
+  {
+    label: "Vmatrix 2x2",
+    snippet: `\\begin{Vmatrix}
+%%CURSOR%% &  \\\\
+ & 
+\\end{Vmatrix}`,
+  },
+];
+
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 
 type MenuPosition = {
@@ -275,7 +336,8 @@ export default function ProjectsTopMenu() {
                   label === "分数・根号・添字" ||
                   label === "ギリシャ文字" ||
                   label === "数学関数" ||
-                  label === "和・積分記号等"
+                  label === "和・積分記号等" ||
+                  label === "cases / matrix"
                 ) {
                   const rect = event.currentTarget.getBoundingClientRect();
                   setSubmenuPosition({
@@ -553,6 +615,61 @@ export default function ProjectsTopMenu() {
           }}
         >
           {sumIntegralMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "cases / matrix" ? (
+        <div
+          role="menu"
+          aria-label="cases / matrix menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(140px, 1fr))",
+            gap: 2,
+            minWidth: 300,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {casesMatrixMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
