@@ -28,6 +28,8 @@ const mathMenuItems = [
   "関係子",
   "数学記号",
   "矢印",
+  "括弧・区切り",
+  "アクセント・装飾",
   "cases / matrix",
 ];
 
@@ -586,6 +588,45 @@ const relationMenuItems = [
 
   { label: "|  \\mid", snippet: "\\mid" },
   { label: "∥  \\parallel", snippet: "\\parallel" },
+];
+
+const delimiterMenuItems = [
+  { label: "( )", snippet: "(%%CURSOR%%)" },
+  { label: "[ ]", snippet: "[%%CURSOR%%]" },
+  { label: "{ }", snippet: "\\{%%CURSOR%%\\}" },
+  { label: "| |", snippet: "|%%CURSOR%%|" },
+  { label: "|| ||", snippet: "\\|%%CURSOR%%\\|" },
+
+  { label: "\\left( \\right)", snippet: "\\left( %%CURSOR%% \\right)" },
+  { label: "\\left[ \\right]", snippet: "\\left[ %%CURSOR%% \\right]" },
+  { label: "\\left\\{ \\right\\}", snippet: "\\left\\{ %%CURSOR%% \\right\\}" },
+  { label: "\\left| \\right|", snippet: "\\left| %%CURSOR%% \\right|" },
+  { label: "\\left\\| \\right\\|", snippet: "\\left\\| %%CURSOR%% \\right\\|" },
+
+  { label: "\\langle \\rangle", snippet: "\\left\\langle %%CURSOR%% \\right\\rangle" },
+  { label: "\\lfloor \\rfloor", snippet: "\\left\\lfloor %%CURSOR%% \\right\\rfloor" },
+  { label: "\\lceil \\rceil", snippet: "\\left\\lceil %%CURSOR%% \\right\\rceil" },
+];
+
+const accentMenuItems = [
+  { label: "\\hat{}", snippet: "\\hat{%%CURSOR%%}" },
+  { label: "\\widehat{}", snippet: "\\widehat{%%CURSOR%%}" },
+  { label: "\\bar{}", snippet: "\\bar{%%CURSOR%%}" },
+  { label: "\\overline{}", snippet: "\\overline{%%CURSOR%%}" },
+  { label: "\\tilde{}", snippet: "\\tilde{%%CURSOR%%}" },
+  { label: "\\widetilde{}", snippet: "\\widetilde{%%CURSOR%%}" },
+  { label: "\\dot{}", snippet: "\\dot{%%CURSOR%%}" },
+  { label: "\\ddot{}", snippet: "\\ddot{%%CURSOR%%}" },
+  { label: "\\vec{}", snippet: "\\vec{%%CURSOR%%}" },
+  { label: "\\overrightarrow{}", snippet: "\\overrightarrow{%%CURSOR%%}" },
+
+  { label: "\\mathrm{}", snippet: "\\mathrm{%%CURSOR%%}" },
+  { label: "\\mathbf{}", snippet: "\\mathbf{%%CURSOR%%}" },
+  { label: "\\mathsf{}", snippet: "\\mathsf{%%CURSOR%%}" },
+  { label: "\\mathtt{}", snippet: "\\mathtt{%%CURSOR%%}" },
+  { label: "\\mathcal{}", snippet: "\\mathcal{%%CURSOR%%}" },
+  { label: "\\boldsymbol{}", snippet: "\\boldsymbol{%%CURSOR%%}" },
+  { label: "\\operatorname{}", snippet: "\\operatorname{%%CURSOR%%}" },
 ];
 
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
@@ -1478,6 +1519,120 @@ export default function ProjectsTopMenu() {
           }}
         >
           {relationMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "Math" && activeSubmenu === "括弧・区切り" ? (
+        <div
+          role="menu"
+          aria-label="括弧・区切り menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(180px, 1fr))",
+            gap: 2,
+            minWidth: 400,
+            maxHeight: "min(70vh, 520px)",
+            overflowY: "auto",
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {delimiterMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "Math" && activeSubmenu === "アクセント・装飾" ? (
+        <div
+          role="menu"
+          aria-label="アクセント・装飾 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(180px, 1fr))",
+            gap: 2,
+            minWidth: 400,
+            maxHeight: "min(70vh, 520px)",
+            overflowY: "auto",
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {accentMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
