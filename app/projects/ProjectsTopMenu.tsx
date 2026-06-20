@@ -16,7 +16,7 @@ const texInsertMenuItems = [
   "数式モード",
   "分数・根号・添字",
   "ギリシャ文字",
-  "equation / align",
+  "数学関数",
   "cases / matrix",
   "figure / table",
   "theorem / proof",
@@ -115,6 +115,41 @@ const greekMenuItems = [
   { label: "Φ  \\Phi", snippet: "\\Phi" },
   { label: "Ψ  \\Psi", snippet: "\\Psi" },
   { label: "Ω  \\Omega", snippet: "\\Omega" },
+];
+
+const mathFunctionMenuItems = [
+  { label: "arccos  \\arccos", snippet: "\\arccos %%CURSOR%%" },
+  { label: "arcsin  \\arcsin", snippet: "\\arcsin %%CURSOR%%" },
+  { label: "arctan  \\arctan", snippet: "\\arctan %%CURSOR%%" },
+  { label: "arg  \\arg", snippet: "\\arg %%CURSOR%%" },
+  { label: "cos  \\cos", snippet: "\\cos %%CURSOR%%" },
+  { label: "cosh  \\cosh", snippet: "\\cosh %%CURSOR%%" },
+  { label: "cot  \\cot", snippet: "\\cot %%CURSOR%%" },
+  { label: "coth  \\coth", snippet: "\\coth %%CURSOR%%" },
+  { label: "csc  \\csc", snippet: "\\csc %%CURSOR%%" },
+  { label: "deg  \\deg", snippet: "\\deg %%CURSOR%%" },
+  { label: "det  \\det", snippet: "\\det %%CURSOR%%" },
+  { label: "dim  \\dim", snippet: "\\dim %%CURSOR%%" },
+  { label: "exp  \\exp", snippet: "\\exp %%CURSOR%%" },
+  { label: "gcd  \\gcd", snippet: "\\gcd %%CURSOR%%" },
+  { label: "hom  \\hom", snippet: "\\hom %%CURSOR%%" },
+  { label: "inf  \\inf", snippet: "\\inf %%CURSOR%%" },
+  { label: "ker  \\ker", snippet: "\\ker %%CURSOR%%" },
+  { label: "lg  \\lg", snippet: "\\lg %%CURSOR%%" },
+  { label: "lim  \\lim", snippet: "\\lim %%CURSOR%%" },
+  { label: "liminf  \\liminf", snippet: "\\liminf %%CURSOR%%" },
+  { label: "limsup  \\limsup", snippet: "\\limsup %%CURSOR%%" },
+  { label: "ln  \\ln", snippet: "\\ln %%CURSOR%%" },
+  { label: "log  \\log", snippet: "\\log %%CURSOR%%" },
+  { label: "max  \\max", snippet: "\\max %%CURSOR%%" },
+  { label: "min  \\min", snippet: "\\min %%CURSOR%%" },
+  { label: "Pr  \\Pr", snippet: "\\Pr %%CURSOR%%" },
+  { label: "sec  \\sec", snippet: "\\sec %%CURSOR%%" },
+  { label: "sin  \\sin", snippet: "\\sin %%CURSOR%%" },
+  { label: "sinh  \\sinh", snippet: "\\sinh %%CURSOR%%" },
+  { label: "sup  \\sup", snippet: "\\sup %%CURSOR%%" },
+  { label: "tan  \\tan", snippet: "\\tan %%CURSOR%%" },
+  { label: "tanh  \\tanh", snippet: "\\tanh %%CURSOR%%" },
 ];
 
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
@@ -225,7 +260,8 @@ export default function ProjectsTopMenu() {
                 if (
                   label === "数式モード" ||
                   label === "分数・根号・添字" ||
-                  label === "ギリシャ文字"
+                  label === "ギリシャ文字" ||
+                  label === "数学関数"
                 ) {
                   const rect = event.currentTarget.getBoundingClientRect();
                   setSubmenuPosition({
@@ -391,6 +427,63 @@ export default function ProjectsTopMenu() {
           }}
         >
           {greekMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "数学関数" ? (
+        <div
+          role="menu"
+          aria-label="数学関数 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(120px, 1fr))",
+            gap: 2,
+            minWidth: 520,
+            maxHeight: "min(70vh, 520px)",
+            overflowY: "auto",
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {mathFunctionMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
