@@ -24,6 +24,8 @@ const mathMenuItems = [
   "ギリシャ文字",
   "数学関数",
   "和・積分記号等",
+  "演算子",
+  "関係子",
   "数学記号",
   "矢印",
   "cases / matrix",
@@ -504,6 +506,86 @@ const arrowMenuItems = [
   { label: "⟹  \\Longrightarrow", snippet: "\\Longrightarrow" },
   { label: "⟸  \\Longleftarrow", snippet: "\\Longleftarrow" },
   { label: "⟺  \\Longleftrightarrow", snippet: "\\Longleftrightarrow" },
+];
+
+const operatorMenuItems = [
+  { label: "×  \\times", snippet: "\\times" },
+  { label: "÷  \\div", snippet: "\\div" },
+  { label: "∗  \\ast", snippet: "\\ast" },
+  { label: "⋆  \\star", snippet: "\\star" },
+  { label: "±  \\pm", snippet: "\\pm" },
+  { label: "∓  \\mp", snippet: "\\mp" },
+
+  { label: "∘  \\circ", snippet: "\\circ" },
+  { label: "∙  \\bullet", snippet: "\\bullet" },
+  { label: "·  \\cdot", snippet: "\\cdot" },
+  { label: "∩  \\cap", snippet: "\\cap" },
+  { label: "∪  \\cup", snippet: "\\cup" },
+  { label: "⊎  \\uplus", snippet: "\\uplus" },
+
+  { label: "⊓  \\sqcap", snippet: "\\sqcap" },
+  { label: "⊔  \\sqcup", snippet: "\\sqcup" },
+  { label: "∨  \\vee", snippet: "\\vee" },
+  { label: "∧  \\wedge", snippet: "\\wedge" },
+  { label: "\\  \\setminus", snippet: "\\setminus" },
+  { label: "≀  \\wr", snippet: "\\wr" },
+
+  { label: "◇  \\diamond", snippet: "\\diamond" },
+  { label: "△  \\bigtriangleup", snippet: "\\bigtriangleup" },
+  { label: "▽  \\bigtriangledown", snippet: "\\bigtriangledown" },
+  { label: "◁  \\triangleleft", snippet: "\\triangleleft" },
+  { label: "▷  \\triangleright", snippet: "\\triangleright" },
+  { label: "⊕  \\oplus", snippet: "\\oplus" },
+
+  { label: "⊖  \\ominus", snippet: "\\ominus" },
+  { label: "⊗  \\otimes", snippet: "\\otimes" },
+  { label: "⊘  \\oslash", snippet: "\\oslash" },
+  { label: "⊙  \\odot", snippet: "\\odot" },
+  { label: "○  \\bigcirc", snippet: "\\bigcirc" },
+  { label: "†  \\dagger", snippet: "\\dagger" },
+
+  { label: "‡  \\ddagger", snippet: "\\ddagger" },
+  { label: "∐  \\amalg", snippet: "\\amalg" },
+];
+
+const relationMenuItems = [
+  { label: "≤  \\le", snippet: "\\le" },
+  { label: "≥  \\ge", snippet: "\\ge" },
+  { label: "≪  \\ll", snippet: "\\ll" },
+  { label: "≫  \\gg", snippet: "\\gg" },
+  { label: "⊂  \\subset", snippet: "\\subset" },
+  { label: "⊃  \\supset", snippet: "\\supset" },
+
+  { label: "⊆  \\subseteq", snippet: "\\subseteq" },
+  { label: "⊇  \\supseteq", snippet: "\\supseteq" },
+  { label: "⊑  \\sqsubseteq", snippet: "\\sqsubseteq" },
+  { label: "⊒  \\sqsupseteq", snippet: "\\sqsupseteq" },
+  { label: "≺  \\prec", snippet: "\\prec" },
+  { label: "≻  \\succ", snippet: "\\succ" },
+
+  { label: "⪯  \\preceq", snippet: "\\preceq" },
+  { label: "⪰  \\succeq", snippet: "\\succeq" },
+  { label: "∈  \\in", snippet: "\\in" },
+  { label: "∉  \\notin", snippet: "\\notin" },
+  { label: "∋  \\ni", snippet: "\\ni" },
+  { label: "⊢  \\vdash", snippet: "\\vdash" },
+
+  { label: "⊣  \\dashv", snippet: "\\dashv" },
+  { label: "⌣  \\smile", snippet: "\\smile" },
+  { label: "⌢  \\frown", snippet: "\\frown" },
+  { label: "≠  \\ne", snippet: "\\ne" },
+  { label: "≐  \\doteq", snippet: "\\doteq" },
+  { label: "∝  \\propto", snippet: "\\propto" },
+
+  { label: "≡  \\equiv", snippet: "\\equiv" },
+  { label: "∼  \\sim", snippet: "\\sim" },
+  { label: "≃  \\simeq", snippet: "\\simeq" },
+  { label: "≈  \\approx", snippet: "\\approx" },
+  { label: "≅  \\cong", snippet: "\\cong" },
+  { label: "⊥  \\perp", snippet: "\\perp" },
+
+  { label: "|  \\mid", snippet: "\\mid" },
+  { label: "∥  \\parallel", snippet: "\\parallel" },
 ];
 
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
@@ -1282,6 +1364,120 @@ export default function ProjectsTopMenu() {
           }}
         >
           {arrowMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "Math" && activeSubmenu === "演算子" ? (
+        <div
+          role="menu"
+          aria-label="演算子 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(6, minmax(105px, 1fr))",
+            gap: 2,
+            minWidth: 650,
+            maxHeight: "min(70vh, 520px)",
+            overflowY: "auto",
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {operatorMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "Math" && activeSubmenu === "関係子" ? (
+        <div
+          role="menu"
+          aria-label="関係子 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(6, minmax(105px, 1fr))",
+            gap: 2,
+            minWidth: 650,
+            maxHeight: "min(70vh, 520px)",
+            overflowY: "auto",
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {relationMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
