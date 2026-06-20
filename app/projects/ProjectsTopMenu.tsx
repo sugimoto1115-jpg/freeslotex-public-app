@@ -23,6 +23,14 @@ const texInsertMenuItems = [
   "日本語 TeX preamble",
 ];
 
+const mathModeMenuItems = [
+  "文中に挿入 / $...$",
+  "1行出力 / \\[...\\]",
+  "1行出力番号付き / equation 環境",
+  "複数行番号なし / align* 環境",
+  "複数行番号付き / align 環境",
+];
+
 type MenuPosition = {
   top: number;
   left: number;
@@ -30,7 +38,9 @@ type MenuPosition = {
 
 export default function ProjectsTopMenu() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({ top: 42, left: 180 });
+  const [submenuPosition, setSubmenuPosition] = useState<MenuPosition>({ top: 42, left: 420 });
   const menuRootRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -40,6 +50,7 @@ export default function ProjectsTopMenu() {
       const target = event.target;
       if (target instanceof Node && menuRootRef.current?.contains(target)) return;
       setOpenMenu(null);
+      setActiveSubmenu(null);
     }
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -69,6 +80,7 @@ export default function ProjectsTopMenu() {
       left: rect.left,
     });
 
+    setActiveSubmenu(null);
     setOpenMenu((current) => (current === item ? null : item));
   }
 
@@ -121,7 +133,69 @@ export default function ProjectsTopMenu() {
               key={label}
               type="button"
               role="menuitem"
-              onClick={() => setOpenMenu(null)}
+              onClick={(event) => {
+                if (label === "数式モード") {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  setSubmenuPosition({
+                    top: menuPosition.top,
+                    left: rect.right + 4,
+                  });
+                  setActiveSubmenu((current) => (current === label ? null : label));
+                  return;
+                }
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: label === activeSubmenu ? "#e2e8f0" : "transparent",
+                color: label === activeSubmenu ? "#0f172a" : "#334155",
+                fontSize: 12,
+                fontWeight: label === activeSubmenu ? 700 : 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "数式モード" ? (
+        <div
+          role="menu"
+          aria-label="数式モード menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "flex",
+            minWidth: 260,
+            flexDirection: "column",
+            gap: 2,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {mathModeMenuItems.map((label) => (
+            <button
+              key={label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
               style={{
                 display: "block",
                 width: "100%",
