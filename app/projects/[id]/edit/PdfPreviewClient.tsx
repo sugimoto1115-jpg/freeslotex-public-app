@@ -164,28 +164,30 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
     return () => window.removeEventListener("resize", fitToViewport);
   }, []);
 
-  function startResizePreviewHeight(event: import("react").MouseEvent<HTMLDivElement>) {
+  function startResizePreviewHeight(event: import("react").PointerEvent<HTMLDivElement>) {
     event.preventDefault();
 
     const startY = event.clientY;
     const startHeight = previewHeight;
 
-    const onMove = (moveEvent: MouseEvent) => {
+    const onMove = (moveEvent: PointerEvent) => {
       const dy = moveEvent.clientY - startY;
       setPreviewHeight(clamp(startHeight + dy, 300, Math.max(420, window.innerHeight - 80)));
     };
 
     const onUp = () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
 
     document.body.style.cursor = "row-resize";
     document.body.style.userSelect = "none";
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   }
 
   const encodedPdfFile = encodeURIComponent(pdfFile);
@@ -470,12 +472,13 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
         role="separator"
         aria-label="Resize PDF Preview height"
         title="Drag to resize PDF Preview height"
-        onMouseDown={startResizePreviewHeight}
+        onPointerDown={startResizePreviewHeight}
         style={{
           cursor: "row-resize",
-          height: 12,
+          touchAction: "none",
+          height: 22,
           borderRadius: 999,
-          background: "linear-gradient(180deg, transparent, #cbd5e1, transparent)",
+          background: "linear-gradient(180deg, transparent 0, transparent 10px, #cbd5e1 10px, #cbd5e1 12px, transparent 12px, transparent 100%)",
           margin: "8px 10px 0 10px",
         }}
       />
