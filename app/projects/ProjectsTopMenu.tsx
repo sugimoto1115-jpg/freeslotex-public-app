@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 const editorMenuItems = [
   "File",
@@ -31,6 +31,31 @@ type MenuPosition = {
 export default function ProjectsTopMenu() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({ top: 42, left: 180 });
+  const menuRootRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (openMenu === null) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (target instanceof Node && menuRootRef.current?.contains(target)) return;
+      setOpenMenu(null);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpenMenu(null);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenu]);
 
   function handleMenuClick(item: string, event: MouseEvent<HTMLButtonElement>) {
     if (item !== "TeX Insert") {
@@ -48,7 +73,7 @@ export default function ProjectsTopMenu() {
   }
 
   return (
-    <nav className="fsx-editor-menubar" aria-label="FreeSloTeX editor menu">
+    <nav ref={menuRootRef} className="fsx-editor-menubar" aria-label="FreeSloTeX editor menu">
       {editorMenuItems.map((item) => {
         const isTexInsert = item === "TeX Insert";
 
@@ -96,6 +121,7 @@ export default function ProjectsTopMenu() {
               key={label}
               type="button"
               role="menuitem"
+              onClick={() => setOpenMenu(null)}
               style={{
                 display: "block",
                 width: "100%",
