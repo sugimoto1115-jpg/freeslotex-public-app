@@ -24,12 +24,29 @@ const texInsertMenuItems = [
 ];
 
 const mathModeMenuItems = [
-  "文中に挿入 / $...$",
-  "1行出力 / \\[...\\]",
-  "1行出力番号付き / equation 環境",
-  "複数行番号なし / align* 環境",
-  "複数行番号付き / align 環境",
+  {
+    label: "文中に挿入 / $...$",
+    snippet: "$%%CURSOR%%$",
+  },
+  {
+    label: "1行出力 / \\[...\\]",
+    snippet: "\\\[\n%%CURSOR%%\n\\\]",
+  },
+  {
+    label: "1行出力番号付き / equation 環境",
+    snippet: "\\begin{equation}\n%%CURSOR%%\n\\end{equation}",
+  },
+  {
+    label: "複数行番号なし / align* 環境",
+    snippet: "\\begin{align*}\n%%CURSOR%%\n\\end{align*}",
+  },
+  {
+    label: "複数行番号付き / align 環境",
+    snippet: "\\begin{align}\n%%CURSOR%%\n\\end{align}",
+  },
 ];
+
+const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 
 type MenuPosition = {
   top: number;
@@ -187,12 +204,18 @@ export default function ProjectsTopMenu() {
             boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
           }}
         >
-          {mathModeMenuItems.map((label) => (
+          {mathModeMenuItems.map((item) => (
             <button
-              key={label}
+              key={item.label}
               type="button"
               role="menuitem"
               onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
                 setOpenMenu(null);
                 setActiveSubmenu(null);
               }}
@@ -210,7 +233,7 @@ export default function ProjectsTopMenu() {
                 whiteSpace: "nowrap",
               }}
             >
-              {label}
+              {item.label}
             </button>
           ))}
         </div>

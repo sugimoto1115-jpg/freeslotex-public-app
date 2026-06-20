@@ -878,6 +878,23 @@ export default function TexEditorClient(props: Props) {
     });
   }
 
+  useEffect(() => {
+    function handleTopMenuInsertSnippet(event: Event) {
+      const customEvent = event as CustomEvent<{ snippet?: string }>;
+      const snippet = customEvent.detail?.snippet;
+
+      if (typeof snippet !== "string" || snippet.length === 0) return;
+
+      insertSnippet(snippet);
+    }
+
+    window.addEventListener("freeslotex:insert-snippet", handleTopMenuInsertSnippet);
+
+    return () => {
+      window.removeEventListener("freeslotex:insert-snippet", handleTopMenuInsertSnippet);
+    };
+  }, [tex, props.canEdit]);
+
   function replaceDocumentClassWithLtjsarticle() {
     if (!props.canEdit) return;
 
