@@ -361,6 +361,69 @@ const theoremProofMenuItems = [
   },
 ];
 
+const japanesePreambleMenuItems = [
+  {
+    label: "LuaLaTeX 日本語標準",
+    snippet: `\\documentclass[a4paper,11pt]{ltjsarticle}
+
+%%CURSOR%%`,
+  },
+  {
+    label: "LuaLaTeX 数学・図表",
+    snippet: `\\documentclass[a4paper,11pt]{ltjsarticle}
+
+\\usepackage{amsmath,amssymb,mathtools}
+\\usepackage{graphicx}
+\\usepackage{booktabs}
+\\usepackage{hyperref}
+
+%%CURSOR%%`,
+  },
+  {
+    label: "LuaLaTeX 定理環境付き",
+    snippet: `\\documentclass[a4paper,11pt]{ltjsarticle}
+
+\\usepackage{amsmath,amssymb,mathtools}
+\\usepackage{amsthm}
+
+\\theoremstyle{plain}
+\\newtheorem{theorem}{Theorem}
+\\newtheorem{lemma}{Lemma}
+\\newtheorem{proposition}{Proposition}
+\\newtheorem{corollary}{Corollary}
+
+\\theoremstyle{definition}
+\\newtheorem{definition}{Definition}
+\\newtheorem{example}{Example}
+
+\\theoremstyle{remark}
+\\newtheorem{remark}{Remark}
+
+%%CURSOR%%`,
+  },
+  {
+    label: "日本語レポート雛形",
+    snippet: `\\documentclass[a4paper,11pt]{ltjsarticle}
+
+\\usepackage{amsmath,amssymb,mathtools}
+\\usepackage{graphicx}
+\\usepackage{booktabs}
+\\usepackage{hyperref}
+
+\\title{}
+\\author{}
+\\date{\\today}
+
+\\begin{document}
+
+\\maketitle
+
+%%CURSOR%%
+
+\\end{document}`,
+  },
+];
+
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 
 type MenuPosition = {
@@ -474,7 +537,8 @@ export default function ProjectsTopMenu() {
                   label === "和・積分記号等" ||
                   label === "cases / matrix" ||
                   label === "figure / table" ||
-                  label === "theorem / proof"
+                  label === "theorem / proof" ||
+                  label === "日本語 TeX preamble"
                 ) {
                   const rect = event.currentTarget.getBoundingClientRect();
                   setSubmenuPosition({
@@ -919,6 +983,61 @@ export default function ProjectsTopMenu() {
           }}
         >
           {theoremProofMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "日本語 TeX preamble" ? (
+        <div
+          role="menu"
+          aria-label="日本語 TeX preamble menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(1, minmax(240px, 1fr))",
+            gap: 2,
+            minWidth: 280,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {japanesePreambleMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
