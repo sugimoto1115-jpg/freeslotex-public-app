@@ -374,7 +374,7 @@ export default function TexEditorClient(props: Props) {
 
   function startResizePane(
     which: "left" | "right",
-    event: import("react").MouseEvent<HTMLDivElement>
+    event: import("react").PointerEvent<HTMLDivElement>
   ) {
     event.preventDefault();
 
@@ -382,7 +382,7 @@ export default function TexEditorClient(props: Props) {
     const startLeft = leftWidth;
     const startRight = rightWidth;
 
-    const onMove = (moveEvent: MouseEvent) => {
+    const onMove = (moveEvent: PointerEvent) => {
       const dx = moveEvent.clientX - startX;
 
       if (which === "left") {
@@ -395,16 +395,18 @@ export default function TexEditorClient(props: Props) {
     };
 
     const onUp = () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
 
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   }
 
   function startResizePdfPreview(
@@ -814,14 +816,14 @@ export default function TexEditorClient(props: Props) {
     }
   }
 
-  function startResizeVertical(event: import("react").MouseEvent<HTMLDivElement>) {
+  function startResizeVertical(event: import("react").PointerEvent<HTMLDivElement>) {
     event.preventDefault();
 
     const startY = event.clientY;
     const startEditorHeight = editorHeight;
     const startTerminalHeight = terminalHeight;
 
-    const onMove = (moveEvent: MouseEvent) => {
+    const onMove = (moveEvent: PointerEvent) => {
       const dy = moveEvent.clientY - startY;
 
       setEditorHeight(clamp(startEditorHeight + dy, 120, Math.max(360, window.innerHeight - 220)));
@@ -829,16 +831,18 @@ export default function TexEditorClient(props: Props) {
     };
 
     const onUp = () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
 
     document.body.style.cursor = "row-resize";
     document.body.style.userSelect = "none";
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   }
 
   function insertSnippet(snippet: string) {
@@ -1326,9 +1330,16 @@ export default function TexEditorClient(props: Props) {
           role="separator"
           aria-label="Resize left sidebar"
           title="Drag to resize Explorer / Outline"
-          onMouseDown={(event) => startResizePane("left", event)}
+          onPointerDown={(event) => startResizePane("left", event)}
           style={{
             cursor: "col-resize",
+            touchAction: "none",
+            width: 22,
+            marginLeft: -8,
+            marginRight: -8,
+            justifySelf: "center",
+            position: "relative",
+            zIndex: 5,
             alignSelf: "stretch",
             borderRadius: 999,
             background: "linear-gradient(90deg, transparent, #cbd5e1, transparent)",
@@ -1457,13 +1468,16 @@ export default function TexEditorClient(props: Props) {
             role="separator"
             aria-label="Resize editor and compile terminal"
             title="Drag to resize TeX editor and Compile Terminal"
-            onMouseDown={startResizeVertical}
+            onPointerDown={startResizeVertical}
             style={{
               cursor: "row-resize",
-              height: 2,
+              touchAction: "none",
+              position: "relative",
+              zIndex: 5,
+              height: 22,
               borderRadius: 999,
               background: "linear-gradient(180deg, transparent, #cbd5e1, transparent)",
-              margin: "-1px 1px",
+              margin: "-10px 1px",
             }}
           />
 
