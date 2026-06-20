@@ -15,6 +15,10 @@ const editorMenuItems = [
 const texInsertMenuItems = [
   "見出し",
   "箇条書き",
+  "参照・引用",
+  "文書構造",
+  "配置・引用環境",
+  "そのまま出力",
   "figure / table",
   "theorem / proof",
   "日本語 TeX preamble",
@@ -679,6 +683,95 @@ const listMenuItems = [
   },
 ];
 
+const referenceMenuItems = [
+  { label: "ラベル / \\label{}", snippet: "\\label{%%CURSOR%%}" },
+  { label: "参照 / \\ref{}", snippet: "\\ref{%%CURSOR%%}" },
+  { label: "数式 / \\eqref{}", snippet: "\\eqref{%%CURSOR%%}" },
+  { label: "ページ / \\pageref{}", snippet: "\\pageref{%%CURSOR%%}" },
+  { label: "文献 / \\cite{}", snippet: "\\cite{%%CURSOR%%}" },
+  {
+    label: "文献リスト / thebibliography",
+    snippet: `\\begin{thebibliography}{99}
+\\bibitem{%%CURSOR%%}
+
+\\end{thebibliography}`,
+  },
+  { label: "脚注 / \\footnote{}", snippet: "\\footnote{%%CURSOR%%}" },
+];
+
+const documentStructureMenuItems = [
+  { label: "\\title{}", snippet: "\\title{%%CURSOR%%}" },
+  { label: "\\author{}", snippet: "\\author{%%CURSOR%%}" },
+  { label: "\\date{\\today}", snippet: "\\date{\\today}" },
+  { label: "\\maketitle", snippet: "\\maketitle\n%%CURSOR%%" },
+  { label: "\\tableofcontents", snippet: "\\tableofcontents\n%%CURSOR%%" },
+  { label: "\\appendix", snippet: "\\appendix\n%%CURSOR%%" },
+  { label: "\\newpage", snippet: "\\newpage\n%%CURSOR%%" },
+  { label: "\\clearpage", snippet: "\\clearpage\n%%CURSOR%%" },
+  {
+    label: "abstract",
+    snippet: `\\begin{abstract}
+%%CURSOR%%
+\\end{abstract}`,
+  },
+];
+
+const placementQuoteMenuItems = [
+  {
+    label: "中央 / center",
+    snippet: `\\begin{center}
+%%CURSOR%%
+\\end{center}`,
+  },
+  {
+    label: "左寄せ / flushleft",
+    snippet: `\\begin{flushleft}
+%%CURSOR%%
+\\end{flushleft}`,
+  },
+  {
+    label: "右寄せ / flushright",
+    snippet: `\\begin{flushright}
+%%CURSOR%%
+\\end{flushright}`,
+  },
+  {
+    label: "引用 / quote",
+    snippet: `\\begin{quote}
+%%CURSOR%%
+\\end{quote}`,
+  },
+  {
+    label: "長い引用 / quotation",
+    snippet: `\\begin{quotation}
+%%CURSOR%%
+\\end{quotation}`,
+  },
+  {
+    label: "ミニページ / minipage",
+    snippet: `\\begin{minipage}{0.9\\linewidth}
+%%CURSOR%%
+\\end{minipage}`,
+  },
+];
+
+const rawOutputMenuItems = [
+  {
+    label: "複数行 / verbatim",
+    snippet: `\\begin{verbatim}
+%%CURSOR%%
+\\end{verbatim}`,
+  },
+  {
+    label: "行内 / \\verb|...|",
+    snippet: "\\verb|%%CURSOR%%|",
+  },
+  {
+    label: "フォント / \\texttt{}",
+    snippet: "\\texttt{%%CURSOR%%}",
+  },
+];
+
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 
 type MenuPosition = {
@@ -788,6 +881,10 @@ export default function ProjectsTopMenu() {
                 if (
                   label === "見出し" ||
                   label === "箇条書き" ||
+                  label === "参照・引用" ||
+                  label === "文書構造" ||
+                  label === "配置・引用環境" ||
+                  label === "そのまま出力" ||
                   label === "figure / table" ||
                   label === "theorem / proof" ||
                   label === "日本語 TeX preamble"
@@ -1795,6 +1892,228 @@ export default function ProjectsTopMenu() {
           }}
         >
           {listMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "参照・引用" ? (
+        <div
+          role="menu"
+          aria-label="参照・引用 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(170px, 1fr))",
+            gap: 2,
+            minWidth: 380,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {referenceMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "文書構造" ? (
+        <div
+          role="menu"
+          aria-label="文書構造 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(170px, 1fr))",
+            gap: 2,
+            minWidth: 380,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {documentStructureMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "配置・引用環境" ? (
+        <div
+          role="menu"
+          aria-label="配置・引用環境 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(180px, 1fr))",
+            gap: 2,
+            minWidth: 410,
+            maxHeight: "min(70vh, 520px)",
+            overflowY: "auto",
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {placementQuoteMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "そのまま出力" ? (
+        <div
+          role="menu"
+          aria-label="そのまま出力 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(1, minmax(220px, 1fr))",
+            gap: 2,
+            minWidth: 260,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {rawOutputMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
