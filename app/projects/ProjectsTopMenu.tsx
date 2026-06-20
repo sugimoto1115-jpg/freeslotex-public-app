@@ -292,6 +292,75 @@ const figureTableMenuItems = [
   },
 ];
 
+const theoremProofMenuItems = [
+  {
+    label: "amsthm + theorem 定義",
+    snippet: `\\usepackage{amsthm}
+
+\\theoremstyle{plain}
+\\newtheorem{theorem}{Theorem}
+\\newtheorem{lemma}{Lemma}
+\\newtheorem{proposition}{Proposition}
+\\newtheorem{corollary}{Corollary}
+
+\\theoremstyle{definition}
+\\newtheorem{definition}{Definition}
+\\newtheorem{example}{Example}
+
+\\theoremstyle{remark}
+\\newtheorem{remark}{Remark}
+%%CURSOR%%`,
+  },
+  {
+    label: "theorem",
+    snippet: `\\begin{theorem}
+%%CURSOR%%
+\\end{theorem}`,
+  },
+  {
+    label: "lemma",
+    snippet: `\\begin{lemma}
+%%CURSOR%%
+\\end{lemma}`,
+  },
+  {
+    label: "proposition",
+    snippet: `\\begin{proposition}
+%%CURSOR%%
+\\end{proposition}`,
+  },
+  {
+    label: "corollary",
+    snippet: `\\begin{corollary}
+%%CURSOR%%
+\\end{corollary}`,
+  },
+  {
+    label: "definition",
+    snippet: `\\begin{definition}
+%%CURSOR%%
+\\end{definition}`,
+  },
+  {
+    label: "example",
+    snippet: `\\begin{example}
+%%CURSOR%%
+\\end{example}`,
+  },
+  {
+    label: "remark",
+    snippet: `\\begin{remark}
+%%CURSOR%%
+\\end{remark}`,
+  },
+  {
+    label: "proof",
+    snippet: `\\begin{proof}
+%%CURSOR%%
+\\end{proof}`,
+  },
+];
+
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 
 type MenuPosition = {
@@ -404,7 +473,8 @@ export default function ProjectsTopMenu() {
                   label === "数学関数" ||
                   label === "和・積分記号等" ||
                   label === "cases / matrix" ||
-                  label === "figure / table"
+                  label === "figure / table" ||
+                  label === "theorem / proof"
                 ) {
                   const rect = event.currentTarget.getBoundingClientRect();
                   setSubmenuPosition({
@@ -792,6 +862,63 @@ export default function ProjectsTopMenu() {
           }}
         >
           {figureTableMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "theorem / proof" ? (
+        <div
+          role="menu"
+          aria-label="theorem / proof menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(180px, 1fr))",
+            gap: 2,
+            minWidth: 390,
+            maxHeight: "min(70vh, 520px)",
+            overflowY: "auto",
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {theoremProofMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
