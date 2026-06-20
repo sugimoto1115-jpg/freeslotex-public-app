@@ -1,15 +1,6 @@
 import type { ReactNode } from "react";
 import { requireUser } from "@/lib/auth";
-
-const editorMenuItems = [
-  "File",
-  "Edit & Search",
-  "View",
-  "TeX Insert",
-  "Math",
-  "Compile",
-  "Help",
-];
+import ProjectsTopMenu from "./ProjectsTopMenu";
 
 export default async function ProjectsLayout({
   children,
@@ -25,13 +16,7 @@ export default async function ProjectsLayout({
           <div className="fsx-topbar-left">
             <div className="fsx-brand">FreeSloTeX</div>
 
-            <nav className="fsx-editor-menubar" aria-label="FreeSloTeX editor menu">
-              {editorMenuItems.map((item) => (
-                <span key={item} className="fsx-editor-menuitem">
-                  {item}
-                </span>
-              ))}
-            </nav>
+            <ProjectsTopMenu />
           </div>
 
           <div className="fsx-topbar-account">
