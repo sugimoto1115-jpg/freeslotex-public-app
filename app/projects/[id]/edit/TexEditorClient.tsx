@@ -1347,7 +1347,7 @@ export default function TexEditorClient(props: Props) {
           }}
         />
 
-        <section style={{ display: "grid", gap: 1, minWidth: 0 }}>
+        <section style={{ display: "grid", gap: 1, minWidth: 0, overflow: "hidden" }}>
           <section className="fsx-panel" style={{ padding: 6 }}>
             <div className="fsx-panel-head" style={{ marginBottom: 4 }}>
               <div
