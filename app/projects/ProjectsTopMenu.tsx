@@ -73,6 +73,50 @@ const fracRootSubscriptMenuItems = [
   },
 ];
 
+const greekMenuItems = [
+  { label: "α  \\alpha", snippet: "\\alpha" },
+  { label: "β  \\beta", snippet: "\\beta" },
+  { label: "γ  \\gamma", snippet: "\\gamma" },
+  { label: "δ  \\delta", snippet: "\\delta" },
+  { label: "ε  \\epsilon", snippet: "\\epsilon" },
+  { label: "ε  \\varepsilon", snippet: "\\varepsilon" },
+  { label: "ζ  \\zeta", snippet: "\\zeta" },
+  { label: "η  \\eta", snippet: "\\eta" },
+  { label: "θ  \\theta", snippet: "\\theta" },
+  { label: "ϑ  \\vartheta", snippet: "\\vartheta" },
+  { label: "ι  \\iota", snippet: "\\iota" },
+  { label: "κ  \\kappa", snippet: "\\kappa" },
+  { label: "λ  \\lambda", snippet: "\\lambda" },
+  { label: "μ  \\mu", snippet: "\\mu" },
+  { label: "ν  \\nu", snippet: "\\nu" },
+  { label: "ξ  \\xi", snippet: "\\xi" },
+  { label: "ο  o", snippet: "o" },
+  { label: "π  \\pi", snippet: "\\pi" },
+  { label: "ϖ  \\varpi", snippet: "\\varpi" },
+  { label: "ρ  \\rho", snippet: "\\rho" },
+  { label: "ϱ  \\varrho", snippet: "\\varrho" },
+  { label: "σ  \\sigma", snippet: "\\sigma" },
+  { label: "ς  \\varsigma", snippet: "\\varsigma" },
+  { label: "τ  \\tau", snippet: "\\tau" },
+  { label: "υ  \\upsilon", snippet: "\\upsilon" },
+  { label: "φ  \\phi", snippet: "\\phi" },
+  { label: "φ  \\varphi", snippet: "\\varphi" },
+  { label: "χ  \\chi", snippet: "\\chi" },
+  { label: "ψ  \\psi", snippet: "\\psi" },
+  { label: "ω  \\omega", snippet: "\\omega" },
+  { label: "Γ  \\Gamma", snippet: "\\Gamma" },
+  { label: "Δ  \\Delta", snippet: "\\Delta" },
+  { label: "Θ  \\Theta", snippet: "\\Theta" },
+  { label: "Λ  \\Lambda", snippet: "\\Lambda" },
+  { label: "Ξ  \\Xi", snippet: "\\Xi" },
+  { label: "Π  \\Pi", snippet: "\\Pi" },
+  { label: "Σ  \\Sigma", snippet: "\\Sigma" },
+  { label: "Υ  \\Upsilon", snippet: "\\Upsilon" },
+  { label: "Φ  \\Phi", snippet: "\\Phi" },
+  { label: "Ψ  \\Psi", snippet: "\\Psi" },
+  { label: "Ω  \\Omega", snippet: "\\Omega" },
+];
+
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 
 type MenuPosition = {
@@ -178,7 +222,11 @@ export default function ProjectsTopMenu() {
               type="button"
               role="menuitem"
               onClick={(event) => {
-                if (label === "数式モード" || label === "分数・根号・添字") {
+                if (
+                  label === "数式モード" ||
+                  label === "分数・根号・添字" ||
+                  label === "ギリシャ文字"
+                ) {
                   const rect = event.currentTarget.getBoundingClientRect();
                   setSubmenuPosition({
                     top: menuPosition.top,
@@ -320,6 +368,63 @@ export default function ProjectsTopMenu() {
           ))}
         </div>
       ) : null}
+      {openMenu === "TeX Insert" && activeSubmenu === "ギリシャ文字" ? (
+        <div
+          role="menu"
+          aria-label="ギリシャ文字 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(110px, 1fr))",
+            gap: 2,
+            minWidth: 360,
+            maxHeight: "min(70vh, 520px)",
+            overflowY: "auto",
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {greekMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
     </nav>
   );
 }
