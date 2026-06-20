@@ -17,6 +17,7 @@ const texInsertMenuItems = [
   "分数・根号・添字",
   "ギリシャ文字",
   "数学関数",
+  "和・積分記号等",
   "cases / matrix",
   "figure / table",
   "theorem / proof",
@@ -152,6 +153,18 @@ const mathFunctionMenuItems = [
   { label: "tanh  \\tanh", snippet: "\\tanh %%CURSOR%%" },
 ];
 
+const sumIntegralMenuItems = [
+  { label: "∫  \\int", snippet: "\\int %%CURSOR%%" },
+  { label: "∮  \\oint", snippet: "\\oint %%CURSOR%%" },
+  { label: "∑  \\sum", snippet: "\\sum %%CURSOR%%" },
+  { label: "∏  \\prod", snippet: "\\prod %%CURSOR%%" },
+  { label: "∐  \\coprod", snippet: "\\coprod %%CURSOR%%" },
+  { label: "⋂  \\bigcap", snippet: "\\bigcap %%CURSOR%%" },
+  { label: "⋃  \\bigcup", snippet: "\\bigcup %%CURSOR%%" },
+  { label: "⋀  \\bigwedge", snippet: "\\bigwedge %%CURSOR%%" },
+  { label: "⋁  \\bigvee", snippet: "\\bigvee %%CURSOR%%" },
+];
+
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 
 type MenuPosition = {
@@ -261,7 +274,8 @@ export default function ProjectsTopMenu() {
                   label === "数式モード" ||
                   label === "分数・根号・添字" ||
                   label === "ギリシャ文字" ||
-                  label === "数学関数"
+                  label === "数学関数" ||
+                  label === "和・積分記号等"
                 ) {
                   const rect = event.currentTarget.getBoundingClientRect();
                   setSubmenuPosition({
@@ -484,6 +498,61 @@ export default function ProjectsTopMenu() {
           }}
         >
           {mathFunctionMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "TeX Insert" && activeSubmenu === "和・積分記号等" ? (
+        <div
+          role="menu"
+          aria-label="和・積分記号等 menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(120px, 1fr))",
+            gap: 2,
+            minWidth: 390,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {sumIntegralMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
