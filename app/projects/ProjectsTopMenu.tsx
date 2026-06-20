@@ -13,15 +13,18 @@ const editorMenuItems = [
 ];
 
 const texInsertMenuItems = [
+  "figure / table",
+  "theorem / proof",
+  "日本語 TeX preamble",
+];
+
+const mathMenuItems = [
   "数式モード",
   "分数・根号・添字",
   "ギリシャ文字",
   "数学関数",
   "和・積分記号等",
   "cases / matrix",
-  "figure / table",
-  "theorem / proof",
-  "日本語 TeX preamble",
 ];
 
 const mathModeMenuItems = [
@@ -464,8 +467,9 @@ export default function ProjectsTopMenu() {
   }, [openMenu]);
 
   function handleMenuClick(item: string, event: MouseEvent<HTMLButtonElement>) {
-    if (item !== "TeX Insert") {
+    if (item !== "TeX Insert" && item !== "Math") {
       setOpenMenu(null);
+      setActiveSubmenu(null);
       return;
     }
 
@@ -482,7 +486,7 @@ export default function ProjectsTopMenu() {
   return (
     <nav ref={menuRootRef} className="fsx-editor-menubar" aria-label="FreeSloTeX editor menu">
       {editorMenuItems.map((item) => {
-        const isTexInsert = item === "TeX Insert";
+        const hasDropdown = item === "TeX Insert" || item === "Math";
 
         return (
           <button
@@ -490,8 +494,8 @@ export default function ProjectsTopMenu() {
             type="button"
             className="fsx-editor-menuitem"
             onClick={(event) => handleMenuClick(item, event)}
-            aria-haspopup={isTexInsert ? "menu" : undefined}
-            aria-expanded={isTexInsert ? openMenu === item : undefined}
+            aria-haspopup={hasDropdown ? "menu" : undefined}
+            aria-expanded={hasDropdown ? openMenu === item : undefined}
             style={{
               border: 0,
               background: "transparent",
@@ -530,12 +534,6 @@ export default function ProjectsTopMenu() {
               role="menuitem"
               onClick={(event) => {
                 if (
-                  label === "数式モード" ||
-                  label === "分数・根号・添字" ||
-                  label === "ギリシャ文字" ||
-                  label === "数学関数" ||
-                  label === "和・積分記号等" ||
-                  label === "cases / matrix" ||
                   label === "figure / table" ||
                   label === "theorem / proof" ||
                   label === "日本語 TeX preamble"
@@ -572,7 +570,60 @@ export default function ProjectsTopMenu() {
         </div>
       ) : null}
 
-      {openMenu === "TeX Insert" && activeSubmenu === "数式モード" ? (
+      {openMenu === "Math" ? (
+        <div
+          role="menu"
+          aria-label="Math menu"
+          style={{
+            position: "fixed",
+            top: menuPosition.top,
+            left: menuPosition.left,
+            zIndex: 2147483647,
+            display: "flex",
+            minWidth: 220,
+            flexDirection: "column",
+            gap: 2,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {mathMenuItems.map((label) => (
+            <button
+              key={label}
+              type="button"
+              role="menuitem"
+              onClick={(event) => {
+                const rect = event.currentTarget.getBoundingClientRect();
+                setSubmenuPosition({
+                  top: menuPosition.top,
+                  left: rect.right + 4,
+                });
+                setActiveSubmenu((current) => (current === label ? null : label));
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: label === activeSubmenu ? "#e2e8f0" : "transparent",
+                color: label === activeSubmenu ? "#0f172a" : "#334155",
+                fontSize: 12,
+                fontWeight: label === activeSubmenu ? 700 : 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "Math" && activeSubmenu === "数式モード" ? (
         <div
           role="menu"
           aria-label="数式モード menu"
@@ -627,7 +678,7 @@ export default function ProjectsTopMenu() {
         </div>
       ) : null}
 
-      {openMenu === "TeX Insert" && activeSubmenu === "分数・根号・添字" ? (
+      {openMenu === "Math" && activeSubmenu === "分数・根号・添字" ? (
         <div
           role="menu"
           aria-label="分数・根号・添字 menu"
@@ -681,7 +732,7 @@ export default function ProjectsTopMenu() {
           ))}
         </div>
       ) : null}
-      {openMenu === "TeX Insert" && activeSubmenu === "ギリシャ文字" ? (
+      {openMenu === "Math" && activeSubmenu === "ギリシャ文字" ? (
         <div
           role="menu"
           aria-label="ギリシャ文字 menu"
@@ -738,7 +789,7 @@ export default function ProjectsTopMenu() {
         </div>
       ) : null}
 
-      {openMenu === "TeX Insert" && activeSubmenu === "数学関数" ? (
+      {openMenu === "Math" && activeSubmenu === "数学関数" ? (
         <div
           role="menu"
           aria-label="数学関数 menu"
@@ -795,7 +846,7 @@ export default function ProjectsTopMenu() {
         </div>
       ) : null}
 
-      {openMenu === "TeX Insert" && activeSubmenu === "和・積分記号等" ? (
+      {openMenu === "Math" && activeSubmenu === "和・積分記号等" ? (
         <div
           role="menu"
           aria-label="和・積分記号等 menu"
@@ -850,7 +901,7 @@ export default function ProjectsTopMenu() {
         </div>
       ) : null}
 
-      {openMenu === "TeX Insert" && activeSubmenu === "cases / matrix" ? (
+      {openMenu === "Math" && activeSubmenu === "cases / matrix" ? (
         <div
           role="menu"
           aria-label="cases / matrix menu"
