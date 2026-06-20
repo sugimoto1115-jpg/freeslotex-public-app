@@ -407,6 +407,51 @@ export default function TexEditorClient(props: Props) {
     window.addEventListener("mouseup", onUp);
   }
 
+  function startResizePdfPreview(
+    event: import("react").PointerEvent<HTMLDivElement>
+  ) {
+    event.preventDefault();
+
+    const startX = event.clientX;
+    const startLeft = leftWidth;
+    const startRight = rightWidth;
+    const pointerId = event.pointerId;
+    const target = event.currentTarget;
+
+    try {
+      target.setPointerCapture(pointerId);
+    } catch {
+      // Ignore if pointer capture is unavailable.
+    }
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const dx = moveEvent.clientX - startX;
+      const maxRight = getMaxRightWidth(startLeft);
+      setRightWidth(clamp(startRight - dx, MIN_RIGHT_WIDTH, maxRight));
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+
+      try {
+        target.releasePointerCapture(pointerId);
+      } catch {
+        // Ignore if capture was not active.
+      }
+
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  }
+
   const saveError = saveErrorMessage(props.saveError);
   const compileError = compileErrorMessage(liveCompileError);
   const compileErrorTitle =
@@ -1522,9 +1567,16 @@ export default function TexEditorClient(props: Props) {
           role="separator"
           aria-label="Resize PDF preview"
           title="Drag to resize PDF preview"
-          onMouseDown={(event) => startResizePane("right", event)}
+          onPointerDown={startResizePdfPreview}
           style={{
             cursor: "col-resize",
+            touchAction: "none",
+            width: 22,
+            marginLeft: -8,
+            marginRight: -8,
+            justifySelf: "center",
+            position: "relative",
+            zIndex: 5,
             alignSelf: "stretch",
             borderRadius: 999,
             background: "linear-gradient(90deg, transparent, #cbd5e1, transparent)",
