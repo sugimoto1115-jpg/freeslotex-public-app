@@ -12,6 +12,10 @@ const editorMenuItems = [
   "Help",
 ];
 
+const viewFontSizeMenuItems = ["12px", "14px", "16px", "18px", "20px", "22px", "24px"];
+
+const viewWrapMenuItems = ["Wrap Off", "Wrap On"];
+
 const texInsertMenuItems = [
   "見出し",
   "箇条書き",
@@ -812,7 +816,7 @@ export default function ProjectsTopMenu() {
   }, [openMenu]);
 
   function handleMenuClick(item: string, event: MouseEvent<HTMLButtonElement>) {
-    if (item !== "TeX Insert" && item !== "Math") {
+    if (item !== "View" && item !== "TeX Insert" && item !== "Math") {
       setOpenMenu(null);
       setActiveSubmenu(null);
       return;
@@ -831,7 +835,7 @@ export default function ProjectsTopMenu() {
   return (
     <nav ref={menuRootRef} className="fsx-editor-menubar" aria-label="FreeSloTeX editor menu">
       {editorMenuItems.map((item) => {
-        const hasDropdown = item === "TeX Insert" || item === "Math";
+        const hasDropdown = item === "View" || item === "TeX Insert" || item === "Math";
 
         return (
           <button
@@ -911,6 +915,102 @@ export default function ProjectsTopMenu() {
                 color: label === activeSubmenu ? "#0f172a" : "#334155",
                 fontSize: 12,
                 fontWeight: label === activeSubmenu ? 700 : 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "View" ? (
+        <div
+          role="menu"
+          aria-label="View menu"
+          style={{
+            position: "fixed",
+            top: menuPosition.top,
+            left: menuPosition.left,
+            zIndex: 2147483647,
+            display: "flex",
+            minWidth: 220,
+            flexDirection: "column",
+            gap: 2,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          <div
+            style={{
+              padding: "4px 8px",
+              color: "#64748b",
+              fontSize: 11,
+              fontWeight: 700,
+            }}
+          >
+            Font size
+          </div>
+
+          {viewFontSizeMenuItems.map((label) => (
+            <button
+              key={label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                // Display only in this first change.
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+
+          <div
+            style={{
+              padding: "6px 8px 4px",
+              color: "#64748b",
+              fontSize: 11,
+              fontWeight: 700,
+            }}
+          >
+            Wrap
+          </div>
+
+          {viewWrapMenuItems.map((label) => (
+            <button
+              key={label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                // Display only in this first change.
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
                 textAlign: "left",
                 whiteSpace: "nowrap",
               }}
