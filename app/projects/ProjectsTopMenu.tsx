@@ -777,6 +777,8 @@ const rawOutputMenuItems = [
 ];
 
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
+const SET_EDITOR_FONT_SIZE_EVENT = "freeslotex:set-editor-font-size";
+const SET_SOFT_WRAP_EVENT = "freeslotex:set-soft-wrap";
 
 type MenuPosition = {
   top: number;
@@ -786,6 +788,8 @@ type MenuPosition = {
 export default function ProjectsTopMenu() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const [viewEditorFontSize, setViewEditorFontSize] = useState(14);
+  const [viewSoftWrap, setViewSoftWrap] = useState(false);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({ top: 42, left: 180 });
   const [submenuPosition, setSubmenuPosition] = useState<MenuPosition>({ top: 42, left: 420 });
   const menuRootRef = useRef<HTMLElement | null>(null);
@@ -815,11 +819,34 @@ export default function ProjectsTopMenu() {
     };
   }, [openMenu]);
 
+  function refreshViewPreferences() {
+    try {
+      const rawFontSize = window.localStorage.getItem("freeslotex.editorFontSize");
+      const parsedFontSize = Number(rawFontSize);
+
+      if ([12, 14, 16, 18, 20, 22, 24].includes(parsedFontSize)) {
+        setViewEditorFontSize(parsedFontSize);
+      } else {
+        setViewEditorFontSize(14);
+      }
+
+      const rawSoftWrap = window.localStorage.getItem("freeslotex.softWrap");
+      setViewSoftWrap(rawSoftWrap === "1");
+    } catch {
+      setViewEditorFontSize(14);
+      setViewSoftWrap(false);
+    }
+  }
+
   function handleMenuClick(item: string, event: MouseEvent<HTMLButtonElement>) {
     if (item !== "View" && item !== "TeX Insert" && item !== "Math") {
       setOpenMenu(null);
       setActiveSubmenu(null);
       return;
+    }
+
+    if (item === "View") {
+      refreshViewPreferences();
     }
 
     const rect = event.currentTarget.getBoundingClientRect();
@@ -956,31 +983,43 @@ export default function ProjectsTopMenu() {
             Font size
           </div>
 
-          {viewFontSizeMenuItems.map((label) => (
-            <button
-              key={label}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                // Display only in this first change.
-              }}
-              style={{
-                display: "block",
-                width: "100%",
-                border: 0,
-                borderRadius: 7,
-                padding: "6px 8px",
-                background: "transparent",
-                color: "#334155",
-                fontSize: 12,
-                fontWeight: 500,
-                textAlign: "left",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {label}
-            </button>
-          ))}
+          {viewFontSizeMenuItems.map((label) => {
+            const fontSize = Number(label.replace("px", ""));
+            const isActive = viewEditorFontSize === fontSize;
+
+            return (
+              <button
+                key={label}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setViewEditorFontSize(fontSize);
+                  window.dispatchEvent(
+                    new CustomEvent(SET_EDITOR_FONT_SIZE_EVENT, {
+                      detail: { fontSize },
+                    }),
+                  );
+                  setOpenMenu(null);
+                  setActiveSubmenu(null);
+                }}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  border: 0,
+                  borderRadius: 7,
+                  padding: "6px 8px",
+                  background: isActive ? "#dbeafe" : "transparent",
+                  color: isActive ? "#1e3a8a" : "#334155",
+                  fontSize: 12,
+                  fontWeight: isActive ? 700 : 500,
+                  textAlign: "left",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
 
           <div
             style={{
@@ -993,31 +1032,43 @@ export default function ProjectsTopMenu() {
             Wrap
           </div>
 
-          {viewWrapMenuItems.map((label) => (
-            <button
-              key={label}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                // Display only in this first change.
-              }}
-              style={{
-                display: "block",
-                width: "100%",
-                border: 0,
-                borderRadius: 7,
-                padding: "6px 8px",
-                background: "transparent",
-                color: "#334155",
-                fontSize: 12,
-                fontWeight: 500,
-                textAlign: "left",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {label}
-            </button>
-          ))}
+          {viewWrapMenuItems.map((label) => {
+            const softWrap = label === "Wrap On";
+            const isActive = viewSoftWrap === softWrap;
+
+            return (
+              <button
+                key={label}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setViewSoftWrap(softWrap);
+                  window.dispatchEvent(
+                    new CustomEvent(SET_SOFT_WRAP_EVENT, {
+                      detail: { softWrap },
+                    }),
+                  );
+                  setOpenMenu(null);
+                  setActiveSubmenu(null);
+                }}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  border: 0,
+                  borderRadius: 7,
+                  padding: "6px 8px",
+                  background: isActive ? "#dbeafe" : "transparent",
+                  color: isActive ? "#1e3a8a" : "#334155",
+                  fontSize: 12,
+                  fontWeight: isActive ? 700 : 500,
+                  textAlign: "left",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       ) : null}
 

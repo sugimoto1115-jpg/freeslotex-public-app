@@ -506,6 +506,34 @@ export default function TexEditorClient(props: Props) {
     }
   }, [editorPreferencesLoaded, softWrap]);
 
+  useEffect(() => {
+    function handleSetEditorFontSize(event: Event) {
+      const customEvent = event as CustomEvent<{ fontSize?: number }>;
+      const fontSize = Number(customEvent.detail?.fontSize);
+
+      if ([12, 14, 16, 18, 20, 22, 24].includes(fontSize)) {
+        setEditorFontSize(fontSize);
+        setShowFontSizePicker(false);
+      }
+    }
+
+    function handleSetSoftWrap(event: Event) {
+      const customEvent = event as CustomEvent<{ softWrap?: boolean }>;
+
+      if (typeof customEvent.detail?.softWrap === "boolean") {
+        setSoftWrap(customEvent.detail.softWrap);
+      }
+    }
+
+    window.addEventListener("freeslotex:set-editor-font-size", handleSetEditorFontSize);
+    window.addEventListener("freeslotex:set-soft-wrap", handleSetSoftWrap);
+
+    return () => {
+      window.removeEventListener("freeslotex:set-editor-font-size", handleSetEditorFontSize);
+      window.removeEventListener("freeslotex:set-soft-wrap", handleSetSoftWrap);
+    };
+  }, []);
+
   const lineNumberText = useMemo(() => {
     const lineCount = Math.max(1, tex.split(/\r\n|\r|\n/).length);
     return Array.from({ length: lineCount }, (_, index) => String(index + 1)).join("\n");
