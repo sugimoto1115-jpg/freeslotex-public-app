@@ -1095,11 +1095,12 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
           zIndex: 2147483000,
           display: "flex",
           alignItems: "center",
-          gap: 6,
+          gap: 4,
           background: "#ffffff",
           borderBottom: "1px solid #e2e8f0",
           boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
-          padding: "5px 8px",
+          padding: "0px 4px",
+          minHeight: 28,
         }}
       >
       {editorMenuItems.map((item) => {
@@ -1117,7 +1118,8 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
               border: 0,
               background: "transparent",
               font: "inherit",
-            }}
+                            padding: "1px 5px",
+              }}
           >
             {item}
           </button>
@@ -1174,7 +1176,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: 6,
             marginLeft: "auto",
             flex: "0 0 auto",
           }}
@@ -1182,7 +1184,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
           <div
             className="fsx-user"
             style={{
-              maxWidth: 220,
+              maxWidth: 190,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -1192,7 +1194,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
           </div>
 
           <form action="/api/logout" method="post" style={{ margin: 0 }}>
-            <button type="submit" className="fsx-button">
+            <button type="submit" className="fsx-button" style={{ padding: "0 7px", lineHeight: 1, height: 22, minHeight: 0 }}>
               Logout
             </button>
           </form>
@@ -2834,7 +2836,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
       <div
         className="fsx-fixed-top-menu-spacer"
         aria-hidden="true"
-        style={{ height: 44, flex: "0 0 auto" }}
+        style={{ height: 30, flex: "0 0 auto" }}
       />
     </>
   );
