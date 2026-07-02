@@ -1314,14 +1314,14 @@ export default function TexEditorClient(props: Props) {
           ) : null}
 
           {isCompiling ? (
-            <span className="fsx-compile-progress" role="status" aria-live="polite">
+            <span className="fsx-compile-progress" role="status" aria-live="polite" style={{ display: "none" }}>
               <span className="fsx-compile-spinner" aria-hidden="true">
                 ⏳
               </span>
               <span>Compiling...</span>
             </span>
           ) : compileStatusMessage ? (
-            <span className="fsx-compile-status" role="status" aria-live="polite">
+            <span className="fsx-compile-status" role="status" aria-live="polite" style={{ display: "none" }}>
               {compileStatusMessage}
             </span>
           ) : null}
