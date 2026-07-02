@@ -795,7 +795,11 @@ type MenuPosition = {
   left: number;
 };
 
-export default function ProjectsTopMenu() {
+type ProjectsTopMenuProps = {
+  accountLabel?: string;
+};
+
+export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [viewEditorFontSize, setViewEditorFontSize] = useState(14);
@@ -1076,7 +1080,28 @@ export default function ProjectsTopMenu() {
   }
 
   return (
-    <nav ref={menuRootRef} className="fsx-editor-menubar" aria-label="FreeSloTeX editor menu">
+    <>
+      <nav
+        ref={menuRootRef}
+        className="fsx-editor-menubar"
+        aria-label="FreeSloTeX editor menu"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          width: "100%",
+          boxSizing: "border-box",
+          zIndex: 2147483000,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          background: "#ffffff",
+          borderBottom: "1px solid #e2e8f0",
+          boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
+          padding: "5px 8px",
+        }}
+      >
       {editorMenuItems.map((item) => {
         const hasDropdown = item === "File" || item === "View" || item === "TeX Insert" || item === "Math";
 
@@ -1141,6 +1166,37 @@ export default function ProjectsTopMenu() {
           </span>
           <span>Compiling...</span>
         </span>
+      ) : null}
+
+      {accountLabel ? (
+        <div
+          className="fsx-topbar-account"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginLeft: "auto",
+            flex: "0 0 auto",
+          }}
+        >
+          <div
+            className="fsx-user"
+            style={{
+              maxWidth: 220,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {accountLabel}
+          </div>
+
+          <form action="/api/logout" method="post" style={{ margin: 0 }}>
+            <button type="submit" className="fsx-button">
+              Logout
+            </button>
+          </form>
+        </div>
       ) : null}
 
       {openMenu === "File" ? (
@@ -2774,6 +2830,12 @@ export default function ProjectsTopMenu() {
         </div>
       ) : null}
 
-    </nav>
+      </nav>
+      <div
+        className="fsx-fixed-top-menu-spacer"
+        aria-hidden="true"
+        style={{ height: 44, flex: "0 0 auto" }}
+      />
+    </>
   );
 }

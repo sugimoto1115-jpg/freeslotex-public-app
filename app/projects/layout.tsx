@@ -16,10 +16,10 @@ export default async function ProjectsLayout({
           <div className="fsx-topbar-left">
             <div className="fsx-brand">FreeSloTeX</div>
 
-            <ProjectsTopMenu />
+            <ProjectsTopMenu accountLabel={user.displayName || user.email} />
           </div>
 
-          <div className="fsx-topbar-account">
+          <div className="fsx-topbar-account" style={{ display: "none" }}>
             <div className="fsx-user">{user.displayName || user.email}</div>
 
             <form action="/api/logout" method="post">
