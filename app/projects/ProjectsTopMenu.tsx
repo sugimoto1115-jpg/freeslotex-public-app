@@ -913,31 +913,61 @@ export default function ProjectsTopMenu() {
             boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
           }}
         >
-          {fileMenuItems.map((label, index) => (
-            <button
-              key={`${label}-${index}`}
-              type="button"
-              role="menuitem"
-              disabled
-              title="Not wired yet. Use the existing toolbar button for now."
-              style={{
-                display: "block",
-                width: "100%",
-                padding: "7px 10px",
-                border: 0,
-                borderRadius: 8,
-                background: "transparent",
-                color: "#64748b",
-                cursor: "not-allowed",
-                fontSize: 13,
-                fontWeight: 500,
-                textAlign: "left",
-                opacity: 0.72,
-              }}
-            >
-              {label}
-            </button>
-          ))}
+          {fileMenuItems.map((label, index) => {
+            if (label === "My workspace") {
+              return (
+                <a
+                  key={`${label}-${index}`}
+                  href="/workspace"
+                  role="menuitem"
+                  title="Open My workspace."
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "7px 10px",
+                    border: 0,
+                    borderRadius: 8,
+                    background: "transparent",
+                    color: "#334155",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    textAlign: "left",
+                    textDecoration: "none",
+                  }}
+                >
+                  {label}
+                </a>
+              );
+            }
+
+            return (
+              <button
+                key={`${label}-${index}`}
+                type="button"
+                role="menuitem"
+                disabled
+                title="Not wired yet. Use the existing toolbar button for now."
+                style={{
+                  display: "block",
+                  width: "100%",
+                  padding: "7px 10px",
+                  border: 0,
+                  borderRadius: 8,
+                  background: "transparent",
+                  color: "#64748b",
+                  cursor: "not-allowed",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  textAlign: "left",
+                  opacity: 0.72,
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       ) : null}
 
