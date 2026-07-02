@@ -16,6 +16,16 @@ const viewFontSizeMenuItems = ["12px", "14px", "16px", "18px", "20px", "22px", "
 
 const viewWrapMenuItems = ["Wrap Off", "Wrap On"];
 
+const fileMenuItems = [
+  "Save",
+  "Save as...",
+  "Download TeX",
+  "Download PDF",
+  "Back to Project",
+  "My workspace",
+];
+
+
 const texInsertMenuItems = [
   "見出し",
   "箇条書き",
@@ -839,7 +849,7 @@ export default function ProjectsTopMenu() {
   }
 
   function handleMenuClick(item: string, event: MouseEvent<HTMLButtonElement>) {
-    if (item !== "View" && item !== "TeX Insert" && item !== "Math") {
+    if (item !== "File" && item !== "View" && item !== "TeX Insert" && item !== "Math") {
       setOpenMenu(null);
       setActiveSubmenu(null);
       return;
@@ -862,7 +872,7 @@ export default function ProjectsTopMenu() {
   return (
     <nav ref={menuRootRef} className="fsx-editor-menubar" aria-label="FreeSloTeX editor menu">
       {editorMenuItems.map((item) => {
-        const hasDropdown = item === "View" || item === "TeX Insert" || item === "Math";
+        const hasDropdown = item === "File" || item === "View" || item === "TeX Insert" || item === "Math";
 
         return (
           <button
@@ -882,6 +892,54 @@ export default function ProjectsTopMenu() {
           </button>
         );
       })}
+
+      {openMenu === "File" ? (
+        <div
+          role="menu"
+          aria-label="File menu"
+          style={{
+            position: "fixed",
+            top: menuPosition.top,
+            left: menuPosition.left,
+            zIndex: 2147483647,
+            display: "flex",
+            minWidth: 210,
+            flexDirection: "column",
+            gap: 2,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {fileMenuItems.map((label, index) => (
+            <button
+              key={`${label}-${index}`}
+              type="button"
+              role="menuitem"
+              disabled
+              title="Not wired yet. Use the existing toolbar button for now."
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "7px 10px",
+                border: 0,
+                borderRadius: 8,
+                background: "transparent",
+                color: "#64748b",
+                cursor: "not-allowed",
+                fontSize: 13,
+                fontWeight: 500,
+                textAlign: "left",
+                opacity: 0.72,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {openMenu === "TeX Insert" ? (
         <div
