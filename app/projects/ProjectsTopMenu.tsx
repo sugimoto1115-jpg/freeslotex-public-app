@@ -803,6 +803,7 @@ export default function ProjectsTopMenu() {
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({ top: 42, left: 180 });
   const [submenuPosition, setSubmenuPosition] = useState<MenuPosition>({ top: 42, left: 420 });
   const menuRootRef = useRef<HTMLElement | null>(null);
+  const [topSmartCompileBusy, setTopSmartCompileBusy] = useState(false);
 
   useEffect(() => {
     if (openMenu === null) return;
@@ -869,6 +870,36 @@ export default function ProjectsTopMenu() {
     setOpenMenu((current) => (current === item ? null : item));
   }
 
+  function waitForExistingSmartCompileToFinish(button: HTMLButtonElement) {
+    const startedAt = Date.now();
+    let sawCompileState = false;
+
+    function check() {
+      const progress = document.querySelector(".fsx-compile-progress");
+      const stillCompiling = Boolean(progress) || button.disabled;
+
+      if (stillCompiling) {
+        sawCompileState = true;
+      }
+
+      const elapsed = Date.now() - startedAt;
+
+      if ((sawCompileState && !stillCompiling && elapsed > 500) || (!sawCompileState && elapsed > 4000)) {
+        setTopSmartCompileBusy(false);
+        return;
+      }
+
+      if (elapsed > 120000) {
+        setTopSmartCompileBusy(false);
+        return;
+      }
+
+      window.setTimeout(check, 250);
+    }
+
+    window.setTimeout(check, 250);
+  }
+
   function triggerExistingSmartCompileFromTopMenu() {
     setOpenMenu(null);
     setActiveSubmenu(null);
@@ -893,7 +924,9 @@ export default function ProjectsTopMenu() {
       return;
     }
 
+    setTopSmartCompileBusy(true);
     button.click();
+    waitForExistingSmartCompileToFinish(button);
   }
 
   function triggerExistingSaveFromFileMenu() {
@@ -1070,7 +1103,8 @@ export default function ProjectsTopMenu() {
         type="button"
         onClick={triggerExistingSmartCompileFromTopMenu}
         aria-label="Smart Compile"
-        title="Use the existing Smart Compile action."
+        title={topSmartCompileBusy ? "Compiling..." : "Use the existing Smart Compile action."}
+        disabled={topSmartCompileBusy}
         style={{
           marginLeft: 10,
           padding: "4px 10px",
@@ -1078,13 +1112,14 @@ export default function ProjectsTopMenu() {
           borderRadius: 8,
           background: "#2563eb",
           color: "#ffffff",
-          cursor: "pointer",
+          cursor: topSmartCompileBusy ? "not-allowed" : "pointer",
           fontSize: 12,
           fontWeight: 700,
+          opacity: topSmartCompileBusy ? 0.72 : 1,
           whiteSpace: "nowrap",
         }}
       >
-        Smart Compile
+        {topSmartCompileBusy ? "⏳ Compiling..." : "Smart Compile"}
       </button>
 
       {openMenu === "File" ? (
