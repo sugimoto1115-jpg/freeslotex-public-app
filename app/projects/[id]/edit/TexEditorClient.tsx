@@ -1028,7 +1028,7 @@ export default function TexEditorClient(props: Props) {
             onClick={() => runSaveCurrentFile()}
             disabled={isSavingFile || !currentFileCanBeSaved}
             title={`Save ${currentFileDisplayName}`}
-            style={{ padding: "1px 7px", fontSize: 12, width: "fit-content" }}
+            style={{ display: "none", padding: "1px 7px", fontSize: 12, width: "fit-content" }}
           >
             {isSavingFile ? "Saving..." : "Save"}
           </button>
@@ -1038,7 +1038,7 @@ export default function TexEditorClient(props: Props) {
             onClick={runSaveAsCurrentFile}
             disabled={isSavingFile || !props.canEdit}
             title={`Save current content as another TeX file, e.g. ${saveAsSuggestedPath}`}
-            style={{ padding: "1px 7px", fontSize: 12, width: "fit-content" }}
+            style={{ display: "none", padding: "1px 7px", fontSize: 12, width: "fit-content" }}
           >
             Save as...
           </button>
