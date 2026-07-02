@@ -869,6 +869,25 @@ export default function ProjectsTopMenu() {
     setOpenMenu((current) => (current === item ? null : item));
   }
 
+  function triggerExistingSaveFromFileMenu() {
+    setOpenMenu(null);
+    setActiveSubmenu(null);
+
+    const button = document.querySelector<HTMLButtonElement>(".fsx-save-current-inline");
+
+    if (!button) {
+      window.alert("Save button was not found. Please use the existing toolbar button.");
+      return;
+    }
+
+    if (button.disabled) {
+      window.alert("Save is currently unavailable.");
+      return;
+    }
+
+    button.click();
+  }
+
   function triggerExistingSaveAsFromFileMenu() {
     setOpenMenu(null);
     setActiveSubmenu(null);
@@ -1041,6 +1060,33 @@ export default function ProjectsTopMenu() {
           }}
         >
           {fileMenuItems.map((label, index) => {
+            if (label === "Save") {
+              return (
+                <button
+                  key={`${label}-${index}`}
+                  type="button"
+                  role="menuitem"
+                  title="Use the existing Save action."
+                  onClick={triggerExistingSaveFromFileMenu}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    padding: "7px 10px",
+                    border: 0,
+                    borderRadius: 8,
+                    background: "transparent",
+                    color: "#334155",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    textAlign: "left",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            }
+
             if (label === "Save as...") {
               return (
                 <button
