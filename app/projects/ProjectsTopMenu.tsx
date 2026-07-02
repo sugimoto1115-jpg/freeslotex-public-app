@@ -1119,8 +1119,29 @@ export default function ProjectsTopMenu() {
           whiteSpace: "nowrap",
         }}
       >
-        {topSmartCompileBusy ? "⏳ Compiling..." : "Smart Compile"}
+        Smart Compile
       </button>
+      {topSmartCompileBusy ? (
+        <span
+          className="top-smart-compile-progress"
+          aria-live="polite"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            marginLeft: 6,
+            color: "#475569",
+            fontSize: 12,
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span className="fsx-compile-spinner" aria-hidden="true">
+            ⏳
+          </span>
+          <span>Compiling...</span>
+        </span>
+      ) : null}
 
       {openMenu === "File" ? (
         <div
