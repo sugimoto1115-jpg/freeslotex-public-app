@@ -869,6 +869,33 @@ export default function ProjectsTopMenu() {
     setOpenMenu((current) => (current === item ? null : item));
   }
 
+  function triggerExistingSmartCompileFromTopMenu() {
+    setOpenMenu(null);
+    setActiveSubmenu(null);
+
+    const menuRoot = menuRootRef.current;
+    const button = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
+      (candidate) => {
+        if (menuRoot?.contains(candidate)) return false;
+
+        const text = candidate.textContent?.replace(/\s+/g, " ").trim();
+        return text === "Smart Compile";
+      }
+    );
+
+    if (!button) {
+      window.alert("Smart Compile button was not found. Please use the existing toolbar button.");
+      return;
+    }
+
+    if (button.disabled) {
+      window.alert("Smart Compile is currently unavailable.");
+      return;
+    }
+
+    button.click();
+  }
+
   function triggerExistingSaveFromFileMenu() {
     setOpenMenu(null);
     setActiveSubmenu(null);
@@ -1038,6 +1065,27 @@ export default function ProjectsTopMenu() {
           </button>
         );
       })}
+
+      <button
+        type="button"
+        onClick={triggerExistingSmartCompileFromTopMenu}
+        aria-label="Smart Compile"
+        title="Use the existing Smart Compile action."
+        style={{
+          marginLeft: 10,
+          padding: "4px 10px",
+          border: "1px solid #2563eb",
+          borderRadius: 8,
+          background: "#2563eb",
+          color: "#ffffff",
+          cursor: "pointer",
+          fontSize: 12,
+          fontWeight: 700,
+          whiteSpace: "nowrap",
+        }}
+      >
+        Smart Compile
+      </button>
 
       {openMenu === "File" ? (
         <div
