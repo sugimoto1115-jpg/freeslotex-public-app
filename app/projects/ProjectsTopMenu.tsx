@@ -869,6 +869,26 @@ export default function ProjectsTopMenu() {
     setOpenMenu((current) => (current === item ? null : item));
   }
 
+  function downloadMainPdfFromFileMenu() {
+    const match = window.location.pathname.match(/^\/projects\/([^/]+)/);
+    const projectId = match?.[1];
+
+    setOpenMenu(null);
+    setActiveSubmenu(null);
+
+    if (!projectId) {
+      window.location.href = "/projects";
+      return;
+    }
+
+    const anchor = document.createElement("a");
+    anchor.href = `/api/projects/${encodeURIComponent(projectId)}/pdf?file=main.pdf`;
+    anchor.download = "main.pdf";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  }
+
   function openCurrentProjectFromFileMenu() {
     const match = window.location.pathname.match(/^\/projects\/([^/]+)/);
     const projectId = match?.[1];
@@ -929,6 +949,33 @@ export default function ProjectsTopMenu() {
           }}
         >
           {fileMenuItems.map((label, index) => {
+            if (label === "Download PDF") {
+              return (
+                <button
+                  key={`${label}-${index}`}
+                  type="button"
+                  role="menuitem"
+                  title="Download main.pdf."
+                  onClick={downloadMainPdfFromFileMenu}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    padding: "7px 10px",
+                    border: 0,
+                    borderRadius: 8,
+                    background: "transparent",
+                    color: "#334155",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    textAlign: "left",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            }
+
             if (label === "Back to Project") {
               return (
                 <button
