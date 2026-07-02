@@ -2836,7 +2836,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
       <div
         className="fsx-fixed-top-menu-spacer"
         aria-hidden="true"
-        style={{ height: 30, flex: "0 0 auto" }}
+        style={{ height: 0, flex: "0 0 auto" }}
       />
     </>
   );
