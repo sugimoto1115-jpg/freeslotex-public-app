@@ -1286,6 +1286,7 @@ export default function TexEditorClient(props: Props) {
             onClick={downloadCurrentFile}
             className="fsx-button"
             title={`Download ${currentFileDisplayName}`}
+            style={{ display: "none" }}
           >
             Download TeX
           </button>
@@ -1296,17 +1297,18 @@ export default function TexEditorClient(props: Props) {
               onClick={runSmartCompile}
               disabled={isCompiling}
               className="fsx-button fsx-button-primary"
+              style={{ display: "none" }}
             >
               {isCompiling ? "Compiling..." : "Smart Compile"}
             </button>
           ) : (
-            <span className="fsx-button" aria-disabled="true">
+            <span className="fsx-button" aria-disabled="true" style={{ display: "none" }}>
               Viewer cannot compile
             </span>
           )}
 
           {livePdfExists ? (
-            <a href={`/api/projects/${props.projectId}/pdf?file=${encodedCurrentPdfFile}`} className="fsx-button fsx-button-primary">
+            <a href={`/api/projects/${props.projectId}/pdf?file=${encodedCurrentPdfFile}`} className="fsx-button fsx-button-primary" style={{ display: "none" }}>
               Download PDF
             </a>
           ) : null}
