@@ -869,6 +869,21 @@ export default function ProjectsTopMenu() {
     setOpenMenu((current) => (current === item ? null : item));
   }
 
+  function openCurrentProjectFromFileMenu() {
+    const match = window.location.pathname.match(/^\/projects\/([^/]+)/);
+    const projectId = match?.[1];
+
+    setOpenMenu(null);
+    setActiveSubmenu(null);
+
+    if (!projectId) {
+      window.location.href = "/projects";
+      return;
+    }
+
+    window.location.href = `/projects/${projectId}`;
+  }
+
   return (
     <nav ref={menuRootRef} className="fsx-editor-menubar" aria-label="FreeSloTeX editor menu">
       {editorMenuItems.map((item) => {
@@ -914,6 +929,33 @@ export default function ProjectsTopMenu() {
           }}
         >
           {fileMenuItems.map((label, index) => {
+            if (label === "Back to Project") {
+              return (
+                <button
+                  key={`${label}-${index}`}
+                  type="button"
+                  role="menuitem"
+                  title="Open the current project page."
+                  onClick={openCurrentProjectFromFileMenu}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    padding: "7px 10px",
+                    border: 0,
+                    borderRadius: 8,
+                    background: "transparent",
+                    color: "#334155",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    textAlign: "left",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            }
+
             if (label === "My workspace") {
               return (
                 <a
