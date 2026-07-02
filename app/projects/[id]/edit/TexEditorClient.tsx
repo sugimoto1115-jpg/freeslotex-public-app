@@ -1046,7 +1046,91 @@ export default function TexEditorClient(props: Props) {
         </div>
 
         <div className="fsx-editor-header-tools">
+          <div
+            className="fsx-actions fsx-editor-navigation-actions-top"
+            aria-label="Editor preferences and navigation"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              flexWrap: "wrap",
+            }}
+          >
+            <div className="fsx-editor-pref-actions" aria-label="Editor preferences" style={{ display: "none" }}>
+              <button
+                type="button"
+                className="fsx-button"
+                onClick={() => setShowFontSizePicker((value) => !value)}
+                aria-expanded={showFontSizePicker}
+                title="Show font size options"
+                style={{ padding: "6px 9px", fontSize: 12 }}
+              >
+                Font {editorFontSize}px {showFontSizePicker ? "▾" : "▸"}
+              </button>
+
+              {showFontSizePicker ? (
+                <>
+                  {([12, 14, 16, 18, 20, 22, 24] as const).map((value) => (
+                    <button
+                      key={`top-font-${value}`}
+                      type="button"
+                      className={editorFontSize === value ? "fsx-button fsx-button-primary" : "fsx-button"}
+                      onClick={() => {
+                        setEditorFontSize(value);
+                        setShowFontSizePicker(false);
+                      }}
+                      style={{ padding: "6px 9px", fontSize: 12 }}
+                    >
+                      {value}px
+                    </button>
+                  ))}
+                </>
+              ) : null}
+
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 1,
+                  height: 24,
+                  background: "#cbd5e1",
+                  margin: "0 4px",
+                }}
+              />
+
+              <span className="fsx-muted" style={{ fontWeight: 700 }}>
+                Wrap
+              </span>
+
+              <button
+                type="button"
+                className={!softWrap ? "fsx-button fsx-button-primary" : "fsx-button"}
+                onClick={() => setSoftWrap(false)}
+                style={{ padding: "6px 9px", fontSize: 12 }}
+              >
+                Off
+              </button>
+
+              <button
+                type="button"
+                className={softWrap ? "fsx-button fsx-button-primary" : "fsx-button"}
+                onClick={() => setSoftWrap(true)}
+                style={{ padding: "6px 9px", fontSize: 12 }}
+              >
+                On
+              </button>
+            </div>
+
+            <a href={`/projects/${props.projectId}`} className="fsx-button" style={{ display: "none" }}>
+              Back to Project
+            </a>
+
+            <a href="/workspace" className="fsx-button" style={{ display: "none" }}>
+              My workspace
+            </a>
+          </div>
+
         <div
+          style={{ display: "none" }}
           className={
             showTexHelpers
               ? "fsx-editor-command-bar fsx-editor-command-bar-open"
