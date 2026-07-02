@@ -869,6 +869,79 @@ export default function ProjectsTopMenu() {
     setOpenMenu((current) => (current === item ? null : item));
   }
 
+  async function downloadMainTexFromFileMenu() {
+    const match = window.location.pathname.match(/^\/projects\/([^/]+)/);
+    const projectId = match?.[1];
+
+    setOpenMenu(null);
+    setActiveSubmenu(null);
+
+    if (!projectId) {
+      window.location.href = "/projects";
+      return;
+    }
+
+    const encodedProjectId = encodeURIComponent(projectId);
+    const encodedFileName = encodeURIComponent("main.tex");
+    const readUrls = [
+      `/api/projects/${encodedProjectId}/files/read?path=${encodedFileName}`,
+      `/api/projects/${encodedProjectId}/files/read?relativePath=${encodedFileName}`,
+      `/api/projects/${encodedProjectId}/files/read?file=${encodedFileName}`,
+    ];
+
+    let content = "";
+
+    for (const readUrl of readUrls) {
+      try {
+        const response = await fetch(readUrl, { cache: "no-store" });
+        if (!response.ok) continue;
+
+        const data = (await response.json()) as {
+          content?: unknown;
+          text?: unknown;
+          file?: {
+            content?: unknown;
+            text?: unknown;
+          };
+        };
+
+        const candidate =
+          typeof data.content === "string"
+            ? data.content
+            : typeof data.text === "string"
+              ? data.text
+              : typeof data.file?.content === "string"
+                ? data.file.content
+                : typeof data.file?.text === "string"
+                  ? data.file.text
+                  : "";
+
+        if (candidate) {
+          content = candidate;
+          break;
+        }
+      } catch {
+        // Try the next compatible query shape.
+      }
+    }
+
+    if (!content) {
+      window.alert("Could not download main.tex. Please use the existing Download TeX button.");
+      return;
+    }
+
+    const blob = new Blob([content], { type: "application/x-tex;charset=utf-8" });
+    const objectUrl = window.URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = objectUrl;
+    anchor.download = "main.tex";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(objectUrl);
+  }
+
   function downloadMainPdfFromFileMenu() {
     const match = window.location.pathname.match(/^\/projects\/([^/]+)/);
     const projectId = match?.[1];
@@ -949,6 +1022,35 @@ export default function ProjectsTopMenu() {
           }}
         >
           {fileMenuItems.map((label, index) => {
+            if (label === "Download TeX") {
+              return (
+                <button
+                  key={`${label}-${index}`}
+                  type="button"
+                  role="menuitem"
+                  title="Download main.tex."
+                  onClick={() => {
+                    void downloadMainTexFromFileMenu();
+                  }}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    padding: "7px 10px",
+                    border: 0,
+                    borderRadius: 8,
+                    background: "transparent",
+                    color: "#334155",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    textAlign: "left",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            }
+
             if (label === "Download PDF") {
               return (
                 <button
