@@ -869,6 +869,25 @@ export default function ProjectsTopMenu() {
     setOpenMenu((current) => (current === item ? null : item));
   }
 
+  function triggerExistingSaveAsFromFileMenu() {
+    setOpenMenu(null);
+    setActiveSubmenu(null);
+
+    const button = document.querySelector<HTMLButtonElement>(".fsx-save-as-inline");
+
+    if (!button) {
+      window.alert("Save as... button was not found. Please use the existing toolbar button.");
+      return;
+    }
+
+    if (button.disabled) {
+      window.alert("Save as... is currently unavailable.");
+      return;
+    }
+
+    button.click();
+  }
+
   async function downloadMainTexFromFileMenu() {
     const match = window.location.pathname.match(/^\/projects\/([^/]+)/);
     const projectId = match?.[1];
@@ -1022,6 +1041,33 @@ export default function ProjectsTopMenu() {
           }}
         >
           {fileMenuItems.map((label, index) => {
+            if (label === "Save as...") {
+              return (
+                <button
+                  key={`${label}-${index}`}
+                  type="button"
+                  role="menuitem"
+                  title="Use the existing Save as... action."
+                  onClick={triggerExistingSaveAsFromFileMenu}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    padding: "7px 10px",
+                    border: 0,
+                    borderRadius: 8,
+                    background: "transparent",
+                    color: "#334155",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    textAlign: "left",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            }
+
             if (label === "Download TeX") {
               return (
                 <button
