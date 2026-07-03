@@ -390,6 +390,9 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               >
                 Edit main.tex
               </Link>
+              <a href={`/api/projects/${id}/download`} className="fsx-button">
+                Download ZIP
+              </a>
               <Link href="/projects" className="fsx-button">
                 Projects
               </Link>
