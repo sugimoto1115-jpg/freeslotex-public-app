@@ -326,7 +326,7 @@ export default function TexEditorClient(props: Props) {
             savedEditorHeight <= 260 ? savedEditorHeight + 200 : savedEditorHeight;
 
           setEditorHeight(
-            clamp(migratedEditorHeight, 320, Math.max(700, window.innerHeight - 40))
+            clamp(migratedEditorHeight, 320, Math.max(1200, window.innerHeight * 1.6))
           );
         }
 
@@ -859,7 +859,7 @@ export default function TexEditorClient(props: Props) {
     const onMove = (moveEvent: PointerEvent) => {
       const dy = moveEvent.clientY - startY;
 
-      setEditorHeight(clamp(startEditorHeight + dy, 320, Math.max(700, window.innerHeight - 40)));
+      setEditorHeight(clamp(startEditorHeight + dy, 320, Math.max(1200, window.innerHeight * 1.6)));
       setTerminalHeight(clamp(startTerminalHeight - dy, 160, Math.max(220, window.innerHeight - 260)));
     };
 
