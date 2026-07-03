@@ -1464,7 +1464,15 @@ export default function TexEditorClient(props: Props) {
                     type="button"
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => goToLine(item.line)}
-                    className="fsx-outline-row"
+                    className={
+                      item.level === "paragraph"
+                        ? "fsx-outline-row fsx-outline-row-paragraph"
+                        : item.level === "subsubsection"
+                          ? "fsx-outline-row fsx-outline-row-subsubsection"
+                          : item.level === "subsection"
+                            ? "fsx-outline-row fsx-outline-row-subsection"
+                            : "fsx-outline-row"
+                    }
                     style={{ paddingLeft: 6 + outlineIndent(item.level) }}
                     title={`line ${item.line}: ${item.title}`}
                   >

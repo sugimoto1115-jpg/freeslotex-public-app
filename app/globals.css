@@ -1786,3 +1786,42 @@ a {
     text-overflow: ellipsis;
   }
 }
+
+/* FreeSloTeX subsection outline rows */
+.fsx-editor-main .fsx-outline-row.fsx-outline-row-subsection,
+.fsx-editor-main .fsx-outline-row.fsx-outline-row-subsection span {
+  font-size: 11px !important;
+  line-height: 1.08 !important;
+}
+
+.fsx-editor-main .fsx-outline-row.fsx-outline-row-subsection {
+  min-height: 16px !important;
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+}
+
+/* FreeSloTeX subsubsection outline rows */
+.fsx-editor-main .fsx-outline-row.fsx-outline-row-subsubsection,
+.fsx-editor-main .fsx-outline-row.fsx-outline-row-subsubsection span {
+  font-size: 10px !important;
+  line-height: 1.04 !important;
+}
+
+.fsx-editor-main .fsx-outline-row.fsx-outline-row-subsubsection {
+  min-height: 14px !important;
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+}
+
+/* FreeSloTeX paragraph outline rows */
+.fsx-editor-main .fsx-outline-row.fsx-outline-row-paragraph,
+.fsx-editor-main .fsx-outline-row.fsx-outline-row-paragraph span {
+  font-size: 9px !important;
+  line-height: 1.02 !important;
+}
+
+.fsx-editor-main .fsx-outline-row.fsx-outline-row-paragraph {
+  min-height: 13px !important;
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+}
