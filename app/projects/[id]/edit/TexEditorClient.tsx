@@ -262,6 +262,8 @@ export default function TexEditorClient(props: Props) {
 
 
   const [softWrap, setSoftWrap] = useState(false);
+  const [showParagraphInOutline, setShowParagraphInOutline] = useState(true);
+  const [outlinePreferencesLoaded, setOutlinePreferencesLoaded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lineGutterRef = useRef<HTMLDivElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -546,7 +548,43 @@ export default function TexEditorClient(props: Props) {
     return Array.from({ length: lineCount }, (_, index) => String(index + 1)).join("\n");
   }, [tex]);
 
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("freeslotex.showParagraphInOutline");
+
+      if (saved === "0") {
+        setShowParagraphInOutline(false);
+      } else if (saved === "1") {
+        setShowParagraphInOutline(true);
+      }
+    } catch {
+      // Ignore storage errors. Outline still works with the default setting.
+    } finally {
+      setOutlinePreferencesLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!outlinePreferencesLoaded) return;
+
+    try {
+      window.localStorage.setItem(
+        "freeslotex.showParagraphInOutline",
+        showParagraphInOutline ? "1" : "0"
+      );
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [outlinePreferencesLoaded, showParagraphInOutline]);
+
   const liveOutline = useMemo(() => parseLiveOutline(tex), [tex]);
+  const visibleOutline = useMemo(
+    () =>
+      showParagraphInOutline
+        ? liveOutline
+        : liveOutline.filter((item) => item.level !== "paragraph"),
+    [liveOutline, showParagraphInOutline]
+  );
   const currentFileDisplayName = currentFilePath || "main.tex";
   const saveAsSuggestedPath = currentFilePath.endsWith(".tex")
     ? currentFilePath.replace(/\.tex$/i, "_copy.tex")
@@ -1450,15 +1488,29 @@ export default function TexEditorClient(props: Props) {
             <div className="fsx-panel-head" style={{ marginBottom: 6 }}>
               <div>
                 <h2 className="fsx-panel-title">Outline</h2>
-                <p className="fsx-panel-note">Explorer style / click to jump</p>
+                <button
+                  type="button"
+                  className={showParagraphInOutline ? "fsx-button fsx-button-primary" : "fsx-button"}
+                  onClick={() => setShowParagraphInOutline((value) => !value)}
+                  title="Show or hide paragraph entries in the outline."
+                  style={{
+                    padding: "2px 7px",
+                    fontSize: 11,
+                    lineHeight: 1,
+                    marginTop: 4,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Paragraph {showParagraphInOutline ? "On" : "Off"}
+                </button>
               </div>
             </div>
 
-            {liveOutline.length === 0 ? (
+            {visibleOutline.length === 0 ? (
               <div className="fsx-empty-box">No outline items.</div>
             ) : (
               <div className="fsx-outline-tree" role="tree" aria-label="Document outline">
-                {liveOutline.map((item, index) => (
+                {visibleOutline.map((item, index) => (
                   <button
                     key={`${item.level}-${item.line}-${index}`}
                     type="button"
