@@ -634,6 +634,134 @@ export default function TexEditorClient(props: Props) {
     window.setTimeout(() => setCopySummaryStatus(""), 1800);
   }
 
+  function extractLatexErrorLineNumber(text: string) {
+    const locationMatch = text.match(/(\d+)行目/);
+    if (locationMatch?.[1]) {
+      const value = Number(locationMatch[1]);
+      if (Number.isInteger(value) && value > 0) return value;
+    }
+
+    const logMatch = text.match(/(?:^|\n)l\.(\d+)/);
+    if (logMatch?.[1]) {
+      const value = Number(logMatch[1]);
+      if (Number.isInteger(value) && value > 0) return value;
+    }
+
+    return null;
+  }
+
+  function makeSourceExcerptAroundLine(lineNumber: number | null, radius = 15) {
+    const lines = tex.split(/\r\n|\r|\n/);
+
+    if (!lineNumber) {
+      return [
+        "該当行番号を自動特定できませんでした。",
+        "必要に応じて、エラー行付近のTeX本文を確認してください。",
+      ].join("\n");
+    }
+
+    const safeLine = Math.min(Math.max(1, lineNumber), lines.length);
+    const start = Math.max(1, safeLine - radius);
+    const end = Math.min(lines.length, safeLine + radius);
+
+    return lines
+      .slice(start - 1, end)
+      .map((line, index) => {
+        const currentLine = start + index;
+        const marker = currentLine === safeLine ? ">" : " ";
+        return `${marker} ${String(currentLine).padStart(4, " ")} | ${line}`;
+      })
+      .join("\n");
+  }
+
+  function makeAiPromptForCompileError() {
+    const errorSummary = liveCompileErrorSummary || "エラー要約はありません。";
+    const combinedLog = [
+      liveFsxLogTail ? `===== FreeSloTeX compile log =====\n${liveFsxLogTail}` : "",
+      liveTexLogTail ? `===== TeX log tail =====\n${liveTexLogTail}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const lineNumber = extractLatexErrorLineNumber(errorSummary);
+    const sourceExcerpt = makeSourceExcerptAroundLine(lineNumber);
+
+    return [
+      "あなたはLaTeXエラー診断AIです。",
+      "以下のFreeSloTeXのコンパイルエラーを診断してください。",
+      "",
+      "重要な制約:",
+      "- 文書全体を書き換えないでください。",
+      "- 原因を特定し、最小限の修正だけを提案してください。",
+      "- 不確実な場合は、追加で確認すべき箇所を明示してください。",
+      "- 回答は日本語でお願いします。",
+      "",
+      "回答形式:",
+      "1. 原因",
+      "2. 該当箇所",
+      "3. 最小修正案",
+      "4. 補足確認事項",
+      "",
+      "プロジェクト情報:",
+      `- Project ID: ${props.projectId}`,
+      `- 現在のファイル: ${currentFilePath}`,
+      `- コンパイル対象: ${currentFilePath}`,
+      `- エンジン: ${liveEngine || "unknown"}`,
+      lineNumber ? `- 推定エラー行: ${lineNumber}行目付近` : "- 推定エラー行: 不明",
+      "",
+      "エラー要約:",
+      "```text",
+      errorSummary,
+      "```",
+      "",
+      "該当行付近のTeX本文:",
+      "```tex",
+      sourceExcerpt,
+      "```",
+      "",
+      "TeXログ抜粋:",
+      "```text",
+      combinedLog || "TeXログ抜粋はありません。",
+      "```",
+    ].join("\n");
+  }
+
+  async function copyAiPromptForCompileError() {
+    if (!liveCompileErrorSummary) return;
+
+    const text = makeAiPromptForCompileError();
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        throw new Error("Clipboard API is unavailable");
+      }
+
+      setCopySummaryStatus("AI prompt copied");
+    } catch {
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "true");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        textarea.style.top = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+        setCopySummaryStatus("AI prompt copied");
+      } catch {
+        setCopySummaryStatus("AI prompt copy failed");
+      }
+    }
+
+    window.setTimeout(() => setCopySummaryStatus(""), 2400);
+  }
+
+
   async function runSaveCurrentFile(options: { silent?: boolean } = {}) {
     if (!props.canEdit) return false;
 
@@ -1727,6 +1855,14 @@ export default function TexEditorClient(props: Props) {
                     style={{ padding: "6px 10px", fontSize: 12 }}
                   >
                     Copy error summary
+                  </button>
+                  <button
+                    type="button"
+                    className="fsx-button"
+                    onClick={copyAiPromptForCompileError}
+                    style={{ padding: "6px 10px", fontSize: 12 }}
+                  >
+                    Copy AI prompt
                   </button>
                 </div>
               ) : null}
