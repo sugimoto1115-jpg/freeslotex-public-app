@@ -881,6 +881,11 @@ export default function TexEditorClient(props: Props) {
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
+    const previousTextareaScrollTop = textarea.scrollTop;
+    const previousTextareaScrollLeft = textarea.scrollLeft;
+    const previousLineGutterScrollTop = lineGutterRef.current?.scrollTop ?? previousTextareaScrollTop;
+    const previousWindowScrollX = window.scrollX;
+    const previousWindowScrollY = window.scrollY;
     const before = tex.slice(0, start);
     const selected = tex.slice(start, end);
     const after = tex.slice(end);
@@ -900,9 +905,20 @@ export default function TexEditorClient(props: Props) {
 
     setTex(next);
 
-    window.requestAnimationFrame(() => {
-      textarea.focus();
+    const restoreSelectionAndScroll = () => {
+      textarea.focus({ preventScroll: true });
       textarea.setSelectionRange(cursor, cursor);
+      textarea.scrollTop = previousTextareaScrollTop;
+      textarea.scrollLeft = previousTextareaScrollLeft;
+      if (lineGutterRef.current) {
+        lineGutterRef.current.scrollTop = previousLineGutterScrollTop;
+      }
+      window.scrollTo(previousWindowScrollX, previousWindowScrollY);
+    };
+
+    window.requestAnimationFrame(() => {
+      restoreSelectionAndScroll();
+      window.requestAnimationFrame(restoreSelectionAndScroll);
     });
   }
 
