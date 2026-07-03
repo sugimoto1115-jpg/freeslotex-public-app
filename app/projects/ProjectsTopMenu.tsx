@@ -1190,6 +1190,26 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   }
 
 
+  function resetEditorLayoutFromViewMenu() {
+    const ok = window.confirm(
+      "Reset editor/PDF layout? Font size, wrap, and PDF zoom will be kept."
+    );
+
+    if (!ok) return;
+
+    try {
+      window.localStorage.removeItem("freeslotex.editorLayout");
+      window.localStorage.removeItem("freeslotex.pdfPreviewHeight");
+    } catch {
+      // Ignore storage errors. Reload still gives the default in-memory layout.
+    }
+
+    setOpenMenu(null);
+    setActiveSubmenu(null);
+    window.location.reload();
+  }
+
+
   return (
     <>
       <nav
@@ -1828,6 +1848,46 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
               </button>
             );
           })}
+          <div
+            aria-hidden="true"
+            style={{
+              height: 1,
+              margin: "4px 0",
+              background: "#e2e8f0",
+            }}
+          />
+          <div
+            style={{
+              padding: "6px 10px 2px",
+              color: "#64748b",
+              fontSize: 12,
+              fontWeight: 700,
+            }}
+          >
+            Layout
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            title="Reset editor, terminal, and PDF preview layout."
+            onClick={resetEditorLayoutFromViewMenu}
+            style={{
+              display: "block",
+              width: "100%",
+              padding: "7px 10px",
+              border: 0,
+              borderRadius: 8,
+              background: "transparent",
+              color: "#334155",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 500,
+              textAlign: "left",
+            }}
+          >
+            Reset layout
+          </button>
+
         </div>
       ) : null}
 
