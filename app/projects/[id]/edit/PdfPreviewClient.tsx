@@ -108,7 +108,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
       const savedHeight = Number(window.localStorage.getItem("freeslotex.pdfPreviewHeight"));
 
       if (Number.isFinite(savedHeight)) {
-        setPreviewHeight(clamp(savedHeight, 300, Math.max(420, window.innerHeight - 80)));
+        setPreviewHeight(clamp(savedHeight, 300, Math.max(1200, window.innerHeight * 1.6)));
       }
     } catch {
       // Ignore storage errors. PDF preview still works with default height.
@@ -155,7 +155,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
     const fitToViewport = () => {
       setPreviewHeight((value) => {
         const preferred = Math.max(360, window.innerHeight - 230);
-        return clamp(value || preferred, 300, Math.max(420, window.innerHeight - 120));
+        return clamp(value || preferred, 300, Math.max(1200, window.innerHeight * 1.6));
       });
     };
 
@@ -172,7 +172,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
 
     const onMove = (moveEvent: PointerEvent) => {
       const dy = moveEvent.clientY - startY;
-      setPreviewHeight(clamp(startHeight + dy, 300, Math.max(420, window.innerHeight - 80)));
+      setPreviewHeight(clamp(startHeight + dy, 300, Math.max(1200, window.innerHeight * 1.6)));
     };
 
     const onUp = () => {
