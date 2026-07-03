@@ -70,6 +70,7 @@ function outlineIcon(level: string) {
   if (level === "section") return "§";
   if (level === "subsection") return "¶";
   if (level === "subsubsection") return "•";
+  if (level === "paragraph") return "◦";
   return "–";
 }
 
@@ -79,6 +80,7 @@ function outlineIndent(level: string) {
   if (level === "section") return 1;
   if (level === "subsection") return 7;
   if (level === "subsubsection") return 12;
+  if (level === "paragraph") return 17;
   return 1;
 }
 
@@ -105,7 +107,7 @@ function isEditableTextPath(relativePath: string) {
 
 function parseLiveOutline(tex: string): OutlineItem[] {
   const items: OutlineItem[] = [];
-  const re = /\\(part|chapter|section|subsection|subsubsection)\*?\{([^}]*)\}/g;
+  const re = /\\(part|chapter|section|subsection|subsubsection|paragraph)\*?\{([^}]*)\}/g;
 
   for (const match of tex.matchAll(re)) {
     const index = match.index ?? 0;
