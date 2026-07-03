@@ -265,7 +265,7 @@ export default function TexEditorClient(props: Props) {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const [leftWidth, setLeftWidth] = useState(280);
   const [rightWidth, setRightWidth] = useState(640);
-  const [editorHeight, setEditorHeight] = useState(180);
+  const [editorHeight, setEditorHeight] = useState(380);
   const [terminalHeight, setTerminalHeight] = useState(320);
   const [copySummaryStatus, setCopySummaryStatus] = useState("");
   const [isCompiling, setIsCompiling] = useState(false);
@@ -322,7 +322,12 @@ export default function TexEditorClient(props: Props) {
         }
 
         if (Number.isFinite(savedEditorHeight)) {
-          setEditorHeight(clamp(savedEditorHeight, 120, 220));
+          const migratedEditorHeight =
+            savedEditorHeight <= 260 ? savedEditorHeight + 200 : savedEditorHeight;
+
+          setEditorHeight(
+            clamp(migratedEditorHeight, 320, Math.max(700, window.innerHeight - 40))
+          );
         }
 
         if (Number.isFinite(savedTerminalHeight)) {
@@ -854,7 +859,7 @@ export default function TexEditorClient(props: Props) {
     const onMove = (moveEvent: PointerEvent) => {
       const dy = moveEvent.clientY - startY;
 
-      setEditorHeight(clamp(startEditorHeight + dy, 120, Math.max(360, window.innerHeight - 220)));
+      setEditorHeight(clamp(startEditorHeight + dy, 320, Math.max(700, window.innerHeight - 40)));
       setTerminalHeight(clamp(startTerminalHeight - dy, 160, Math.max(220, window.innerHeight - 260)));
     };
 
@@ -1535,7 +1540,7 @@ export default function TexEditorClient(props: Props) {
                       gridTemplateColumns: "30px minmax(0, 1fr)",
                       width: editorBodyWidth,
                       maxWidth: "100%",
-                      height: `${editorHeight + 200}px`,
+                      height: `${editorHeight}px`,
                       minHeight: 120,
                       resize: "none",
                       overflow: "hidden",
