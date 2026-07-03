@@ -12,6 +12,8 @@ const editorMenuItems = [
   "Help",
 ];
 
+const editSearchMenuItems = ["Find"];
+
 const viewFontSizeMenuItems = ["12px", "14px", "16px", "18px", "20px", "22px", "24px"];
 
 const viewWrapMenuItems = ["Wrap Off", "Wrap On"];
@@ -803,6 +805,11 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [viewEditorFontSize, setViewEditorFontSize] = useState(14);
+  const [showFindPanel, setShowFindPanel] = useState(false);
+  const [findQuery, setFindQuery] = useState("");
+  const [findMessage, setFindMessage] = useState("");
+  const [findPanelPosition, setFindPanelPosition] = useState({ top: 34, left: 12 });
+  const findInputRef = useRef<HTMLInputElement | null>(null);
   const [viewSoftWrap, setViewSoftWrap] = useState(false);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({ top: 42, left: 180 });
   const [submenuPosition, setSubmenuPosition] = useState<MenuPosition>({ top: 42, left: 420 });
@@ -854,7 +861,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   }
 
   function handleMenuClick(item: string, event: MouseEvent<HTMLButtonElement>) {
-    if (item !== "File" && item !== "View" && item !== "TeX Insert" && item !== "Math") {
+    if (item !== "File" && item !== "Edit & Search" && item !== "View" && item !== "TeX Insert" && item !== "Math") {
       setOpenMenu(null);
       setActiveSubmenu(null);
       return;
@@ -1079,6 +1086,110 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
     window.location.href = `/projects/${projectId}`;
   }
 
+  function getEditorTextareaForFind() {
+    return document.querySelector<HTMLTextAreaElement>('textarea[name="content"]');
+  }
+
+  function getFindPanelPosition(textarea: HTMLTextAreaElement | null) {
+    if (!textarea) {
+      return { top: 34, left: 12 };
+    }
+
+    const rect = textarea.getBoundingClientRect();
+    const panelWidth = 420;
+    const maxLeft = Math.max(8, window.innerWidth - panelWidth);
+    const maxTop = Math.max(34, window.innerHeight - 84);
+
+    return {
+      top: Math.max(34, Math.min(rect.top + 8, maxTop)),
+      left: Math.max(8, Math.min(rect.left + 8, maxLeft)),
+    };
+  }
+
+  function scrollEditorTextareaToIndex(textarea: HTMLTextAreaElement, index: number) {
+    const textBefore = textarea.value.slice(0, index);
+    const lineIndex = textBefore.split("\n").length - 1;
+    const computedStyle = window.getComputedStyle(textarea);
+    const parsedLineHeight = Number.parseFloat(computedStyle.lineHeight);
+    const lineHeight = Number.isFinite(parsedLineHeight) && parsedLineHeight > 0 ? parsedLineHeight : 20;
+    const targetScrollTop = Math.max(0, lineIndex * lineHeight - textarea.clientHeight * 0.35);
+
+    textarea.scrollTop = targetScrollTop;
+    textarea.dispatchEvent(new Event("scroll", { bubbles: true }));
+  }
+
+  function openFindPanelFromTopMenu() {
+    const previousWindowScrollX = window.scrollX;
+    const previousWindowScrollY = window.scrollY;
+    const textarea = getEditorTextareaForFind();
+
+    setFindPanelPosition(getFindPanelPosition(textarea));
+
+    if (textarea) {
+      const selected = textarea.value.slice(textarea.selectionStart, textarea.selectionEnd);
+
+      if (selected.length > 0 && selected.length <= 200 && !selected.includes("\n")) {
+        setFindQuery(selected);
+      }
+    }
+
+    setFindMessage("");
+    setShowFindPanel(true);
+    setOpenMenu(null);
+    setActiveSubmenu(null);
+
+    window.requestAnimationFrame(() => {
+      findInputRef.current?.focus({ preventScroll: true });
+      findInputRef.current?.select();
+      window.scrollTo(previousWindowScrollX, previousWindowScrollY);
+    });
+  }
+
+  function findNextFromTopMenu() {
+    const query = findQuery;
+
+    if (query.length === 0) {
+      setFindMessage("Enter search text.");
+      findInputRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    const textarea = getEditorTextareaForFind();
+
+    if (!textarea) {
+      setFindMessage("Editor not found.");
+      return;
+    }
+
+    const previousWindowScrollX = window.scrollX;
+    const previousWindowScrollY = window.scrollY;
+    const searchStart = Math.max(textarea.selectionStart, textarea.selectionEnd);
+
+    let wrapped = false;
+    let foundIndex = textarea.value.indexOf(query, searchStart);
+
+    if (foundIndex < 0 && searchStart > 0) {
+      wrapped = true;
+      foundIndex = textarea.value.indexOf(query, 0);
+    }
+
+    if (foundIndex < 0) {
+      setFindMessage("No match.");
+      return;
+    }
+
+    textarea.focus({ preventScroll: true });
+    textarea.setSelectionRange(foundIndex, foundIndex + query.length);
+    scrollEditorTextareaToIndex(textarea, foundIndex);
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo(previousWindowScrollX, previousWindowScrollY);
+    });
+
+    setFindMessage(wrapped ? "Found. Wrapped to top." : "Found.");
+  }
+
+
   return (
     <>
       <nav
@@ -1104,7 +1215,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
         }}
       >
       {editorMenuItems.map((item) => {
-        const hasDropdown = item === "File" || item === "View" || item === "TeX Insert" || item === "Math";
+        const hasDropdown = item === "File" || item === "Edit & Search" || item === "View" || item === "TeX Insert" || item === "Math";
 
         return (
           <button
@@ -1198,6 +1309,121 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
               Logout
             </button>
           </form>
+        </div>
+      ) : null}
+
+
+
+      {showFindPanel ? (
+        <div
+          className="fsx-editor-find-panel"
+          role="dialog"
+          aria-label="Find in editor"
+          style={{
+            position: "fixed",
+            top: findPanelPosition.top,
+            left: findPanelPosition.left,
+            zIndex: 2147483200,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            maxWidth: "calc(100vw - 24px)",
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+            fontSize: 13,
+            flexWrap: "wrap",
+          }}
+        >
+          <label style={{ fontWeight: 700 }}>Find</label>
+          <input
+            ref={findInputRef}
+            type="text"
+            value={findQuery}
+            onChange={(event) => {
+              setFindQuery(event.target.value);
+              setFindMessage("");
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                findNextFromTopMenu();
+              }
+
+              if (event.key === "Escape") {
+                event.preventDefault();
+                setShowFindPanel(false);
+              }
+            }}
+            style={{
+              width: 220,
+              padding: "4px 6px",
+              border: "1px solid #cbd5e1",
+              borderRadius: 6,
+              font: "inherit",
+            }}
+          />
+
+          <button type="button" className="fsx-button" onClick={findNextFromTopMenu}>
+            Next
+          </button>
+
+          <button type="button" className="fsx-button" onClick={() => setShowFindPanel(false)}>
+            Close
+          </button>
+
+          {findMessage ? (
+            <span style={{ color: "#475569", fontWeight: 600 }}>{findMessage}</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {openMenu === "Edit & Search" ? (
+        <div
+          role="menu"
+          aria-label="Edit & Search menu"
+          style={{
+            position: "fixed",
+            top: menuPosition.top,
+            left: menuPosition.left,
+            zIndex: 2147483647,
+            display: "flex",
+            minWidth: 160,
+            flexDirection: "column",
+            gap: 2,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {editSearchMenuItems.map((label) => (
+            <button
+              key={label}
+              type="button"
+              role="menuitem"
+              title="Find text in the editor."
+              onClick={openFindPanelFromTopMenu}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "7px 10px",
+                border: 0,
+                borderRadius: 8,
+                background: "transparent",
+                color: "#334155",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 500,
+                textAlign: "left",
+              }}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       ) : null}
 
