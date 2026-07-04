@@ -219,6 +219,87 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
       ];
     }
 
+  function extractFileNotFoundName(errorLine: string) {
+    const match = errorLine.match(/File\s+(.+?)\s+not found/i);
+    return match?.[1]?.replace(/^[`\'"]+|[`\'".]+$/g, "").trim() ?? "";
+  }
+
+  function makeFileNotFoundHint(errorLine: string): string[] {
+    const fileName = extractFileNotFoundName(errorLine);
+
+    if (!fileName) {
+      return [
+        "FreeSloTeX Hint:",
+        "読み込もうとしたファイル名をログから特定できませんでした。",
+        "パッケージ、画像、.bib、.tex などの参照先がプロジェクト内にあるか確認してください。",
+        "",
+      ];
+    }
+
+    const lower = fileName.toLowerCase();
+
+    if (/\.(png|jpe?g|pdf|eps|svg)$/i.test(lower)) {
+      return [
+        "FreeSloTeX Hint:",
+        `画像ファイル \`${fileName}\` が見つかりません。`,
+        "ファイル名の大文字・小文字、拡張子、フォルダ位置が本文中の画像指定と一致しているか確認してください。",
+        "",
+        "最小確認:",
+        "・画像ファイルがプロジェクト内にあるか確認する",
+        "・拡張子 .png / .jpg / .pdf などが本文の指定と一致しているか確認する",
+        "・サブフォルダ内の画像なら `figures/name.png` のように相対パスで指定する",
+        "",
+      ];
+    }
+
+    if (lower.endsWith(".sty")) {
+      return [
+        "FreeSloTeX Hint:",
+        `LaTeX パッケージファイル \`${fileName}\` が見つかりません。`,
+        "パッケージ名の誤字、または TeX 環境に未導入のパッケージである可能性があります。",
+        "",
+        "最小確認:",
+        "・`\\usepackage{...}` の名前を確認する",
+        "・特殊な .sty ファイルならプロジェクト内にアップロードする",
+        "",
+      ];
+    }
+
+    if (lower.endsWith(".cls")) {
+      return [
+        "FreeSloTeX Hint:",
+        `文書クラスファイル \`${fileName}\` が見つかりません。`,
+        "`\\documentclass{...}` のクラス名、または独自 .cls ファイルの有無を確認してください。",
+        "",
+      ];
+    }
+
+    if (lower.endsWith(".bib")) {
+      return [
+        "FreeSloTeX Hint:",
+        `BibTeX ファイル \`${fileName}\` が見つかりません。`,
+        "`\\bibliography{...}` や bib ファイル名、置き場所を確認してください。",
+        "",
+      ];
+    }
+
+    if (lower.endsWith(".tex")) {
+      return [
+        "FreeSloTeX Hint:",
+        `TeX ファイル \`${fileName}\` が見つかりません。`,
+        "`\\input{...}` や `\\include{...}` のファイル名・相対パスを確認してください。",
+        "",
+      ];
+    }
+
+    return [
+      "FreeSloTeX Hint:",
+      `\`${fileName}\` が見つかりません。`,
+      "ファイル名、拡張子、大文字・小文字、フォルダ位置を確認してください。",
+      "",
+    ];
+  }
+
   const undefinedIndex = lines.findIndex((line) =>
     line.includes("Undefined control sequence")
   );
@@ -251,11 +332,13 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
   );
 
   if (fileNotFoundIndex >= 0) {
+    const hint = makeFileNotFoundHint(lines[fileNotFoundIndex] ?? "");
     return [
       "FreeSloTeX compile error summary",
       "",
       "原因: ファイルが見つかりません (File not found)",
       "",
+      ...hint,
       "対処:",
       "・\\usepackage{...} のパッケージ名が正しいか確認する",
       "・\\includegraphics{...} の画像ファイル名・拡張子・置き場所を確認する",
