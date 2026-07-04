@@ -789,6 +789,7 @@ const rawOutputMenuItems = [
 ];
 
 const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
+const REVEAL_EDITOR_RANGE_EVENT = "freeslotex:reveal-editor-range";
 const SET_EDITOR_FONT_SIZE_EVENT = "freeslotex:set-editor-font-size";
 const SET_SOFT_WRAP_EVENT = "freeslotex:set-soft-wrap";
 
@@ -1163,6 +1164,14 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
     textarea.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
+  function revealEditorRangeFromTopMenu(start: number, end: number) {
+    window.dispatchEvent(
+      new CustomEvent(REVEAL_EDITOR_RANGE_EVENT, {
+        detail: { start, end },
+      })
+    );
+  }
+
   function restoreFindSelection(
     textarea: HTMLTextAreaElement,
     start: number,
@@ -1173,11 +1182,13 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
     window.requestAnimationFrame(() => {
       textarea.focus({ preventScroll: true });
       textarea.setSelectionRange(start, end);
+      revealEditorRangeFromTopMenu(start, end);
       textarea.scrollTop = scrollTop;
       textarea.scrollLeft = scrollLeft;
 
       window.requestAnimationFrame(() => {
         textarea.setSelectionRange(start, end);
+      revealEditorRangeFromTopMenu(start, end);
         textarea.scrollTop = scrollTop;
         textarea.scrollLeft = scrollLeft;
       });
@@ -1317,9 +1328,11 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
       return;
     }
 
+    const foundEnd = foundIndex + query.length;
+
     textarea.focus({ preventScroll: true });
-    textarea.setSelectionRange(foundIndex, foundIndex + query.length);
-    scrollEditorTextareaToIndex(textarea, foundIndex);
+    textarea.setSelectionRange(foundIndex, foundEnd);
+    revealEditorRangeFromTopMenu(foundIndex, foundEnd);
 
     window.requestAnimationFrame(() => {
       window.scrollTo(previousWindowScrollX, previousWindowScrollY);

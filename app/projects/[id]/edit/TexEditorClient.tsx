@@ -1070,6 +1070,93 @@ export default function TexEditorClient(props: Props) {
     }
   }
 
+  function revealEditorRange(start: number, end: number) {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const targetTextarea: HTMLTextAreaElement = textarea;
+    const value = targetTextarea.value;
+    const safeStart = Math.min(Math.max(0, start), value.length);
+    const safeEnd = Math.min(Math.max(safeStart, end), value.length);
+
+    function measureTargetScrollTop() {
+      const computedStyle = window.getComputedStyle(targetTextarea);
+      const mirror = document.createElement("div");
+      const marker = document.createElement("span");
+
+      mirror.style.position = "absolute";
+      mirror.style.visibility = "hidden";
+      mirror.style.pointerEvents = "none";
+      mirror.style.left = "-10000px";
+      mirror.style.top = "0";
+      mirror.style.width = `${targetTextarea.clientWidth}px`;
+      mirror.style.boxSizing = "border-box";
+      mirror.style.padding = computedStyle.padding;
+      mirror.style.border = "0";
+      mirror.style.fontFamily = computedStyle.fontFamily;
+      mirror.style.fontSize = computedStyle.fontSize;
+      mirror.style.fontWeight = computedStyle.fontWeight;
+      mirror.style.letterSpacing = computedStyle.letterSpacing;
+      mirror.style.lineHeight = computedStyle.lineHeight;
+      mirror.style.tabSize = computedStyle.tabSize;
+      mirror.style.whiteSpace = softWrap ? "pre-wrap" : "pre";
+      mirror.style.overflowWrap = softWrap ? "break-word" : "normal";
+      mirror.style.wordBreak = computedStyle.wordBreak;
+
+      mirror.textContent = value.slice(0, safeStart) || "\u200b";
+      marker.textContent = "\u200b";
+      mirror.appendChild(marker);
+      document.body.appendChild(mirror);
+
+      const measuredTop = marker.offsetTop;
+      mirror.remove();
+
+      return Math.max(0, measuredTop - targetTextarea.clientHeight / 2);
+    }
+
+    const targetScrollTop = measureTargetScrollTop();
+
+    const applyScroll = () => {
+      targetTextarea.scrollTop = targetScrollTop;
+
+      if (lineGutterRef.current) {
+        lineGutterRef.current.scrollTop = targetScrollTop;
+      }
+    };
+
+    targetTextarea.focus({ preventScroll: true });
+    targetTextarea.setSelectionRange(safeStart, safeEnd);
+    applyScroll();
+
+    window.requestAnimationFrame(() => {
+      applyScroll();
+      targetTextarea.setSelectionRange(safeStart, safeEnd);
+      window.setTimeout(applyScroll, 0);
+      window.setTimeout(applyScroll, 50);
+      window.setTimeout(applyScroll, 120);
+      window.setTimeout(applyScroll, 250);
+    });
+  }
+
+  useEffect(() => {
+    function handleRevealEditorRange(event: Event) {
+      const customEvent = event as CustomEvent<{ start?: number; end?: number }>;
+      const start = customEvent.detail?.start;
+      const end = customEvent.detail?.end;
+
+      if (typeof start !== "number" || typeof end !== "number") return;
+      if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+
+      revealEditorRange(start, end);
+    }
+
+    window.addEventListener("freeslotex:reveal-editor-range", handleRevealEditorRange);
+
+    return () => {
+      window.removeEventListener("freeslotex:reveal-editor-range", handleRevealEditorRange);
+    };
+  }, [softWrap]);
+
   function goToLine(line: number) {
     const textarea = textareaRef.current;
     if (!textarea) return;
