@@ -164,6 +164,37 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
     }
 
 
+    function makeLikelyMissingDollarHint(
+      lineInfo: { lineNumber: string; offending: string } | null
+    ): string[] {
+      const raw = lineInfo?.offending?.trim() ?? "";
+      const shown = raw.length > 160 ? `${raw.slice(0, 157)}...` : raw;
+      const escapedUnderscore = shown.replace(/_/g, "\\_");
+      const lineLabel = lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "該当行付近";
+
+      if (shown && (shown.includes("_") || shown.includes("^"))) {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}の \`${shown}\` に \`_\` または \`^\` が含まれています。`,
+          "本文中で使う場合は `\\_` のようにエスケープし、数式なら `$...$` で囲んでください。",
+          "",
+          "例:",
+          shown.includes("_") ? `${shown} → ${escapedUnderscore}` : "`x_i` → `$x_i$`",
+          "",
+        ];
+      }
+
+      return [
+        "FreeSloTeX Hint:",
+        "数式モード外で `_` や `^` を使ったか、数式の開始・終了記号が不足している可能性があります。",
+        "",
+        "最小確認:",
+        "・本文中の `_` は `\\_` にする",
+        "・数式なら `$...$` または `\\(...\\)` で囲む",
+        "",
+      ];
+    }
+
   const undefinedIndex = lines.findIndex((line) =>
     line.includes("Undefined control sequence")
   );
@@ -211,6 +242,30 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
       ...excerpt(fileNotFoundIndex),
     ].join("\n").slice(0, 16000);
   }
+
+    const missingDollarIndex = lines.findIndex((line) => line.includes("Missing $ inserted"));
+
+    if (missingDollarIndex >= 0) {
+      const lineInfo = findLineNumberAfter(missingDollarIndex);
+      const hint = makeLikelyMissingDollarHint(lineInfo);
+
+      return [
+        "FreeSloTeX compile error summary",
+        "",
+        "原因: 数式モードに関するエラー (Missing $ inserted)",
+        `場所: ${rootFile} ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
+        "",
+        ...hint,
+        "対処:",
+        "・本文中の `_` や `^` は `\\_` や `\\^{}` のようにエスケープする",
+        "・数式として書く場合は `$...$` や `\\(...\\)` で囲む",
+        "・数式環境の開始・終了記号の抜けも確認する",
+        "",
+        "該当ログ:",
+        "",
+        ...excerpt(lineInfo?.index ?? missingDollarIndex),
+      ].join("\n").slice(0, 16000);
+    }
 
   const latexErrorIndex = lines.findIndex((line) =>
     /^! LaTeX Error:/.test(line) || /LaTeX Error:/.test(line) || /Package .* Error:/.test(line)
