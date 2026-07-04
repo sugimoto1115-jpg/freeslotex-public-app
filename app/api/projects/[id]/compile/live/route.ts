@@ -131,6 +131,39 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
     return text.match(/\\[A-Za-z@]+|\\./)?.[0] ?? text.trim();
   }
 
+    function makeLikelyMissingBackslashHint(
+      errorLine: string,
+      lineInfo: { lineNumber: string; offending: string } | null
+    ): string[] {
+      if (!errorLine.includes("Missing \\begin{document}")) return [];
+
+      const raw = lineInfo?.offending?.trim() ?? "";
+      const compact = raw.replace(/\s+/g, "");
+
+      if (!compact || compact.startsWith("\\")) return [];
+
+      const commandMatch = compact.match(
+        /^(?:documentclass|usepackage|newtheorem|theoremstyle|begin|end|section|subsection|subsubsection|paragraph|chapter|part|title|author|date|maketitle|label|ref|cite|includegraphics|bibliography|bibliographystyle|input|include)(?:\[[^\]]*\])?(?:\{[^}\r\n]*\}){0,3}/
+      );
+
+      if (!commandMatch?.[0]) return [];
+
+      const suspect = commandMatch[0];
+      const fixed = `\\${suspect}`;
+      const lineLabel = lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近の` : "該当行付近の";
+
+      return [
+        "FreeSloTeX Hint:",
+        `${lineLabel} \`${suspect}\` は、`,
+        "LaTeX コマンドの先頭の `\\` が抜けている可能性があります。",
+        "",
+        "最小修正:",
+        fixed,
+        "",
+      ];
+    }
+
+
   const undefinedIndex = lines.findIndex((line) =>
     line.includes("Undefined control sequence")
   );
@@ -185,6 +218,7 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
 
   if (latexErrorIndex >= 0) {
     const lineInfo = findLineNumberAfter(latexErrorIndex);
+    const hint = makeLikelyMissingBackslashHint(lines[latexErrorIndex] ?? "", lineInfo);
 
     return [
       "FreeSloTeX compile error summary",
@@ -192,6 +226,7 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
       "原因: LaTeX エラー",
       `場所: ${rootFile} ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
       "",
+      ...hint,
       "対処:",
       "・最初の `! LaTeX Error:` または `! Package ... Error:` の行を確認する",
       "・近くの `l.<number>` が，TeX が止まった行番号である",
