@@ -432,6 +432,32 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
       ];
     }
 
+    function makeEnvironmentMismatchHint(
+      errorLine: string,
+      lineInfo: { lineNumber: string; offending: string } | null
+    ): string[] {
+      const match = errorLine.match(/\\begin\{([^}]+)\}(?: on input line (\d+))? ended by \\end\{([^}]+)\}/i);
+      const beginEnv = match?.[1]?.trim() ?? "";
+      const beginLine = match?.[2]?.trim() ?? "";
+      const endEnv = match?.[3]?.trim() ?? "";
+
+      if (!beginEnv || !endEnv) return [];
+
+      const lineLabel = lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "該当行付近";
+      const beginLineText = beginLine ? `開始は${beginLine}行目付近です。` : "";
+
+      return [
+        "FreeSloTeX Hint:",
+        `${lineLabel}で \`${beginEnv}\` 環境を開始していますが、\`${endEnv}\` 環境で閉じています。`,
+        beginLineText,
+        "\\begin{...} と \\end{...} の環境名を一致させてください。",
+        "",
+        "最小確認:",
+        `\\begin{${beginEnv}} ... \\end{${beginEnv}}`,
+        "",
+      ].filter(Boolean);
+    }
+
     function makeLikelyMissingBackslashHint(
       errorLine: string,
       lineInfo: { lineNumber: string; offending: string } | null
@@ -687,6 +713,7 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
       ...makeLikelyMissingBackslashHint(lines[latexErrorIndex] ?? "", lineInfo),
       ...makeBadMathDelimiterHint(lines[latexErrorIndex] ?? "", lineInfo),
       ...makeUndefinedEnvironmentHint(lines[latexErrorIndex] ?? "", lineInfo),
+      ...makeEnvironmentMismatchHint(lines[latexErrorIndex] ?? "", lineInfo),
     ];
 
     return [
