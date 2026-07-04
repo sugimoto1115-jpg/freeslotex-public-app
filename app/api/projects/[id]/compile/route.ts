@@ -783,6 +783,67 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
     ].join("\n").slice(0, 16000);
   }
 
+  function makeBraceMismatchHint(
+    errorLine: string,
+    lineInfo: { lineNumber: string; offending: string } | null
+  ): string[] {
+    const raw = lineInfo?.offending?.trim() ?? "";
+    const shownRaw = raw.replace(/`/g, "'");
+    const shown = shownRaw.length > 180 ? `${shownRaw.slice(0, 177)}...` : shownRaw;
+    const lineLabel = lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "該当行付近";
+    const isMissing = errorLine.includes("Missing } inserted");
+    const isExtra = errorLine.includes("Extra }") || errorLine.includes("Too many }");
+
+    const hint = [
+      "FreeSloTeX Hint:",
+      isMissing
+        ? `${lineLabel}またはその直前で、閉じ波括弧 \`}\` が不足している可能性があります。`
+        : isExtra
+          ? `${lineLabel}またはその直前で、閉じ波括弧 \`}\` が多すぎる可能性があります。`
+          : `${lineLabel}またはその直前で、波括弧 \`{\` と \`}\` の対応が崩れている可能性があります。`,
+      "",
+      "最小確認:",
+      "・該当行とその直前の `{` と `}` の数を確認する",
+      "・`\\textbf{...}`, `\\emph{...}`, `\\frac{...}{...}`, `\\section{...}` などの閉じ括弧を確認する",
+      "・余分な `}` がある場合は削除し、不足している場合は対応する位置に `}` を追加する",
+      "",
+    ];
+
+    if (shown) {
+      hint.push("該当行:", shown, "");
+    }
+
+    return hint;
+  }
+
+  const braceMismatchIndex = lines.findIndex((line) =>
+    line.includes("Missing } inserted") ||
+    line.includes("Extra }") ||
+    line.includes("Too many }")
+  );
+
+  if (braceMismatchIndex >= 0) {
+    const lineInfo = findLineNumberAfter(braceMismatchIndex);
+    const hint = makeBraceMismatchHint(lines[braceMismatchIndex] ?? "", lineInfo);
+
+    return [
+      "FreeSloTeX compile error summary",
+      "",
+      "原因: 波括弧の対応エラー (Missing / Extra })",
+      `場所: ${rootFile} ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
+      "",
+      ...hint,
+      "対処:",
+      "・該当行とその直前で `{` と `}` の対応を確認する",
+      "・コマンド引数や数式の中で閉じ括弧が不足または過剰になっていないか確認する",
+      "・原因箇所が分かりにくい場合は、直前の段落や数式を一時的にコメントアウトして切り分ける",
+      "",
+      "該当ログ:",
+      "",
+      ...excerpt(lineInfo?.index ?? braceMismatchIndex),
+    ].join("\n").slice(0, 16000);
+  }
+
   const runawayArgumentIndex = lines.findIndex((line) => line.includes("Runaway argument"));
 
   if (runawayArgumentIndex >= 0) {
