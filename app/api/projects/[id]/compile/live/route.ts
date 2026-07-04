@@ -658,6 +658,33 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
     return hint;
   }
 
+  function extractOptionClashPackageName(errorLine: string) {
+    const match = errorLine.match(/Option clash for package\s+[`'"]?([^`'".\s]+)[`'"]?\.?/i);
+    return match?.[1]?.trim() ?? "";
+  }
+
+  function makePackageOptionClashHint(errorLine: string): string[] {
+    const packageName = extractOptionClashPackageName(errorLine);
+
+    return [
+      "FreeSloTeX Hint:",
+      packageName
+        ? `パッケージ \`${packageName}\` が、異なるオプションで複数回読み込まれている可能性があります。`
+        : "同じパッケージが、異なるオプションで複数回読み込まれている可能性があります。",
+      "\\usepackage{...} は同じパッケージについて1回だけにまとめてください。",
+      "",
+      "最小確認:",
+      packageName
+        ? `・\`\\usepackage{${packageName}}\` が複数箇所にないか確認する`
+        : "・同じパッケージを複数箇所で読み込んでいないか確認する",
+      "・必要な option を1つの \\usepackage にまとめる",
+      packageName
+        ? `・例: \`\\usepackage[...]{${packageName}}\` のように1回だけ書く`
+        : "・例: `\\usepackage[...]{package}` のように1回だけ書く",
+      "",
+    ];
+  }
+
   const undefinedIndex = lines.findIndex((line) =>
     line.includes("Undefined control sequence")
   );
@@ -733,6 +760,30 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
         ...excerpt(lineInfo?.index ?? missingDollarIndex),
       ].join("\n").slice(0, 16000);
     }
+
+  const optionClashIndex = lines.findIndex((line) =>
+    /Option clash for package/i.test(line)
+  );
+
+  if (optionClashIndex >= 0) {
+    const hint = makePackageOptionClashHint(lines[optionClashIndex] ?? "");
+
+    return [
+      "FreeSloTeX compile error summary",
+      "",
+      "原因: パッケージオプションの衝突 (Option clash)",
+      "",
+      ...hint,
+      "対処:",
+      "・同じパッケージを複数回 \\usepackage していないか確認する",
+      "・異なる option を指定している場合は、1つの \\usepackage にまとめる",
+      "・クラスファイルやテンプレートが先に読み込んでいるパッケージも確認する",
+      "",
+      "該当ログ:",
+      "",
+      ...excerpt(optionClashIndex),
+    ].join("\n").slice(0, 16000);
+  }
 
   const latexErrorIndex = lines.findIndex((line) =>
     /^! LaTeX Error:/.test(line) || /LaTeX Error:/.test(line) || /Package .* Error:/.test(line)
