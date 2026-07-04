@@ -627,6 +627,37 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
     ];
   }
 
+  function makeRunawayArgumentHint(
+    index: number,
+    lineInfo: { lineNumber: string; offending: string } | null
+  ): string[] {
+    const fragment = excerpt(index, 0, 12)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 6)
+      .join(" ");
+    const shown = fragment.length > 240 ? `${fragment.slice(0, 237)}...` : fragment;
+    const lineLabel = lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "エラー発生箇所付近";
+
+    const hint = [
+      "FreeSloTeX Hint:",
+      `${lineLabel}またはその直前で、LaTeX コマンドの引数が閉じられていない可能性があります。`,
+      "特に `\\section{...}`, `\\caption{...}`, `\\title{...}`, `\\footnote{...}`, `\\textbf{...}` などの `{` と `}` の対応を確認してください。",
+      "",
+      "最小確認:",
+      "・エラー行の直前にある `{` と `}` の数を確認する",
+      "・長い `\\caption{...}` や `\\section{...}` を一度短くして切り分ける",
+      "・閉じ忘れが疑われる行の末尾に `}` が必要か確認する",
+      "",
+    ];
+
+    if (shown) {
+      hint.push("ログ断片:", shown, "");
+    }
+
+    return hint;
+  }
+
   const undefinedIndex = lines.findIndex((line) =>
     line.includes("Undefined control sequence")
   );
@@ -730,6 +761,30 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
       "該当ログ:",
       "",
       ...excerpt(lineInfo?.index ?? latexErrorIndex),
+    ].join("\n").slice(0, 16000);
+  }
+
+  const runawayArgumentIndex = lines.findIndex((line) => line.includes("Runaway argument"));
+
+  if (runawayArgumentIndex >= 0) {
+    const lineInfo = findLineNumberAfter(runawayArgumentIndex);
+    const hint = makeRunawayArgumentHint(runawayArgumentIndex, lineInfo);
+
+    return [
+      "FreeSloTeX compile error summary",
+      "",
+      "原因: 引数の閉じ忘れの可能性 (Runaway argument)",
+      `場所: ${rootFile} ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
+      "",
+      ...hint,
+      "対処:",
+      "・直前の `\\section{...}`, `\\caption{...}`, `\\title{...}` などの閉じ括弧 `}` を確認する",
+      "・長い引数を一度短くして、どこで閉じ忘れているか確認する",
+      "・コメントアウトで原因範囲を狭める",
+      "",
+      "該当ログ:",
+      "",
+      ...excerpt(lineInfo?.index ?? runawayArgumentIndex),
     ].join("\n").slice(0, 16000);
   }
 
