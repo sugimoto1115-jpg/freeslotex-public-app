@@ -164,6 +164,30 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
     }
 
 
+    function makeBadMathDelimiterHint(
+      errorLine: string,
+      lineInfo: { lineNumber: string; offending: string } | null
+    ): string[] {
+      if (!errorLine.includes("Bad math environment delimiter")) return [];
+
+      const raw = lineInfo?.offending?.trim() ?? "";
+      const shortened = raw.length > 160 ? `${raw.slice(0, 157)}...` : raw;
+      const shown = shortened ? `\`${shortened}\`` : "該当行";
+      const lineLabel = lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "該当行付近";
+
+      return [
+        "FreeSloTeX Hint:",
+        `${lineLabel}の ${shown} で、数式環境の区切りが不正になっています。`,
+        "直前に `$` や `\\(` の閉じ忘れがある状態で `\\[` を始めた、または数式環境を入れ子にした可能性があります。",
+        "",
+        "最小確認:",
+        "・直前の行で `$...$` の `$` が片方だけになっていないか確認する",
+        "・`\\[` ... `\\]` の外側を `$...$`, `\\(...\\)`, equation, align などで囲んでいないか確認する",
+        "・display math は `\\[` と `\\]` をペアで使う",
+        "",
+      ];
+    }
+
     function makeLikelyMissingDollarHint(
       lineInfo: { lineNumber: string; offending: string } | null
     ): string[] {
@@ -273,7 +297,10 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
 
   if (latexErrorIndex >= 0) {
     const lineInfo = findLineNumberAfter(latexErrorIndex);
-    const hint = makeLikelyMissingBackslashHint(lines[latexErrorIndex] ?? "", lineInfo);
+    const hint = [
+      ...makeLikelyMissingBackslashHint(lines[latexErrorIndex] ?? "", lineInfo),
+      ...makeBadMathDelimiterHint(lines[latexErrorIndex] ?? "", lineInfo),
+    ];
 
     return [
       "FreeSloTeX compile error summary",
