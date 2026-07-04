@@ -295,6 +295,162 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
       ];
     }
 
+    function makeUndefinedEnvironmentHint(
+      errorLine: string,
+      lineInfo: { lineNumber: string; offending: string } | null
+    ): string[] {
+      const match = errorLine.match(/Environment\s+(.+?)\s+undefined/i);
+      const environment = match?.[1]?.trim() ?? "";
+
+      if (!environment) return [];
+
+      const lower = environment.toLowerCase();
+      const base = lower.replace(/\*$/, "");
+      const lineLabel = lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "該当行付近";
+
+      if (base === "algorithm") {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "algorithm 環境を使うためのパッケージが読み込まれていない可能性があります。",
+          "",
+          "最小確認:",
+          "・algorithm パッケージを使うなら `\\usepackage{algorithm}` を確認する",
+          "・algorithm2e を使うなら `\\usepackage{algorithm2e}` を確認する",
+          "・algpseudocode の本文と algorithm の浮動環境を混同していないか確認する",
+          "",
+        ];
+      }
+
+      if (base === "algorithmic") {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "algorithmic / algpseudocode 系のパッケージが読み込まれていない可能性があります。",
+          "",
+          "最小修正:",
+          "\\usepackage{algpseudocode}",
+          "",
+        ];
+      }
+
+      if (["theorem", "lemma", "definition", "remark", "proposition", "corollary", "assumption"].includes(base)) {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "amsthm の読み込み、または theorem 環境の定義が不足している可能性があります。",
+          "",
+          "最小確認:",
+          "・`\\usepackage{amsthm}` を確認する",
+          `・preamble に \`\\newtheorem{${base}}{...}\` があるか確認する`,
+          "",
+        ];
+      }
+
+      if (base === "proof") {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "proof 環境は通常 amsthm パッケージで定義されます。",
+          "",
+          "最小修正:",
+          "\\usepackage{amsthm}",
+          "",
+        ];
+      }
+
+      if (["align", "alignat", "gather", "multline", "split", "cases"].includes(base)) {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "この数式環境は amsmath パッケージが必要なことがあります。",
+          "",
+          "最小修正:",
+          "\\usepackage{amsmath}",
+          "",
+        ];
+      }
+
+      if (base === "tikzpicture") {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "TikZ 図を使うには tikz パッケージが必要です。",
+          "",
+          "最小修正:",
+          "\\usepackage{tikz}",
+          "",
+        ];
+      }
+
+      if (base === "tabularx") {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "tabularx 環境を使うには tabularx パッケージが必要です。",
+          "",
+          "最小修正:",
+          "\\usepackage{tabularx}",
+          "",
+        ];
+      }
+
+      if (base === "longtable") {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "longtable 環境を使うには longtable パッケージが必要です。",
+          "",
+          "最小修正:",
+          "\\usepackage{longtable}",
+          "",
+        ];
+      }
+
+      if (base === "landscape") {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "landscape 環境を使うには pdflscape または lscape パッケージが必要です。",
+          "",
+          "最小修正:",
+          "\\usepackage{pdflscape}",
+          "",
+        ];
+      }
+
+      if (base === "comment") {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "comment 環境を使うには comment パッケージが必要です。",
+          "",
+          "最小修正:",
+          "\\usepackage{comment}",
+          "",
+        ];
+      }
+
+      if (base === "subfigure" || base === "subtable") {
+        return [
+          "FreeSloTeX Hint:",
+          `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+          "subfigure / subtable 環境を使うには subcaption パッケージが必要なことがあります。",
+          "",
+          "最小修正:",
+          "\\usepackage{subcaption}",
+          "",
+        ];
+      }
+
+      return [
+        "FreeSloTeX Hint:",
+        `${lineLabel}で \`${environment}\` 環境が未定義です。`,
+        "環境名の誤字、必要パッケージの読み込み不足、または独自環境の定義不足の可能性があります。",
+        "",
+      ];
+    }
+
     function makeLikelyMissingBackslashHint(
       errorLine: string,
       lineInfo: { lineNumber: string; offending: string } | null
@@ -549,6 +705,7 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
     const hint = [
       ...makeLikelyMissingBackslashHint(lines[latexErrorIndex] ?? "", lineInfo),
       ...makeBadMathDelimiterHint(lines[latexErrorIndex] ?? "", lineInfo),
+      ...makeUndefinedEnvironmentHint(lines[latexErrorIndex] ?? "", lineInfo),
     ];
 
     return [
