@@ -150,6 +150,151 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
     return text.match(/\\[A-Za-z@]+|\\./)?.[0] ?? text.trim();
   }
 
+    function makeUndefinedCommandHint(command: string): string[] {
+      const trimmed = command.trim();
+
+      if (!trimmed) {
+        return [
+          "FreeSloTeX Hint:",
+          "未定義コマンド名をログから特定できませんでした。",
+          "該当行付近のコマンド名と必要パッケージを確認してください。",
+          "",
+        ];
+      }
+
+      const name = trimmed.replace(/^\\+/, "");
+      const lower = name.toLowerCase();
+
+      if (lower === "includegraphics") {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は通常 graphicx パッケージで定義されます。`,
+          "",
+          "最小修正:",
+          "\\usepackage{graphicx}",
+          "",
+        ];
+      }
+
+      if (lower === "mathbb" || lower === "mathfrak") {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は amssymb または amsfonts が必要なことがあります。`,
+          "",
+          "最小修正:",
+          "\\usepackage{amssymb}",
+          "",
+        ];
+      }
+
+      if (lower === "bm") {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は bm パッケージで定義されます。`,
+          "",
+          "最小修正:",
+          "\\usepackage{bm}",
+          "",
+        ];
+      }
+
+      if (["toprule", "midrule", "bottomrule", "cmidrule"].includes(lower)) {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は booktabs パッケージの表罫線コマンドです。`,
+          "",
+          "最小修正:",
+          "\\usepackage{booktabs}",
+          "",
+        ];
+      }
+
+      if (["citep", "citet", "citealt", "citealp"].includes(lower)) {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は natbib パッケージで使われる引用コマンドです。`,
+          "",
+          "最小修正:",
+          "\\usepackage[numbers]{natbib}",
+          "",
+        ];
+      }
+
+      if (lower === "autoref" || lower === "href" || lower === "url") {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は hyperref パッケージで定義されることがあります。`,
+          "",
+          "最小修正:",
+          "\\usepackage{hyperref}",
+          "",
+        ];
+      }
+
+      if (["cref", "crefrange", "cpageref", "namecref", "labelcref"].includes(lower)) {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は cleveref パッケージで定義されることがあります。`,
+          "",
+          "最小修正:",
+          "\\usepackage{cleveref}",
+          "",
+        ];
+      }
+
+      if (["kwdata", "kwresult", "kwin", "kwout", "kwto", "kwret", "fn"].includes(lower)) {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は algorithm2e 系のコマンドである可能性があります。`,
+          "",
+          "最小確認:",
+          "・algorithm2e を使うなら `\\usepackage{algorithm2e}` を確認する",
+          "・algpseudocode と algorithm2e の記法を混在させていないか確認する",
+          "",
+        ];
+      }
+
+      if (["state", "procedure", "endprocedure", "require", "ensure"].includes(lower)) {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は algpseudocode / algorithmicx 系のコマンドである可能性があります。`,
+          "",
+          "最小修正:",
+          "\\usepackage{algpseudocode}",
+          "",
+        ];
+      }
+
+      if (lower === "si" || lower === "num" || lower === "qty") {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は siunitx パッケージで使われることがあります。`,
+          "",
+          "最小修正:",
+          "\\usepackage{siunitx}",
+          "",
+        ];
+      }
+
+      if (lower === "textcolor" || lower === "colorbox" || lower === "definecolor") {
+        return [
+          "FreeSloTeX Hint:",
+          `\`${trimmed}\` は xcolor パッケージで定義されることがあります。`,
+          "",
+          "最小修正:",
+          "\\usepackage{xcolor}",
+          "",
+        ];
+      }
+
+      return [
+        "FreeSloTeX Hint:",
+        `未定義コマンド \`${trimmed}\` が使われています。`,
+        "コマンド名の誤字、または必要パッケージの読み込み不足の可能性があります。",
+        "",
+      ];
+    }
+
     function makeLikelyMissingBackslashHint(
       errorLine: string,
       lineInfo: { lineNumber: string; offending: string } | null
@@ -326,6 +471,7 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
   if (undefinedIndex >= 0) {
     const lineInfo = findLineNumberAfter(undefinedIndex);
     const command = lineInfo ? firstCommand(lineInfo.offending) : "";
+    const hint = makeUndefinedCommandHint(command);
 
     return [
       "FreeSloTeX compile error summary",
@@ -334,6 +480,7 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
       `場所: ${rootFile} ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
       `問題: ${command || "TeXが知らない命令があります。"}`,
       "",
+      ...hint,
       "対処:",
       "・コマンド名の誤字を直す",
       "・必要なパッケージを \\usepackage{...} で追加する",
