@@ -1295,6 +1295,52 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
     setFindMessage(`Replaced ${count} occurrence(s).`);
   }
 
+  function findPreviousFromTopMenu() {
+    const query = findQuery;
+
+    if (query.length === 0) {
+      setFindMessage("Enter search text.");
+      findInputRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    const textarea = getEditorTextareaForFind();
+
+    if (!textarea) {
+      setFindMessage("Editor not found.");
+      return;
+    }
+
+    const previousWindowScrollX = window.scrollX;
+    const previousWindowScrollY = window.scrollY;
+    const searchEnd = Math.min(textarea.selectionStart, textarea.selectionEnd);
+
+    let wrapped = false;
+    let foundIndex = searchEnd > 0 ? textarea.value.lastIndexOf(query, searchEnd - 1) : -1;
+
+    if (foundIndex < 0) {
+      wrapped = true;
+      foundIndex = textarea.value.lastIndexOf(query);
+    }
+
+    if (foundIndex < 0) {
+      setFindMessage("No match.");
+      return;
+    }
+
+    const foundEnd = foundIndex + query.length;
+
+    textarea.focus({ preventScroll: true });
+    textarea.setSelectionRange(foundIndex, foundEnd);
+    revealEditorRangeFromTopMenu(foundIndex, foundEnd);
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo(previousWindowScrollX, previousWindowScrollY);
+    });
+
+    setFindMessage(wrapped ? "Found. Wrapped to bottom." : "Found.");
+  }
+
   function findNextFromTopMenu() {
     const query = findQuery;
 
@@ -1558,6 +1604,9 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
               style={{ display: findPanelMode === "replace" ? undefined : "none", width: 240 }}
             />
 
+          <button type="button" className="fsx-button" onClick={findPreviousFromTopMenu}>
+            Back
+          </button>
           <button type="button" className="fsx-button" onClick={findNextFromTopMenu}>
             Next
           </button>
