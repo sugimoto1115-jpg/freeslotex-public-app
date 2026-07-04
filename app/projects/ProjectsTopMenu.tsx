@@ -12,7 +12,7 @@ const editorMenuItems = [
   "Help",
 ];
 
-const editSearchMenuItems = ["Find"];
+const editSearchMenuItems = ["Find", "Replace"];
 
 const viewFontSizeMenuItems = ["12px", "14px", "16px", "18px", "20px", "22px", "24px"];
 
@@ -806,7 +806,9 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [viewEditorFontSize, setViewEditorFontSize] = useState(14);
   const [showFindPanel, setShowFindPanel] = useState(false);
+  const [findPanelMode, setFindPanelMode] = useState<"find" | "replace">("find");
   const [findQuery, setFindQuery] = useState("");
+  const [replaceText, setReplaceText] = useState("");
   const [findMessage, setFindMessage] = useState("");
   const [findPanelPosition, setFindPanelPosition] = useState({ top: 34, left: 12 });
   const findInputRef = useRef<HTMLInputElement | null>(null);
@@ -1118,7 +1120,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
     textarea.dispatchEvent(new Event("scroll", { bubbles: true }));
   }
 
-  function openFindPanelFromTopMenu() {
+  function openFindPanelFromTopMenu(mode: "find" | "replace" = "find") {
     const previousWindowScrollX = window.scrollX;
     const previousWindowScrollY = window.scrollY;
     const textarea = getEditorTextareaForFind();
@@ -1134,6 +1136,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
     }
 
     setFindMessage("");
+    setFindPanelMode(mode);
     setShowFindPanel(true);
     setOpenMenu(null);
     setActiveSubmenu(null);
@@ -1143,6 +1146,142 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
       findInputRef.current?.select();
       window.scrollTo(previousWindowScrollX, previousWindowScrollY);
     });
+  }
+
+  function setEditorTextareaValue(textarea: HTMLTextAreaElement, value: string) {
+    const setter = Object.getOwnPropertyDescriptor(
+      window.HTMLTextAreaElement.prototype,
+      "value"
+    )?.set;
+
+    if (setter) {
+      setter.call(textarea, value);
+    } else {
+      textarea.value = value;
+    }
+
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  function restoreFindSelection(
+    textarea: HTMLTextAreaElement,
+    start: number,
+    end: number,
+    scrollTop: number,
+    scrollLeft: number
+  ) {
+    window.requestAnimationFrame(() => {
+      textarea.focus({ preventScroll: true });
+      textarea.setSelectionRange(start, end);
+      textarea.scrollTop = scrollTop;
+      textarea.scrollLeft = scrollLeft;
+
+      window.requestAnimationFrame(() => {
+        textarea.setSelectionRange(start, end);
+        textarea.scrollTop = scrollTop;
+        textarea.scrollLeft = scrollLeft;
+      });
+    });
+  }
+
+  function replaceOneFromTopMenu() {
+    const query = findQuery;
+
+    if (!query) {
+      setFindMessage("Enter search text.");
+      findInputRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    const textarea = getEditorTextareaForFind();
+
+    if (!textarea) {
+      setFindMessage("Editor not found.");
+      return;
+    }
+
+    if (textarea.readOnly) {
+      setFindMessage("Editor is read-only.");
+      return;
+    }
+
+    const value = textarea.value;
+    const selectionStart = textarea.selectionStart;
+    const selectionEnd = textarea.selectionEnd;
+    const selected = value.slice(selectionStart, selectionEnd);
+    const searchStart = Math.max(selectionStart, selectionEnd);
+    const scrollTop = textarea.scrollTop;
+    const scrollLeft = textarea.scrollLeft;
+
+    let replaceStart = -1;
+    let wrapped = false;
+
+    if (selected === query) {
+      replaceStart = selectionStart;
+    } else {
+      replaceStart = value.indexOf(query, searchStart);
+
+      if (replaceStart < 0 && searchStart > 0) {
+        replaceStart = value.indexOf(query, 0);
+        wrapped = replaceStart >= 0;
+      }
+    }
+
+    if (replaceStart < 0) {
+      setFindMessage("No match.");
+      return;
+    }
+
+    const replaceEnd = replaceStart + query.length;
+    const nextValue = value.slice(0, replaceStart) + replaceText + value.slice(replaceEnd);
+    const nextSelectionEnd = replaceStart + replaceText.length;
+
+    setEditorTextareaValue(textarea, nextValue);
+    restoreFindSelection(textarea, replaceStart, nextSelectionEnd, scrollTop, scrollLeft);
+    setFindMessage(wrapped ? "Replaced. Wrapped to top." : "Replaced.");
+  }
+
+  function replaceAllFromTopMenu() {
+    const query = findQuery;
+
+    if (!query) {
+      setFindMessage("Enter search text.");
+      findInputRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    const textarea = getEditorTextareaForFind();
+
+    if (!textarea) {
+      setFindMessage("Editor not found.");
+      return;
+    }
+
+    if (textarea.readOnly) {
+      setFindMessage("Editor is read-only.");
+      return;
+    }
+
+    const value = textarea.value;
+    const count = value.split(query).length - 1;
+
+    if (count <= 0) {
+      setFindMessage("No match.");
+      return;
+    }
+
+    if (!window.confirm(`Replace ${count} occurrence(s)?`)) {
+      setFindMessage("Replace canceled.");
+      return;
+    }
+
+    const scrollTop = textarea.scrollTop;
+    const scrollLeft = textarea.scrollLeft;
+    const nextValue = value.split(query).join(replaceText);
+
+    setEditorTextareaValue(textarea, nextValue);
+    restoreFindSelection(textarea, 0, 0, scrollTop, scrollLeft);
+    setFindMessage(`Replaced ${count} occurrence(s).`);
   }
 
   function findNextFromTopMenu() {
@@ -1385,9 +1524,35 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
               font: "inherit",
             }}
           />
+            <label style={{ display: findPanelMode === "replace" ? undefined : "none", fontWeight: 700 }}>Replace</label>
+            <input
+              className="fsx-input"
+              value={replaceText}
+              onChange={(event) => {
+                setReplaceText(event.target.value);
+                setFindMessage("");
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  replaceOneFromTopMenu();
+                }
+                if (event.key === "Escape") {
+                  setShowFindPanel(false);
+                }
+              }}
+              placeholder="Replace with"
+              style={{ display: findPanelMode === "replace" ? undefined : "none", width: 240 }}
+            />
 
           <button type="button" className="fsx-button" onClick={findNextFromTopMenu}>
             Next
+          </button>
+          <button type="button" className="fsx-button" onClick={replaceOneFromTopMenu} style={{ display: findPanelMode === "replace" ? undefined : "none" }}>
+            Replace one
+          </button>
+          <button type="button" className="fsx-button" onClick={replaceAllFromTopMenu} style={{ display: findPanelMode === "replace" ? undefined : "none" }}>
+            Replace all
           </button>
 
           <button type="button" className="fsx-button" onClick={() => setShowFindPanel(false)}>
@@ -1425,8 +1590,8 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
               key={label}
               type="button"
               role="menuitem"
-              title="Find text in the editor."
-              onClick={openFindPanelFromTopMenu}
+              title="Find or replace text in the editor."
+              onClick={() => openFindPanelFromTopMenu(label === "Replace" ? "replace" : "find")}
               style={{
                 display: "block",
                 width: "100%",
