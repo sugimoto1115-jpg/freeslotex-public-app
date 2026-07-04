@@ -797,6 +797,63 @@ function extractLatexErrorSummary(text: string, rootFile = "main.tex") {
     return hint;
   }
 
+  function makeMisplacedAlignmentTabHint(
+    lineInfo: { lineNumber: string; offending: string } | null
+  ): string[] {
+    const raw = lineInfo?.offending?.trim() ?? "";
+    const shownRaw = raw.replace(/`/g, "'");
+    const shown = shownRaw.length > 180 ? `${shownRaw.slice(0, 177)}...` : shownRaw;
+    const escaped = shown.replace(/&/g, "\\&");
+    const lineLabel = lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "該当行付近";
+
+    const hint = [
+      "FreeSloTeX Hint:",
+      `${lineLabel}で \`&\` が不適切な位置にあります。`,
+      "`&` は tabular, array, align などの整列用記号です。本文中で文字として使う場合は `\\&` と書いてください。",
+      "",
+      "最小確認:",
+      "・本文中の `&` は `\\&` にする",
+      "・表なら `tabular` 環境の中で使う",
+      "・数式の整列なら `align` など適切な数式環境の中で使う",
+      "",
+    ];
+
+    if (shown) {
+      hint.push("該当行:", shown, "");
+      if (shown.includes("&")) {
+        hint.push("本文中で文字として使う場合の例:", escaped, "");
+      }
+    }
+
+    return hint;
+  }
+
+  const misplacedAlignmentTabIndex = lines.findIndex((line) =>
+    line.includes("Misplaced alignment tab character &")
+  );
+
+  if (misplacedAlignmentTabIndex >= 0) {
+    const lineInfo = findLineNumberAfter(misplacedAlignmentTabIndex);
+    const hint = makeMisplacedAlignmentTabHint(lineInfo);
+
+    return [
+      "FreeSloTeX compile error summary",
+      "",
+      "原因: & の位置が不正です (Misplaced alignment tab character &)",
+      `場所: ${rootFile} ${lineInfo?.lineNumber ? `${lineInfo.lineNumber}行目付近` : "行番号不明"}`,
+      "",
+      ...hint,
+      "対処:",
+      "・本文中で & を文字として使う場合は `\\&` にする",
+      "・表の列区切りなら tabular 環境の中に入れる",
+      "・数式の整列なら align などの環境を使う",
+      "",
+      "該当ログ:",
+      "",
+      ...excerpt(lineInfo?.index ?? misplacedAlignmentTabIndex),
+    ].join("\n").slice(0, 16000);
+  }
+
   const braceMismatchIndex = lines.findIndex((line) =>
     line.includes("Missing } inserted") ||
     line.includes("Extra }") ||
