@@ -363,43 +363,69 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
   }
 
   const pdfToolbar = (
-    <div className="fsx-pdf-toolbar" aria-label="PDF preview controls">
-      <div className="fsx-pdf-title-line">
-        <h2 className="fsx-panel-title">PDF</h2>
-      </div>
+    <div
+      aria-label="PDF preview controls"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: 3,
+        padding: 0,
+        margin: 0,
+        minHeight: 0,
+      }}
+    >
+      <h2 className="fsx-panel-title" style={{ margin: 0, fontSize: 18, lineHeight: 1 }}>
+        PDF
+      </h2>
 
-      <div className="fsx-pdf-zoom-group" aria-label="PDF zoom controls">
+      <div
+        aria-label="PDF zoom controls"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 3,
+          padding: 0,
+          margin: 0,
+          minHeight: 0,
+        }}
+      >
         <button
           type="button"
           className={zoom === "fit" ? "fsx-button fsx-button-primary" : "fsx-button"}
           onClick={() => setZoom("fit")}
-          style={{ padding: "6px 9px", fontSize: 12 }}
+          style={{ padding: "0 6px", fontSize: 11, lineHeight: 1, minHeight: 20 }}
         >
           Fit width
         </button>
 
         <button
           type="button"
-          className="fsx-button fsx-pdf-zoom-step"
+          className="fsx-button"
           onClick={() => applyZoomDelta(-1)}
           disabled={!canZoomOut}
           aria-label="Zoom out"
           title="Zoom out"
+          style={{ padding: "0 6px", fontSize: 11, lineHeight: 1, minHeight: 20 }}
         >
           −
         </button>
 
-        <span className="fsx-pdf-zoom-value" aria-label={`Current zoom: ${zoomLabel(zoom)}`}>
+        <span
+          aria-label={`Current zoom: ${zoomLabel(zoom)}`}
+          style={{ padding: "0 2px", fontSize: 11, fontWeight: 700, lineHeight: 1 }}
+        >
           {zoomLabel(zoom)}
         </span>
 
         <button
           type="button"
-          className="fsx-button fsx-pdf-zoom-step"
+          className="fsx-button"
           onClick={() => applyZoomDelta(1)}
           disabled={!canZoomIn}
           aria-label="Zoom in"
           title="Zoom in"
+          style={{ padding: "0 6px", fontSize: 11, lineHeight: 1, minHeight: 20 }}
         >
           +
         </button>
@@ -412,7 +438,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
             target="_blank"
             rel="noreferrer"
             className="fsx-button"
-            style={{ padding: "6px 9px", fontSize: 12 }}
+            style={{ padding: "0 6px", fontSize: 11, lineHeight: 1, minHeight: 20 }}
           >
             Open full viewer
           </a>
@@ -420,13 +446,17 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
           <a
             href={`/api/projects/${projectId}/pdf?file=${encodedPdfFile}`}
             className="fsx-button fsx-button-primary"
-            style={{ padding: "6px 9px", fontSize: 12 }}
+            style={{ padding: "0 6px", fontSize: 11, lineHeight: 1, minHeight: 20 }}
           >
             Download PDF
           </a>
         </>
       ) : (
-        <span className="fsx-button" aria-disabled="true" style={{ padding: "6px 9px", fontSize: 12 }}>
+        <span
+          className="fsx-button"
+          aria-disabled="true"
+          style={{ padding: "0 6px", fontSize: 11, lineHeight: 1, minHeight: 20 }}
+        >
           PDF not generated yet
         </span>
       )}
