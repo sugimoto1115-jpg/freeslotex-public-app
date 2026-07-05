@@ -469,37 +469,37 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
           ) : (
             <div className="fsx-table-wrap">
               <div className="fsx-table-scroll">
-                <table className="fsx-table">
+                <table className="fsx-table" style={{ fontSize: 12, lineHeight: 1.15 }}>
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Path</th>
-                      <th>Type</th>
-                      <th>Size</th>
-                      <th>Updated</th>
-                        <th>Actions</th>
+                      <th style={{ padding: "4px 10px" }}>Name</th>
+                      <th style={{ padding: "4px 10px" }}>Path</th>
+                      <th style={{ padding: "4px 10px" }}>Type</th>
+                      <th style={{ padding: "4px 10px" }}>Size</th>
+                      <th style={{ padding: "4px 10px" }}>Updated</th>
+                        <th style={{ padding: "4px 10px" }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {workspaceEntries.map((entry) => (
-                      <tr key={entry.relativePath}>
-                        <td>
-                          <div style={{ paddingLeft: `${entry.depth * 1.0}rem` }}>
+                      <tr key={entry.relativePath} style={{ height: 28 }}>
+                        <td style={{ padding: "3px 10px" }}>
+                          <div style={{ paddingLeft: `${entry.depth * 0.65}rem` }}>
                             <span className="fsx-code">
                               {entry.kind === "dir" ? "[DIR]" : "[FILE]"}
                             </span>{" "}
                             <strong>{entry.name}</strong>
                           </div>
                         </td>
-                        <td className="fsx-code">{entry.relativePath}</td>
-                        <td>{entry.kind}</td>
-                        <td>{formatBytes(entry.size)}</td>
-                        <td>{formatDate(entry.updatedAt)}</td>
-                          <td>
+                        <td className="fsx-code" style={{ padding: "3px 10px" }}>{entry.relativePath}</td>
+                        <td style={{ padding: "3px 10px" }}>{entry.kind}</td>
+                        <td style={{ padding: "3px 10px" }}>{formatBytes(entry.size)}</td>
+                        <td style={{ padding: "3px 10px" }}>{formatDate(entry.updatedAt)}</td>
+                          <td style={{ padding: "3px 10px" }}>
                             {entry.kind === "file" ? (
-                              <form action={`/api/projects/${id}/files/delete`} method="post">
+                              <form action={`/api/projects/${id}/files/delete`} method="post" style={{ margin: 0 }}>
                                 <input type="hidden" name="relativePath" value={entry.relativePath} />
-                                <button type="submit" className="fsx-button" style={{ padding: "4px 8px", fontSize: 12 }}>
+                                <button type="submit" className="fsx-button" style={{ height: 22, minHeight: 0, padding: "0 7px", fontSize: 11, lineHeight: 1 }}>
                                   Delete
                                 </button>
                               </form>
