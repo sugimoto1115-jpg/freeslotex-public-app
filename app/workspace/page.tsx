@@ -20,6 +20,7 @@ type ProjectRow = {
   updated_at: string;
   role: string;
   owner_user_id: number;
+    owner_project_no: number | null;
   member_count: number;
   folder_kind: "private" | "shared";
   source_exists?: boolean;
@@ -166,7 +167,9 @@ function ProjectCard({ project }: { project: ProjectRow }) {
           </div>
 
           <div className="fsx-meta fsx-meta-line">
-            <span>Project ID: <code>{project.id}</code></span>
+            {project.role === "owner" && project.owner_project_no != null ? (
+              <span>Project No. <code>{project.owner_project_no}</code></span>
+            ) : null}
             <span>Updated: {fmtDate(project.updated_at)}</span>
             <span>Created: {fmtDate(project.created_at)}</span>
             <span>Status: {project.status}</span>
@@ -247,6 +250,15 @@ export default async function WorkspacePage() {
       p.created_at::text as created_at,
       p.updated_at::text as updated_at,
       p.owner_user_id,
+        (
+          SELECT count(*)::int
+          FROM projects p2
+          WHERE p2.owner_user_id = p.owner_user_id
+            AND (
+              p2.created_at < p.created_at
+              OR (p2.created_at = p.created_at AND p2.id <= p.id)
+            )
+        ) AS owner_project_no,
       pm.role,
       coalesce(mc.member_count, 0)::int as member_count,
       CASE
