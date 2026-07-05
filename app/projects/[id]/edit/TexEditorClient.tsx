@@ -270,7 +270,7 @@ export default function TexEditorClient(props: Props) {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const [leftWidth, setLeftWidth] = useState(280);
   const [rightWidth, setRightWidth] = useState(640);
-  const [editorHeight, setEditorHeight] = useState(380);
+  const [editorHeight, setEditorHeight] = useState(300);
   const [terminalHeight, setTerminalHeight] = useState(320);
   const [copySummaryStatus, setCopySummaryStatus] = useState("");
   const [isCompiling, setIsCompiling] = useState(false);
@@ -327,11 +327,8 @@ export default function TexEditorClient(props: Props) {
         }
 
         if (Number.isFinite(savedEditorHeight)) {
-          const migratedEditorHeight =
-            savedEditorHeight <= 260 ? savedEditorHeight + 200 : savedEditorHeight;
-
           setEditorHeight(
-            clamp(migratedEditorHeight, 320, Math.max(1200, window.innerHeight * 1.6))
+            clamp(savedEditorHeight, 240, Math.max(1200, window.innerHeight * 1.6))
           );
         }
 
@@ -962,7 +959,7 @@ export default function TexEditorClient(props: Props) {
     const onMove = (moveEvent: PointerEvent) => {
       const dy = moveEvent.clientY - startY;
 
-      setEditorHeight(clamp(startEditorHeight + dy, 320, Math.max(1200, window.innerHeight * 1.6)));
+      setEditorHeight(clamp(startEditorHeight + dy, 240, Math.max(1200, window.innerHeight * 1.6)));
       setTerminalHeight(clamp(startTerminalHeight - dy, 160, Math.max(220, window.innerHeight - 260)));
     };
 
