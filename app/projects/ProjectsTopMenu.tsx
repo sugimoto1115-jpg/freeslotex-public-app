@@ -23,6 +23,29 @@ const compileMenuItems = [
   { label: "View TeX log", action: "view-tex-log" },
 ];
 
+const helpMenuItems = [
+  {
+    label: "Basic usage",
+    message: "Basic usage:\n1. Write or open a .tex file.\n2. Use Compile > Compile current file.\n3. Check the PDF preview and Compile Terminal.",
+  },
+  {
+    label: "Compile help",
+    message: "Compile help:\nUse Compile current file to compile the opened .tex file.\nUse Refresh PDF if the preview looks stale.\nUse Download PDF after a successful compile.",
+  },
+  {
+    label: "Search / Replace",
+    message: "Search / Replace:\nUse Edit & Search > Find or Replace.\nBack and Next move between matches.\nReplace one changes the selected match. Replace all asks before replacing all matches.",
+  },
+  {
+    label: "LaTeX error help",
+    message: "LaTeX error help:\nWhen compilation fails, check Compile Error Summary.\nUse Copy error summary or Copy AI prompt from the Compile menu.",
+  },
+  {
+    label: "About FreeSloTeX",
+    message: "FreeSloTeX is a browser-based LaTeX editor focused on Japanese TeX workflows.",
+  },
+];
+
 
 const viewFontSizeMenuItems = ["12px", "14px", "16px", "18px", "20px", "22px", "24px"];
 
@@ -875,7 +898,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   }
 
   function handleMenuClick(item: string, event: MouseEvent<HTMLButtonElement>) {
-    if (item !== "File" && item !== "Edit & Search" && item !== "View" && item !== "TeX Insert" && item !== "Math" && item !== "Compile") {
+    if (item !== "File" && item !== "Edit & Search" && item !== "View" && item !== "TeX Insert" && item !== "Math" && item !== "Compile" && item !== "Help") {
       setOpenMenu(null);
       setActiveSubmenu(null);
       return;
@@ -1399,6 +1422,12 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   }
 
 
+  function showHelpFromTopMenu(message: string) {
+    setOpenMenu(null);
+    setActiveSubmenu(null);
+    window.alert(message);
+  }
+
   function dispatchCompileMenuAction(action: string) {
     setOpenMenu(null);
     setActiveSubmenu(null);
@@ -1455,7 +1484,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
         }}
       >
       {editorMenuItems.map((item) => {
-        const hasDropdown = item === "File" || item === "Edit & Search" || item === "View" || item === "TeX Insert" || item === "Math" || item === "Compile";
+        const hasDropdown = item === "File" || item === "Edit & Search" || item === "View" || item === "TeX Insert" || item === "Math" || item === "Compile" || item === "Help";
 
         return (
           <button
@@ -1648,6 +1677,49 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
           ) : null}
         </div>
       ) : null}
+
+        {openMenu === "Help" ? (
+          <div
+            role="menu"
+            aria-label="Help menu"
+            style={{
+              position: "fixed",
+              top: menuPosition.top,
+              left: menuPosition.left,
+              zIndex: 2147483647,
+              display: "flex",
+              minWidth: 220,
+              flexDirection: "column",
+              gap: 2,
+              padding: 6,
+              border: "1px solid #cbd5e1",
+              borderRadius: 10,
+              background: "#ffffff",
+              boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+            }}
+          >
+            {helpMenuItems.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                role="menuitem"
+                className="fsx-editor-menuitem"
+                onClick={() => showHelpFromTopMenu(item.message)}
+                style={{
+                  border: 0,
+                  background: "transparent",
+                  textAlign: "left",
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  font: "inherit",
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         {openMenu === "Compile" ? (
           <div
