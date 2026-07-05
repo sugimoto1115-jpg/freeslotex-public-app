@@ -14,6 +14,16 @@ const editorMenuItems = [
 
 const editSearchMenuItems = ["Find", "Replace"];
 
+const compileMenuItems = [
+  { label: "Compile current file", action: "compile-current-file" },
+  { label: "Refresh PDF", action: "refresh-pdf" },
+  { label: "Download PDF", action: "download-pdf" },
+  { label: "Copy error summary", action: "copy-error-summary" },
+  { label: "Copy AI prompt", action: "copy-ai-prompt" },
+  { label: "View TeX log", action: "view-tex-log" },
+];
+
+
 const viewFontSizeMenuItems = ["12px", "14px", "16px", "18px", "20px", "22px", "24px"];
 
 const viewWrapMenuItems = ["Wrap Off", "Wrap On"];
@@ -792,6 +802,7 @@ const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 const REVEAL_EDITOR_RANGE_EVENT = "freeslotex:reveal-editor-range";
 const SET_EDITOR_FONT_SIZE_EVENT = "freeslotex:set-editor-font-size";
 const SET_SOFT_WRAP_EVENT = "freeslotex:set-soft-wrap";
+const COMPILE_MENU_ACTION_EVENT = "freeslotex:compile-menu-action";
 
 type MenuPosition = {
   top: number;
@@ -864,7 +875,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   }
 
   function handleMenuClick(item: string, event: MouseEvent<HTMLButtonElement>) {
-    if (item !== "File" && item !== "Edit & Search" && item !== "View" && item !== "TeX Insert" && item !== "Math") {
+    if (item !== "File" && item !== "Edit & Search" && item !== "View" && item !== "TeX Insert" && item !== "Math" && item !== "Compile") {
       setOpenMenu(null);
       setActiveSubmenu(null);
       return;
@@ -1388,6 +1399,17 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   }
 
 
+  function dispatchCompileMenuAction(action: string) {
+    setOpenMenu(null);
+    setActiveSubmenu(null);
+
+    window.dispatchEvent(
+      new CustomEvent(COMPILE_MENU_ACTION_EVENT, {
+        detail: { action },
+      })
+    );
+  }
+
   function resetEditorLayoutFromViewMenu() {
     const ok = window.confirm(
       "Reset editor/PDF layout? Font size, wrap, and PDF zoom will be kept."
@@ -1433,7 +1455,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
         }}
       >
       {editorMenuItems.map((item) => {
-        const hasDropdown = item === "File" || item === "Edit & Search" || item === "View" || item === "TeX Insert" || item === "Math";
+        const hasDropdown = item === "File" || item === "Edit & Search" || item === "View" || item === "TeX Insert" || item === "Math" || item === "Compile";
 
         return (
           <button
@@ -1626,6 +1648,49 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
           ) : null}
         </div>
       ) : null}
+
+        {openMenu === "Compile" ? (
+          <div
+            role="menu"
+            aria-label="Compile menu"
+            style={{
+              position: "fixed",
+              top: menuPosition.top,
+              left: menuPosition.left,
+              zIndex: 2147483647,
+              display: "flex",
+              minWidth: 210,
+              flexDirection: "column",
+              gap: 2,
+              padding: 6,
+              border: "1px solid #cbd5e1",
+              borderRadius: 10,
+              background: "#ffffff",
+              boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+            }}
+          >
+            {compileMenuItems.map((item) => (
+              <button
+                key={item.action}
+                type="button"
+                role="menuitem"
+                className="fsx-editor-menuitem"
+                onClick={() => dispatchCompileMenuAction(item.action)}
+                style={{
+                  border: 0,
+                  background: "transparent",
+                  textAlign: "left",
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  font: "inherit",
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
       {openMenu === "Edit & Search" ? (
         <div

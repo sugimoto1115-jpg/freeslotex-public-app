@@ -266,6 +266,7 @@ export default function TexEditorClient(props: Props) {
   const [outlinePreferencesLoaded, setOutlinePreferencesLoaded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lineGutterRef = useRef<HTMLDivElement | null>(null);
+  const compileTerminalPanelRef = useRef<HTMLElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
   const [leftWidth, setLeftWidth] = useState(280);
   const [rightWidth, setRightWidth] = useState(640);
@@ -979,6 +980,86 @@ export default function TexEditorClient(props: Props) {
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
   }
+
+  useEffect(() => {
+    function handleCompileMenuAction(event: Event) {
+      const customEvent = event as CustomEvent<{ action?: string }>;
+      const action = customEvent.detail?.action;
+
+      if (action === "compile-current-file") {
+        void runSmartCompile();
+        return;
+      }
+
+      if (action === "refresh-pdf") {
+        setPdfRefreshKey((value) => value + 1);
+        return;
+      }
+
+      if (action === "download-pdf") {
+        if (!livePdfExists) {
+          window.alert("No PDF available. Compile first.");
+          return;
+        }
+
+        const link = document.createElement("a");
+        const filename = currentPdfFile.split("/").pop() || "main.pdf";
+        link.href = `/api/projects/${props.projectId}/pdf?file=${encodeURIComponent(currentPdfFile)}`;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return;
+      }
+
+      if (action === "copy-error-summary") {
+        if (!liveCompileErrorSummary) {
+          window.alert("No error summary.");
+          return;
+        }
+
+        void copyCompileErrorSummary();
+        return;
+      }
+
+      if (action === "copy-ai-prompt") {
+        if (!liveCompileErrorSummary) {
+          window.alert("No error summary.");
+          return;
+        }
+
+        void copyAiPromptForCompileError();
+        return;
+      }
+
+      if (action === "view-tex-log") {
+        compileTerminalPanelRef.current?.scrollIntoView({
+          block: "start",
+          behavior: "smooth",
+        });
+
+        if (!liveFsxLogTail && !liveTexLogTail) {
+          window.alert("No compile log yet.");
+        }
+      }
+    }
+
+    window.addEventListener("freeslotex:compile-menu-action", handleCompileMenuAction);
+
+    return () => {
+      window.removeEventListener("freeslotex:compile-menu-action", handleCompileMenuAction);
+    };
+  }, [
+    copyAiPromptForCompileError,
+    copyCompileErrorSummary,
+    currentPdfFile,
+    liveCompileErrorSummary,
+    liveFsxLogTail,
+    livePdfExists,
+    liveTexLogTail,
+    props.projectId,
+    runSmartCompile,
+  ]);
 
   function insertSnippet(snippet: string) {
     if (!props.canEdit) return;
@@ -1844,7 +1925,7 @@ export default function TexEditorClient(props: Props) {
             }}
           />
 
-          <section className="fsx-panel" style={{ padding: 6 }}>
+          <section ref={compileTerminalPanelRef} className="fsx-panel" style={{ padding: 6 }}>
             <div className="fsx-panel-head" style={{ marginBottom: 4 }}>
               <div>
                 <h2 className="fsx-panel-title">Compile Terminal</h2>
