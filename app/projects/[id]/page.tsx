@@ -35,6 +35,93 @@ type WorkspaceEntry = {
   depth: number;
 };
 
+type WorkspaceFileSortKey = "name" | "type" | "size" | "updated";
+
+const workspaceFileSortOptions: { key: WorkspaceFileSortKey; label: string }[] = [
+  { key: "name", label: "Name" },
+  { key: "type", label: "Type" },
+  { key: "size", label: "Size" },
+  { key: "updated", label: "Updated" },
+];
+
+function normalizeWorkspaceFileSort(value: string | string[] | undefined): WorkspaceFileSortKey {
+  const raw = Array.isArray(value) ? value[0] : value;
+
+  if (raw === "name" || raw === "type" || raw === "size" || raw === "updated") {
+    return raw;
+  }
+
+  return "name";
+}
+
+function workspaceFileSortHref(projectId: string, sort: WorkspaceFileSortKey) {
+  const base = `/projects/${encodeURIComponent(projectId)}`;
+  return sort === "name" ? base : `${base}?fileSort=${sort}`;
+}
+
+function compareWorkspaceEntryName(a: WorkspaceEntry, b: WorkspaceEntry) {
+  const nameDiff = a.name.localeCompare(b.name, "ja-JP", {
+    numeric: true,
+    sensitivity: "base",
+  });
+
+  if (nameDiff !== 0) return nameDiff;
+
+  return a.relativePath.localeCompare(b.relativePath, "ja-JP", {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
+function workspaceEntryTypeLabel(entry: WorkspaceEntry) {
+  if (entry.kind === "dir") return "folder";
+
+  const dot = entry.name.lastIndexOf(".");
+  if (dot <= 0 || dot === entry.name.length - 1) return "file";
+
+  return entry.name.slice(dot + 1).toLowerCase();
+}
+
+function workspaceEntrySize(entry: WorkspaceEntry) {
+  return typeof entry.size === "number" ? entry.size : -1;
+}
+
+function workspaceEntryUpdatedMs(entry: WorkspaceEntry) {
+  const ms = entry.updatedAt?.getTime() ?? 0;
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function sortWorkspaceEntries(entries: WorkspaceEntry[], sort: WorkspaceFileSortKey) {
+  return [...entries].sort((a, b) => {
+    if (sort === "type") {
+      const typeDiff = workspaceEntryTypeLabel(a).localeCompare(
+        workspaceEntryTypeLabel(b),
+        "ja-JP",
+        {
+          numeric: true,
+          sensitivity: "base",
+        }
+      );
+      if (typeDiff !== 0) return typeDiff;
+      return compareWorkspaceEntryName(a, b);
+    }
+
+    if (sort === "size") {
+      const sizeDiff = workspaceEntrySize(b) - workspaceEntrySize(a);
+      if (sizeDiff !== 0) return sizeDiff;
+      return compareWorkspaceEntryName(a, b);
+    }
+
+    if (sort === "updated") {
+      const updatedDiff = workspaceEntryUpdatedMs(b) - workspaceEntryUpdatedMs(a);
+      if (updatedDiff !== 0) return updatedDiff;
+      return compareWorkspaceEntryName(a, b);
+    }
+
+    return compareWorkspaceEntryName(a, b);
+  });
+}
+
 function quoteIdent(value: string): string {
   return `"${value.replace(/"/g, '""')}"`;
 }
@@ -251,10 +338,13 @@ async function collectWorkspaceEntries(
 
 type ProjectPageProps = {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ fileSort?: string | string[] | undefined }>;
 };
 
-export default async function ProjectDetailPage({ params }: ProjectPageProps) {
+export default async function ProjectDetailPage({ params, searchParams }: ProjectPageProps) {
   const { id } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const workspaceFileSort = normalizeWorkspaceFileSort(resolvedSearchParams.fileSort);
 
   const userId = await resolveCurrentUserId();
   if (userId === null) {
@@ -359,6 +449,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
       workspaceError = "storage_path is empty.";
     }
 
+    workspaceEntries = sortWorkspaceEntries(workspaceEntries, workspaceFileSort);
+
     const mainTexExists = workspaceEntries.some(
       (entry) => entry.kind === "file" && entry.relativePath === "main.tex"
     );
@@ -425,6 +517,28 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             <div>
               <h2 className="fsx-panel-title">Workspace files</h2>
               <p className="fsx-panel-note">Files in this project workspace.</p>
+              <div
+                className="fsx-actions"
+                aria-label="Workspace file sort"
+                style={{ gap: 6, flexWrap: "wrap", marginTop: 6 }}
+              >
+                <span
+                  className="fsx-muted"
+                  style={{ display: "inline-flex", alignItems: "center", fontWeight: 700, transform: "translateY(2px)" }}
+                >
+                  Sort by
+                </span>
+                {workspaceFileSortOptions.map((option) => (
+                  <Link
+                    key={option.key}
+                    href={workspaceFileSortHref(id, option.key)}
+                    className={workspaceFileSort === option.key ? "fsx-button fsx-button-primary" : "fsx-button"}
+                    style={{ padding: "3px 7px", fontSize: 11 }}
+                  >
+                    {option.label}
+                  </Link>
+                ))}
+              </div>
             </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <form
@@ -492,7 +606,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                           </div>
                         </td>
                         <td className="fsx-code" style={{ padding: "3px 10px" }}>{entry.relativePath}</td>
-                        <td style={{ padding: "3px 10px" }}>{entry.kind}</td>
+                        <td style={{ padding: "3px 10px" }}>{workspaceEntryTypeLabel(entry)}</td>
                         <td style={{ padding: "3px 10px" }}>{formatBytes(entry.size)}</td>
                         <td style={{ padding: "3px 10px" }}>{formatDate(entry.updatedAt)}</td>
                           <td style={{ padding: "3px 10px" }}>
