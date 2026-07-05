@@ -370,7 +370,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
         alignItems: "center",
         flexWrap: "wrap",
         gap: 3,
-        padding: 0,
+        padding: "0 0 0 12px",
         margin: 0,
         minHeight: 0,
       }}
