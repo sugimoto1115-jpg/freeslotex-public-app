@@ -50,15 +50,63 @@ function roleClass(role: string) {
   return "fsx-pill";
 }
 
-function sortProjectsByUpdatedDesc(projects: ProjectRow[]) {
-  return [...projects].sort((a, b) => {
-    const at = new Date(a.updated_at).getTime();
-    const bt = new Date(b.updated_at).getTime();
+type WorkspaceSortKey = "project" | "name" | "created" | "updated";
 
-    if (Number.isFinite(at) && Number.isFinite(bt) && at !== bt) {
-      return bt - at;
+const workspaceSortOptions: { key: WorkspaceSortKey; label: string }[] = [
+  { key: "project", label: "Project No." },
+  { key: "name", label: "Name" },
+  { key: "created", label: "Created" },
+  { key: "updated", label: "Updated" },
+];
+
+function normalizeWorkspaceSort(value: string | string[] | undefined): WorkspaceSortKey {
+  const raw = Array.isArray(value) ? value[0] : value;
+
+  if (raw === "project" || raw === "name" || raw === "created" || raw === "updated") {
+    return raw;
+  }
+
+  return "updated";
+}
+
+function workspaceSortHref(sort: WorkspaceSortKey) {
+  return sort === "updated" ? "/workspace" : `/workspace?sort=${sort}`;
+}
+
+function dateMs(value: string) {
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function projectNo(project: ProjectRow) {
+  return typeof project.owner_project_no === "number" ? project.owner_project_no : Number.POSITIVE_INFINITY;
+}
+
+function sortProjects(projects: ProjectRow[], sort: WorkspaceSortKey) {
+  return [...projects].sort((a, b) => {
+    if (sort === "project") {
+      const diff = projectNo(a) - projectNo(b);
+      if (diff !== 0) return diff;
+      return a.id - b.id;
     }
 
+    if (sort === "name") {
+      const diff = a.name.localeCompare(b.name, "ja-JP", {
+        numeric: true,
+        sensitivity: "base",
+      });
+      if (diff !== 0) return diff;
+      return projectNo(a) - projectNo(b);
+    }
+
+    if (sort === "created") {
+      const diff = dateMs(a.created_at) - dateMs(b.created_at);
+      if (diff !== 0) return diff;
+      return a.id - b.id;
+    }
+
+    const diff = dateMs(b.updated_at) - dateMs(a.updated_at);
+    if (diff !== 0) return diff;
     return b.id - a.id;
   });
 }
@@ -215,7 +263,14 @@ function formatWorkspaceCompileQuota(quota: WorkspaceCompileQuota) {
   return `Free plan: Today ${usedToday}/${quota.freeDailyLimit} compiles`;
 }
 
-export default async function WorkspacePage() {
+export default async function WorkspacePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ sort?: string | string[] | undefined }>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const workspaceSort = normalizeWorkspaceSort(resolvedSearchParams.sort);
+
   const user = await requireUser();
 
   const userResult = await query<{ id: number }>(
@@ -278,13 +333,15 @@ export default async function WorkspacePage() {
     [userId]
   );
 
-  const projects = sortProjectsByUpdatedDesc(projectsResult.rows);
+  const projects = sortProjects(projectsResult.rows, workspaceSort);
   const root = await refreshUserWorkspace(userId, projects);
-  const privateProjects = sortProjectsByUpdatedDesc(
-    projects.filter((p) => p.folder_kind === "private")
+  const privateProjects = sortProjects(
+    projects.filter((p) => p.folder_kind === "private"),
+    workspaceSort
   );
-  const sharedProjects = sortProjectsByUpdatedDesc(
-    projects.filter((p) => p.folder_kind === "shared")
+  const sharedProjects = sortProjects(
+    projects.filter((p) => p.folder_kind === "shared"),
+    workspaceSort
   );
 
   const fsAccount = await getLabtexCurrentUser();
@@ -370,6 +427,20 @@ export default async function WorkspacePage() {
         <div className="fsx-count">
           {privateProjects.length} private / {sharedProjects.length} shared
         </div>
+
+          <div className="fsx-actions" aria-label="Workspace sort" style={{ gap: 6, flexWrap: "wrap" }}>
+            <span className="fsx-muted" style={{ fontWeight: 700, transform: "translateY(2px)" }}>Sort</span>
+            {workspaceSortOptions.map((option) => (
+              <Link
+                key={option.key}
+                href={workspaceSortHref(option.key)}
+                className={workspaceSort === option.key ? "fsx-button fsx-button-primary" : "fsx-button"}
+                style={{ padding: "4px 8px", fontSize: 12 }}
+              >
+                {option.label}
+              </Link>
+            ))}
+          </div>
         <div className="fsx-muted">
           Signed in as <strong>{user.email}</strong>
         </div>
