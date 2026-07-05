@@ -1792,8 +1792,8 @@ export default function TexEditorClient(props: Props) {
         />
 
         <section style={{ display: "grid", gap: 1, minWidth: 0, overflow: "hidden" }}>
-          <section className="fsx-panel" style={{ padding: 6 }}>
-            <div className="fsx-panel-head" style={{ marginBottom: 4 }}>
+          <section className="fsx-panel" style={{ padding: "2px 6px" }}>
+            <div className="fsx-panel-head" style={{ marginBottom: 1 }}>
               <div
                 style={{
                   display: "flex",
@@ -1802,10 +1802,10 @@ export default function TexEditorClient(props: Props) {
                   flexWrap: "wrap",
                 }}
               >
-                <h2 className="fsx-panel-title" style={{ margin: 0 }}>
+                <h2 className="fsx-panel-title" style={{ margin: 0, lineHeight: 1.05 }}>
                   {currentFileDisplayName}
                 </h2>
-                <p className="fsx-panel-note" style={{ margin: 0 }}>
+                <p className="fsx-panel-note" style={{ margin: 0, lineHeight: 1.05 }}>
                   Role: <strong>{props.roleLabel}</strong>
                   {" / "}
                   Mode: <strong>{props.canEdit ? "editable" : "viewer only"}</strong>
