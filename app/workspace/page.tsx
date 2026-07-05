@@ -202,10 +202,10 @@ async function refreshUserWorkspace(userId: number, projects: ProjectRow[]) {
 
 function ProjectCard({ project }: { project: ProjectRow }) {
   return (
-    <section className="fsx-card">
-      <div className="fsx-card-head">
+    <section className="fsx-card" style={{ padding: "12px 18px" }}>
+      <div className="fsx-card-head" style={{ gap: 12 }}>
         <div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
             <Link href={`/projects/${project.id}`} className="fsx-project-name">
               {project.name}
             </Link>
@@ -214,7 +214,7 @@ function ProjectCard({ project }: { project: ProjectRow }) {
             <span className="fsx-pill">{project.folder_kind}</span>
           </div>
 
-          <div className="fsx-meta fsx-meta-line">
+          <div className="fsx-meta fsx-meta-line" style={{ gap: 18 }}>
             {project.role === "owner" && project.owner_project_no != null ? (
               <span>Project No. <code>{project.owner_project_no}</code></span>
             ) : null}
@@ -459,7 +459,7 @@ export default async function WorkspacePage({
         {privateProjects.length === 0 ? (
           <div className="fsx-empty-box">No private projects yet.</div>
         ) : (
-          <div className="fsx-grid">
+          <div className="fsx-grid" style={{ gap: 10 }}>
             {privateProjects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
@@ -480,7 +480,7 @@ export default async function WorkspacePage({
         {sharedProjects.length === 0 ? (
           <div className="fsx-empty-box">No shared projects yet.</div>
         ) : (
-          <div className="fsx-grid">
+          <div className="fsx-grid" style={{ gap: 10 }}>
             {sharedProjects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
