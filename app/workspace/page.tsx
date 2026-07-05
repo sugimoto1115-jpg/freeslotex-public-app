@@ -429,7 +429,7 @@ export default async function WorkspacePage({
         </div>
 
           <div className="fsx-actions" aria-label="Workspace sort" style={{ gap: 6, flexWrap: "wrap" }}>
-            <span className="fsx-muted" style={{ fontWeight: 700, transform: "translateY(2px)" }}>Sort</span>
+            <span className="fsx-muted" style={{ display: "inline-flex", alignItems: "center", fontWeight: 700, transform: "translateY(3px)" }}>Sort by</span>
             {workspaceSortOptions.map((option) => (
               <Link
                 key={option.key}
