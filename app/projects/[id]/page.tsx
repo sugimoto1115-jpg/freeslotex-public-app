@@ -35,10 +35,11 @@ type WorkspaceEntry = {
   depth: number;
 };
 
-type WorkspaceFileSortKey = "name" | "type" | "size" | "updated";
+type WorkspaceFileSortKey = "name" | "folder" | "type" | "size" | "updated";
 
 const workspaceFileSortOptions: { key: WorkspaceFileSortKey; label: string }[] = [
   { key: "name", label: "Name" },
+  { key: "folder", label: "Folder" },
   { key: "type", label: "Type" },
   { key: "size", label: "Size" },
   { key: "updated", label: "Updated" },
@@ -47,7 +48,7 @@ const workspaceFileSortOptions: { key: WorkspaceFileSortKey; label: string }[] =
 function normalizeWorkspaceFileSort(value: string | string[] | undefined): WorkspaceFileSortKey {
   const raw = Array.isArray(value) ? value[0] : value;
 
-  if (raw === "name" || raw === "type" || raw === "size" || raw === "updated") {
+  if (raw === "name" || raw === "folder" || raw === "type" || raw === "size" || raw === "updated") {
     return raw;
   }
 
@@ -73,6 +74,31 @@ function compareWorkspaceEntryName(a: WorkspaceEntry, b: WorkspaceEntry) {
   });
 }
 
+function workspaceEntryFolderPath(entry: WorkspaceEntry) {
+  const parts = entry.relativePath.split("/").filter(Boolean);
+  if (parts.length <= 1) return "";
+  return parts.slice(0, -1).join("/");
+}
+
+function compareWorkspaceEntryFolderPath(a: WorkspaceEntry, b: WorkspaceEntry) {
+  const folderDiff = workspaceEntryFolderPath(a).localeCompare(
+    workspaceEntryFolderPath(b),
+    "ja-JP",
+    {
+      numeric: true,
+      sensitivity: "base",
+    }
+  );
+
+  if (folderDiff !== 0) return folderDiff;
+
+  if (a.kind !== b.kind) {
+    return a.kind === "file" ? -1 : 1;
+  }
+
+  return compareWorkspaceEntryName(a, b);
+}
+
 function workspaceEntryTypeLabel(entry: WorkspaceEntry) {
   if (entry.kind === "dir") return "folder";
 
@@ -93,6 +119,10 @@ function workspaceEntryUpdatedMs(entry: WorkspaceEntry) {
 
 function sortWorkspaceEntries(entries: WorkspaceEntry[], sort: WorkspaceFileSortKey) {
   return [...entries].sort((a, b) => {
+    if (sort === "folder") {
+      return compareWorkspaceEntryFolderPath(a, b);
+    }
+
     if (sort === "type") {
       const typeDiff = workspaceEntryTypeLabel(a).localeCompare(
         workspaceEntryTypeLabel(b),
