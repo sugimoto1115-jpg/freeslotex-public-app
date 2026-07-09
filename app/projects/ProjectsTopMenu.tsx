@@ -75,6 +75,7 @@ const texInsertMenuItems = [
 
 const mathMenuItems = [
   "数式モード",
+  "数式フォント",
   "分数・根号・添字",
   "ギリシャ文字",
   "数学関数",
@@ -109,6 +110,17 @@ const mathModeMenuItems = [
     label: "複数行番号付き / align 環境",
     snippet: "\\begin{align}\n%%CURSOR%%\n\\end{align}",
   },
+];
+
+const mathFontMenuItems = [
+  { label: "mathrm ローマン体", snippet: "\\mathrm{%%CURSOR%%}" },
+  { label: "mathbf 太字", snippet: "\\mathbf{%%CURSOR%%}" },
+  { label: "bm 太字数式", snippet: "\\bm{%%CURSOR%%}" },
+  { label: "boldsymbol 太字記号", snippet: "\\boldsymbol{%%CURSOR%%}" },
+  { label: "mathcal カリグラフィ", snippet: "\\mathcal{%%CURSOR%%}" },
+  { label: "mathbb 黒板太字", snippet: "\\mathbb{%%CURSOR%%}" },
+  { label: "mathscr スクリプト", snippet: "\\mathscr{%%CURSOR%%}" },
+  { label: "mathtt タイプライタ", snippet: "\\mathtt{%%CURSOR%%}" },
 ];
 
 const fracRootSubscriptMenuItems = [
@@ -2329,6 +2341,61 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
           }}
         >
           {mathModeMenuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent(INSERT_SNIPPET_EVENT, {
+                    detail: { snippet: item.snippet },
+                  }),
+                );
+
+                setOpenMenu(null);
+                setActiveSubmenu(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                border: 0,
+                borderRadius: 7,
+                padding: "6px 8px",
+                background: "transparent",
+                color: "#334155",
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {openMenu === "Math" && activeSubmenu === "数式フォント" ? (
+        <div
+          role="menu"
+          aria-label="数式フォント menu"
+          style={{
+            position: "fixed",
+            top: submenuPosition.top,
+            left: submenuPosition.left,
+            zIndex: 2147483647,
+            display: "flex",
+            minWidth: 260,
+            flexDirection: "column",
+            gap: 2,
+            padding: 6,
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#ffffff",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+          }}
+        >
+          {mathFontMenuItems.map((item) => (
             <button
               key={item.label}
               type="button"
