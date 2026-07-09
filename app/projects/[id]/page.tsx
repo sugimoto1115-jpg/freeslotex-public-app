@@ -283,7 +283,7 @@ function formatBytes(value: number | null): string {
 async function collectWorkspaceEntries(
   baseDir: string,
   maxDepth = 4,
-  maxItems = 300
+  maxItems = 5000
 ): Promise<{ entries: WorkspaceEntry[]; latestUpdatedAt: Date | null; truncated: boolean }> {
   const entries: WorkspaceEntry[] = [];
   let latestUpdatedAt: Date | null = null;
