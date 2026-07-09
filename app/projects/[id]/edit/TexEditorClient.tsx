@@ -38,6 +38,8 @@ type Props = {
   texLogTail: string;
 };
 
+type RightPaneTab = "pdf" | "terminal";
+
 type LiveCompileResponse = {
   ok: boolean;
   engine?: string;
@@ -272,6 +274,7 @@ export default function TexEditorClient(props: Props) {
   const [rightWidth, setRightWidth] = useState(640);
   const [editorHeight, setEditorHeight] = useState(300);
   const [terminalHeight, setTerminalHeight] = useState(320);
+  const [rightPaneTab, setRightPaneTab] = useState<RightPaneTab>("pdf");
   const [copySummaryStatus, setCopySummaryStatus] = useState("");
   const [isCompiling, setIsCompiling] = useState(false);
   const [liveCompileError, setLiveCompileError] = useState<string | null>(props.compileError ?? null);
@@ -919,6 +922,7 @@ export default function TexEditorClient(props: Props) {
       setLiveTexLogTail(data.texLogTail ?? "");
       if (data.compileError !== "quota_exceeded") {
         setLivePdfExists(Boolean(data.pdfExists));
+        setRightPaneTab(data.ok && Boolean(data.pdfExists) ? "pdf" : "terminal");
         setPdfRefreshKey((value) => value + 1);
       }
       setCompileStatusMessage(
@@ -947,6 +951,26 @@ export default function TexEditorClient(props: Props) {
     } finally {
       setIsCompiling(false);
     }
+  }
+
+  function startResizeEditorHeight(event: React.PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+
+    const startY = event.clientY;
+    const startEditorHeight = editorHeight;
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const dy = moveEvent.clientY - startY;
+      setEditorHeight(clamp(startEditorHeight + dy, 240, Math.max(1200, window.innerHeight * 1.6)));
+    };
+
+    const handlePointerUp = () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp, { once: true });
   }
 
   function startResizeVertical(event: import("react").PointerEvent<HTMLDivElement>) {
@@ -1907,9 +1931,9 @@ export default function TexEditorClient(props: Props) {
 
           <div
             role="separator"
-            aria-label="Resize editor and compile terminal"
-            title="Drag to resize TeX editor and Compile Terminal"
-            onPointerDown={startResizeVertical}
+            aria-label="Resize TeX editor"
+            title="Drag to resize TeX editor"
+            onPointerDown={startResizeEditorHeight}
             style={{
               cursor: "row-resize",
               touchAction: "none",
@@ -1922,6 +1946,75 @@ export default function TexEditorClient(props: Props) {
             }}
           />
 
+        </section>
+
+        <div
+          role="separator"
+          aria-label="Resize PDF preview"
+          title="Drag to resize PDF preview"
+          onPointerDown={startResizePdfPreview}
+          style={{
+            cursor: "col-resize",
+            touchAction: "none",
+            width: 22,
+            marginLeft: -8,
+            marginRight: -8,
+            justifySelf: "center",
+            position: "relative",
+            zIndex: 5,
+            alignSelf: "stretch",
+            borderRadius: 999,
+            background: "linear-gradient(90deg, transparent, #cbd5e1, transparent)",
+            minHeight: 400,
+          }}
+        />
+
+        <aside style={{ display: "grid", gap: 1, minWidth: 0 }}>
+            <section className="fsx-panel" style={{ padding: 1, position: "sticky", top: 1 }}>
+              <div
+                role="tablist"
+                aria-label="Right pane tabs"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "4px 4px 2px",
+                  borderBottom: "1px solid #e5e7eb",
+                  background: "#f8fafc",
+                  borderTopLeftRadius: 12,
+                  borderTopRightRadius: 12,
+                }}
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={rightPaneTab === "pdf"}
+                  className={rightPaneTab === "pdf" ? "fsx-button fsx-button-primary" : "fsx-button"}
+                  onClick={() => setRightPaneTab("pdf")}
+                  style={{ padding: "5px 10px", fontSize: 12 }}
+                >
+                  PDF
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={rightPaneTab === "terminal"}
+                  className={rightPaneTab === "terminal" ? "fsx-button fsx-button-primary" : "fsx-button"}
+                  onClick={() => setRightPaneTab("terminal")}
+                  style={{ padding: "5px 10px", fontSize: 12 }}
+                >
+                  Terminal
+                </button>
+              </div>
+
+              {rightPaneTab === "pdf" ? (
+                <PdfPreviewClient
+                  projectId={props.projectId}
+                  pdfExists={livePdfExists}
+                  refreshKey={pdfRefreshKey}
+                  pdfFile={currentPdfFile}
+                />
+              ) : (
           <section ref={compileTerminalPanelRef} className="fsx-panel" style={{ padding: 6 }}>
             <div className="fsx-panel-head" style={{ marginBottom: 4 }}>
               <div>
@@ -2024,38 +2117,8 @@ export default function TexEditorClient(props: Props) {
               <div className="fsx-empty-box">No compile log yet.</div>
             )}
           </section>
-        </section>
-
-        <div
-          role="separator"
-          aria-label="Resize PDF preview"
-          title="Drag to resize PDF preview"
-          onPointerDown={startResizePdfPreview}
-          style={{
-            cursor: "col-resize",
-            touchAction: "none",
-            width: 22,
-            marginLeft: -8,
-            marginRight: -8,
-            justifySelf: "center",
-            position: "relative",
-            zIndex: 5,
-            alignSelf: "stretch",
-            borderRadius: 999,
-            background: "linear-gradient(90deg, transparent, #cbd5e1, transparent)",
-            minHeight: 400,
-          }}
-        />
-
-        <aside style={{ display: "grid", gap: 1, minWidth: 0 }}>
-          <section className="fsx-panel" style={{ padding: 1, position: "sticky", top: 1 }}>
-            <PdfPreviewClient
-              projectId={props.projectId}
-              pdfExists={livePdfExists}
-              refreshKey={pdfRefreshKey}
-              pdfFile={currentPdfFile}
-            />
-          </section>
+              )}
+            </section>
         </aside>
 
       </div>
