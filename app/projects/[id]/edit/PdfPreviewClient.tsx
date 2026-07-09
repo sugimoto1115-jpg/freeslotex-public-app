@@ -1,11 +1,13 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 type Props = {
   projectId: number;
   pdfExists: boolean;
   pdfFile?: string;
   refreshKey?: number;
+  toolbarPrefix?: ReactNode;
 };
 
 type PdfDoc = any;
@@ -26,7 +28,7 @@ function zoomLabel(value: string) {
   return Number.isFinite(numericValue) ? `${Math.round(numericValue * 100)}%` : value;
 }
 
-export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main.pdf", refreshKey = 0 }: Props) {
+export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main.pdf", refreshKey = 0, toolbarPrefix }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
 
@@ -375,9 +377,11 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
         minHeight: 0,
       }}
     >
-      <h2 className="fsx-panel-title" style={{ margin: 0, fontSize: 18, lineHeight: 1 }}>
-        PDF
-      </h2>
+      {toolbarPrefix ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 4, marginRight: 4 }}>
+          {toolbarPrefix}
+        </div>
+      ) : null}
 
       <div
         aria-label="PDF zoom controls"

@@ -1971,44 +1971,37 @@ export default function TexEditorClient(props: Props) {
 
         <aside style={{ display: "grid", gap: 1, minWidth: 0 }}>
             <section className="fsx-panel" style={{ padding: 1, position: "sticky", top: 1 }}>
-              <div
-                role="tablist"
-                aria-label="Right pane tabs"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: "4px 4px 2px",
-                  borderBottom: "1px solid #e5e7eb",
-                  background: "#f8fafc",
-                  borderTopLeftRadius: 12,
-                  borderTopRightRadius: 12,
-                }}
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={rightPaneTab === "pdf"}
-                  className={rightPaneTab === "pdf" ? "fsx-button fsx-button-primary" : "fsx-button"}
-                  onClick={() => setRightPaneTab("pdf")}
-                  style={{ padding: "5px 10px", fontSize: 12 }}
-                >
-                  PDF
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={rightPaneTab === "terminal"}
-                  className={rightPaneTab === "terminal" ? "fsx-button fsx-button-primary" : "fsx-button"}
-                  onClick={() => setRightPaneTab("terminal")}
-                  style={{ padding: "5px 10px", fontSize: 12 }}
-                >
-                  Terminal
-                </button>
-              </div>
 
               {rightPaneTab === "pdf" ? (
                 <PdfPreviewClient
+                  toolbarPrefix={
+                    <div
+                      role="tablist"
+                      aria-label="Right pane tabs"
+                      style={{ display: "flex", alignItems: "center", gap: 4 }}
+                    >
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={true}
+                        className="fsx-button fsx-button-primary"
+                        onClick={() => setRightPaneTab("pdf")}
+                        style={{ padding: "5px 10px", fontSize: 12 }}
+                      >
+                        PDF
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={false}
+                        className="fsx-button"
+                        onClick={() => setRightPaneTab("terminal")}
+                        style={{ padding: "5px 10px", fontSize: 12 }}
+                      >
+                        Terminal
+                      </button>
+                    </div>
+                  }
                   projectId={props.projectId}
                   pdfExists={livePdfExists}
                   refreshKey={pdfRefreshKey}
@@ -2017,6 +2010,32 @@ export default function TexEditorClient(props: Props) {
               ) : (
           <section ref={compileTerminalPanelRef} className="fsx-panel" style={{ padding: 6 }}>
             <div className="fsx-panel-head" style={{ marginBottom: 4 }}>
+              <div
+                role="tablist"
+                aria-label="Right pane tabs terminal"
+                style={{ display: "flex", alignItems: "center", gap: 4, marginRight: 6 }}
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={false}
+                  className="fsx-button"
+                  onClick={() => setRightPaneTab("pdf")}
+                  style={{ padding: "5px 10px", fontSize: 12 }}
+                >
+                  PDF
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={true}
+                  className="fsx-button fsx-button-primary"
+                  onClick={() => setRightPaneTab("terminal")}
+                  style={{ padding: "5px 10px", fontSize: 12 }}
+                >
+                  Terminal
+                </button>
+              </div>
               <div>
                 <h2 className="fsx-panel-title">Compile Terminal</h2>
                 <p className="fsx-panel-note">
