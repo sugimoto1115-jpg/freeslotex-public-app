@@ -181,45 +181,70 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const formData = await request.formData().catch(() => null);
-  const uploaded = formData?.get("file");
+  const uploadedFiles = (formData?.getAll("file") ?? []).filter(
+    (value): value is File => value instanceof File
+  );
   const overwrite = String(formData?.get("overwrite") ?? "") === "1";
 
-  if (!(uploaded instanceof File)) {
+  if (uploadedFiles.length === 0) {
     return redirectToProject(request, id, { error: "missing_file" });
   }
 
-  if (uploaded.size <= 0) {
-    return redirectToProject(request, id, { error: "empty_file" });
+  if (uploadedFiles.length > 80) {
+    return redirectToProject(request, id, { error: "too_many_files" });
   }
 
-  if (uploaded.size > 25 * 1024 * 1024) {
-    return redirectToProject(request, id, { error: "too_large" });
-  }
-
-  let relativePath = "";
-
-  try {
-    relativePath = normalizeUploadPath(
-      typeof formData?.get("relativePath") === "string"
-        ? String(formData.get("relativePath"))
-        : null,
-      uploaded.name
-    );
-  } catch {
-    return redirectToProject(request, id, { error: "bad_upload_path" });
-  }
+  const singleRelativePath =
+    uploadedFiles.length === 1 && typeof formData?.get("relativePath") === "string"
+      ? String(formData.get("relativePath"))
+      : null;
 
   const projectDir = resolveProjectDir(project.storage_path);
-  const targetPath = resolveProjectFile(projectDir, relativePath);
+  const preparedFiles: { uploaded: File; relativePath: string; targetPath: string }[] = [];
+  const seenRelativePaths = new Set<string>();
 
-  const existing = await stat(targetPath).catch(() => null);
-  if (existing && !overwrite) {
-    return redirectToProject(request, id, { error: "file_exists" });
+  for (const uploaded of uploadedFiles) {
+    if (uploaded.size <= 0) {
+      return redirectToProject(request, id, { error: "empty_file" });
+    }
+
+    if (uploaded.size > 25 * 1024 * 1024) {
+      return redirectToProject(request, id, { error: "too_large" });
+    }
+
+    let relativePath = "";
+
+    try {
+      relativePath = normalizeUploadPath(singleRelativePath, uploaded.name);
+    } catch {
+      return redirectToProject(request, id, { error: "bad_upload_path" });
+    }
+
+    if (seenRelativePaths.has(relativePath)) {
+      return redirectToProject(request, id, { error: "file_exists" });
+    }
+
+    seenRelativePaths.add(relativePath);
+    preparedFiles.push({
+      uploaded,
+      relativePath,
+      targetPath: resolveProjectFile(projectDir, relativePath),
+    });
   }
 
-  await mkdir(path.dirname(targetPath), { recursive: true });
-  const bytes = Buffer.from(await uploaded.arrayBuffer());
-  await writeFile(targetPath, bytes);
+  for (const prepared of preparedFiles) {
+    const existing = await stat(prepared.targetPath).catch(() => null);
+
+    if (existing && !overwrite) {
+      return redirectToProject(request, id, { error: "file_exists" });
+    }
+  }
+
+  for (const prepared of preparedFiles) {
+    await mkdir(path.dirname(prepared.targetPath), { recursive: true });
+    const bytes = Buffer.from(await prepared.uploaded.arrayBuffer());
+    await writeFile(prepared.targetPath, bytes);
+  }
 
   await query(
     `
@@ -230,5 +255,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     [projectId]
   );
 
-  return redirectToProject(request, id, { uploaded: relativePath });
+  return redirectToProject(request, id, {
+    uploaded:
+      preparedFiles.length === 1
+        ? preparedFiles[0].relativePath
+        : `${preparedFiles.length} files`,
+  });
 }

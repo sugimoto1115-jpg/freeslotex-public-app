@@ -550,6 +550,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
                   <input
                     type="file"
                     name="file"
+                    multiple
                     accept=".tex,.bib,.sty,.cls,.md,.txt,.json,.csv,.tsv,.yml,.yaml,.png,.jpg,.jpeg,.pdf,.eps,.svg"
                     className="fsx-button"
                     required
@@ -559,7 +560,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
                     overwrite
                   </label>
                   <button type="submit" className="fsx-button">
-                    Upload file
+                    Upload file(s)
                   </button>
                 </form>
 
