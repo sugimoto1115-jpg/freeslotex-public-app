@@ -80,7 +80,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex") {
     };
   }
 
-  if (/^(u)?p?js(article|book|report)$/.test(cls) || /^(jarticle|jbook|jreport)$/.test(cls)) {
+  if (/^(u)?p?js(article|book|report)$/.test(cls)) {
     return {
       engine: "uplatex+dvipdfmx",
       script:
@@ -88,7 +88,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex") {
     };
   }
 
-  if (cls === "gjisbook") {
+  if (/^(jarticle|jreport|jbook|tarticle|treport|tbook|gjisbook)$/.test(cls)) {
     return {
       engine: "platex+dvipdfmx",
       script:
