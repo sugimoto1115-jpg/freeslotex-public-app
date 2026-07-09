@@ -84,7 +84,15 @@ function detectCompileScript(tex: string, rootFile = "main.tex") {
     return {
       engine: "uplatex+dvipdfmx",
       script:
-        `latexmk -C || true; latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -dvipdf='dvipdfmx %O -o %D %S' ${qRootFile}`,
+        `latexmk -C || true; latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}`,
+    };
+  }
+
+  if (cls === "gjisbook") {
+    return {
+      engine: "platex+dvipdfmx",
+      script:
+        `latexmk -C || true; latexmk -pdfdvi -latex='platex -kanji=utf8 -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}`,
     };
   }
 
