@@ -326,7 +326,7 @@ export default function TexEditorClient(props: Props) {
         }
 
         if (Number.isFinite(savedRightWidth)) {
-          setRightWidth(clamp(savedRightWidth, MIN_RIGHT_WIDTH, 1100));
+          setRightWidth(clamp(savedRightWidth, MIN_RIGHT_WIDTH, 1800));
         }
 
         if (Number.isFinite(savedEditorHeight)) {
