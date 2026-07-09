@@ -272,7 +272,7 @@ export default function TexEditorClient(props: Props) {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const [leftWidth, setLeftWidth] = useState(280);
   const [rightWidth, setRightWidth] = useState(640);
-  const [editorHeight, setEditorHeight] = useState(300);
+  const [editorHeight, setEditorHeight] = useState(680);
   const [terminalHeight, setTerminalHeight] = useState(320);
   const [rightPaneTab, setRightPaneTab] = useState<RightPaneTab>("pdf");
   const [copySummaryStatus, setCopySummaryStatus] = useState("");
