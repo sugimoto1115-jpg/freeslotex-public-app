@@ -309,6 +309,7 @@ export default function TexEditorClient(props: Props) {
   const [softWrap, setSoftWrap] = useState(false);
   const [showParagraphInOutline, setShowParagraphInOutline] = useState(true);
   const [outlinePreferencesLoaded, setOutlinePreferencesLoaded] = useState(false);
+  const [leftOutlineHeight, setLeftOutlineHeight] = useState(300);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lineGutterRef = useRef<HTMLDivElement | null>(null);
   const compileTerminalPanelRef = useRef<HTMLElement | null>(null);
@@ -1053,6 +1054,32 @@ export default function TexEditorClient(props: Props) {
     window.addEventListener("pointercancel", onUp);
   }
 
+  function startResizeOutlineExplorer(event: React.PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+
+    const startY = event.clientY;
+    const startHeight = leftOutlineHeight;
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const dy = moveEvent.clientY - startY;
+      setLeftOutlineHeight(clamp(startHeight + dy, 120, 700));
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  }
+
   useEffect(() => {
     function handleCompileMenuAction(event: Event) {
       const customEvent = event as CustomEvent<{ action?: string }>;
@@ -1744,8 +1771,27 @@ export default function TexEditorClient(props: Props) {
           minWidth: 0,
         }}
       >
-        <aside style={{ display: "grid", gap: 1 }}>
-          <section className="fsx-panel fsx-explorer-panel" style={{ padding: 6, order: 2 }}>
+        <aside
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              minHeight: 0,
+              alignSelf: "stretch",
+            }}
+          >
+          <section
+              className="fsx-panel fsx-explorer-panel"
+              style={{
+                padding: 6,
+                order: 3,
+                flex: "1 1 0",
+                minHeight: 120,
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
             <div className="fsx-panel-head" style={{ marginBottom: 6 }}>
               <div>
                 <h2 className="fsx-panel-title">Explorer</h2>
@@ -1763,7 +1809,14 @@ export default function TexEditorClient(props: Props) {
             {props.files.length === 0 ? (
               <div className="fsx-empty-box">No files found.</div>
             ) : (
-              <div className="fsx-explorer-tree" role="tree" aria-label="Project files">
+              <div className="fsx-explorer-tree" role="tree" aria-label="Project files"
+                  style={{
+                    flex: "1 1 auto",
+                    minHeight: 0,
+                    overflowY: "auto",
+                    overflowX: "hidden",
+                    maxHeight: "none",
+                  }}>
                 {props.files.map((entry) => {
                   const openable = entry.kind === "file" && isTextOpenablePath(entry.relativePath);
                   const active = entry.relativePath === currentFilePath;
@@ -1802,7 +1855,33 @@ export default function TexEditorClient(props: Props) {
             ) : null}
           </section>
 
-          <section className="fsx-panel fsx-outline-panel" style={{ padding: 6, order: 1 }}>
+          <div
+              role="separator"
+              aria-label="Resize Outline and Explorer"
+              title="Drag to resize Outline / Explorer"
+              onPointerDown={startResizeOutlineExplorer}
+              style={{
+                order: 2,
+                flex: "0 0 12px",
+                height: 12,
+                cursor: "row-resize",
+                touchAction: "none",
+                borderRadius: 999,
+                background: "#64748b",
+              }}
+            />
+
+            <section
+              className="fsx-panel fsx-outline-panel"
+              style={{
+                padding: 6,
+                order: 1,
+                flex: `0 0 ${leftOutlineHeight}px`,
+                minHeight: 120,
+                maxHeight: 700,
+                overflow: "auto",
+              }}
+            >
             <div className="fsx-panel-head" style={{ marginBottom: 6 }}>
               <div>
                 <h2 className="fsx-panel-title">Outline</h2>
