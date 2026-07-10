@@ -40,6 +40,8 @@ const ALLOWED_EXTENSIONS = new Set([
   ".pdf",
   ".eps",
   ".svg",
+  ".bb",
+  ".xbb",
 ]);
 
 function makeUrl(request: NextRequest, pathname: string) {

@@ -100,9 +100,27 @@ function getCompilePrefix(mode: CompileMode) {
   return "latexmk -C || true; ";
 }
 
+
+function getExtractBbPrefix(mode: CompileMode) {
+  const condition = mode === "rebuild" ? "true" : '[ ! -f "$bb" ]';
+
+  return `find . -type f \\( -iname '*.pdf' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \\) -exec sh -c 'for img do bb="\${img%.*}.bb"; if ${condition}; then extractbb -O "$img" > "$bb" || exit 1; fi; done' sh {} +; `;
+}
+
+function getDvipdfmxCompilePrefix(mode: CompileMode) {
+  const extractBbPrefix = getExtractBbPrefix(mode);
+
+  if (mode === "fast") {
+    return extractBbPrefix;
+  }
+
+  return `${getCompilePrefix(mode)}${extractBbPrefix}`;
+}
+
 function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: CompileMode = "clean") {
   const qRootFile = shellQuote(rootFile);
   const compilePrefix = getCompilePrefix(compileMode);
+  const dvipdfmxCompilePrefix = getDvipdfmxCompilePrefix(compileMode);
   const cls = tex.match(/\\documentclass(?:\[[^\]]*\])?\{([^}]+)\}/)?.[1] ?? "";
 
   const hasJapaneseOrFullwidth =
@@ -119,7 +137,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: Co
     return {
       engine: "uplatex+dvipdfmx",
       script:
-        `${compilePrefix}latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}`,
+        `${dvipdfmxCompilePrefix}latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}`,
     };
   }
 
@@ -127,7 +145,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: Co
     return {
       engine: "platex+dvipdfmx",
       script:
-        `${compilePrefix}latexmk -pdfdvi -latex='platex -kanji=utf8 -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}`,
+        `${dvipdfmxCompilePrefix}latexmk -pdfdvi -latex='platex -kanji=utf8 -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}`,
     };
   }
 
