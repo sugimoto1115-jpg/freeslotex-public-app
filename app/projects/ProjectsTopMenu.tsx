@@ -878,6 +878,23 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   const [submenuPosition, setSubmenuPosition] = useState<MenuPosition>({ top: 42, left: 420 });
   const menuRootRef = useRef<HTMLElement | null>(null);
   const [topSmartCompileBusy, setTopSmartCompileBusy] = useState(false);
+  const [topFastCompileBusy, setTopFastCompileBusy] = useState(false);
+
+  useEffect(() => {
+    function handleCompileState(event: Event) {
+      const customEvent = event as CustomEvent<{ isCompiling?: boolean }>;
+      const isCompiling = Boolean(customEvent.detail?.isCompiling);
+
+      setTopFastCompileBusy(isCompiling);
+    }
+
+    window.addEventListener("freeslotex:compile-state", handleCompileState);
+
+    return () => {
+      window.removeEventListener("freeslotex:compile-state", handleCompileState);
+    };
+  }, []);
+
 
   useEffect(() => {
     if (openMenu === null) return;
@@ -972,6 +989,17 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
     }
 
     window.setTimeout(check, 250);
+  }
+
+  function triggerFastCompileFromTopMenu() {
+    if (topFastCompileBusy) return;
+
+    setTopFastCompileBusy(true);
+    dispatchCompileMenuAction("compile-fast");
+
+    window.setTimeout(() => {
+      setTopFastCompileBusy(false);
+    }, 120000);
   }
 
   function triggerExistingSmartCompileFromTopMenu() {
@@ -1557,9 +1585,10 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
 
       <button
         type="button"
-        onClick={() => dispatchCompileMenuAction("compile-fast")}
+        onClick={triggerFastCompileFromTopMenu}
         aria-label="Fast Compile"
-        title="Run Fast Compile without cleaning auxiliary files."
+        title={topFastCompileBusy ? "Compiling..." : "Run Fast Compile without cleaning auxiliary files."}
+        disabled={topFastCompileBusy}
         style={{
           border: "1px solid #cbd5e1",
           background: "#ffffff",
@@ -1568,14 +1597,15 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
           padding: "5px 8px",
           fontSize: 12,
           fontWeight: 700,
-          cursor: "pointer",
+          cursor: topFastCompileBusy ? "not-allowed" : "pointer",
           whiteSpace: "nowrap",
           lineHeight: 1.1,
+          opacity: topFastCompileBusy ? 0.72 : 1,
         }}
       >
         Fast Compile
       </button>
-      {topSmartCompileBusy ? (
+      {topSmartCompileBusy || topFastCompileBusy ? (
         <span
           className="top-smart-compile-progress"
           aria-live="polite"
