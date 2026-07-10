@@ -279,6 +279,14 @@ export default function TexEditorClient(props: Props) {
   const [rightPaneTab, setRightPaneTab] = useState<RightPaneTab>("pdf");
   const [copySummaryStatus, setCopySummaryStatus] = useState("");
   const [isCompiling, setIsCompiling] = useState(false);
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("freeslotex:compile-state", {
+        detail: { isCompiling },
+      }),
+    );
+  }, [isCompiling]);
+
   const [liveCompileError, setLiveCompileError] = useState<string | null>(props.compileError ?? null);
   const [liveCompileErrorSummary, setLiveCompileErrorSummary] = useState(props.compileErrorSummary);
   const [liveFsxLogTail, setLiveFsxLogTail] = useState(props.fsxLogTail);
