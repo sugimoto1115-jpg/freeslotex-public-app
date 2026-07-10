@@ -1590,9 +1590,9 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
         title={topFastCompileBusy ? "Compiling..." : "Run Fast Compile without cleaning auxiliary files."}
         disabled={topFastCompileBusy}
         style={{
-          border: "1px solid #cbd5e1",
-          background: "#ffffff",
-          color: "#0f172a",
+          border: "1px solid #7dd3fc",
+          background: "#e0f2fe",
+          color: "#075985",
           borderRadius: 8,
           padding: "5px 8px",
           fontSize: 12,
