@@ -1554,6 +1554,27 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
       >
         Smart Compile
       </button>
+
+      <button
+        type="button"
+        onClick={() => dispatchCompileMenuAction("compile-fast")}
+        aria-label="Fast Compile"
+        title="Run Fast Compile without cleaning auxiliary files."
+        style={{
+          border: "1px solid #cbd5e1",
+          background: "#ffffff",
+          color: "#0f172a",
+          borderRadius: 8,
+          padding: "5px 8px",
+          fontSize: 12,
+          fontWeight: 700,
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+          lineHeight: 1.1,
+        }}
+      >
+        Fast Compile
+      </button>
       {topSmartCompileBusy ? (
         <span
           className="top-smart-compile-progress"
