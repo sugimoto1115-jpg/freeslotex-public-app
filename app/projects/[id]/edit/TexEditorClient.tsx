@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import PdfPreviewClient from "./PdfPreviewClient";
+import ProjectUploadClient from "../ProjectUploadClient";
 
 type OutlineItem = {
   level: string;
@@ -1711,6 +1712,13 @@ export default function TexEditorClient(props: Props) {
                 <p className="fsx-panel-note">Project files / click text files to open</p>
               </div>
             </div>
+
+              {props.canEdit ? (
+                <div style={{ marginBottom: 6 }}>
+                  <ProjectUploadClient projectId={String(props.projectId)} />
+                </div>
+              ) : null}
+
 
             {props.files.length === 0 ? (
               <div className="fsx-empty-box">No files found.</div>
