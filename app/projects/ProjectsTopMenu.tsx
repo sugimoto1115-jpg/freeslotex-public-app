@@ -15,7 +15,9 @@ const editorMenuItems = [
 const editSearchMenuItems = ["Find", "Replace"];
 
 const compileMenuItems = [
-  { label: "Compile current file", action: "compile-current-file" },
+  { label: "Fast Compile", action: "compile-fast" },
+  { label: "Clean Compile", action: "compile-clean" },
+  { label: "Rebuild", action: "compile-rebuild" },
   { label: "Refresh PDF", action: "refresh-pdf" },
   { label: "Download PDF", action: "download-pdf" },
   { label: "Copy error summary", action: "copy-error-summary" },

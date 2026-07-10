@@ -39,6 +39,7 @@ type Props = {
 };
 
 type RightPaneTab = "pdf" | "terminal";
+type CompileMode = "fast" | "clean" | "rebuild";
 
 type LiveCompileResponse = {
   ok: boolean;
@@ -886,7 +887,7 @@ export default function TexEditorClient(props: Props) {
     }
   }
 
-  async function runSmartCompile() {
+  async function runSmartCompile(compileMode: CompileMode = "clean") {
     if (!props.canEdit || isCompiling) return;
 
     const saved = await runSaveCurrentFile({ silent: true });
@@ -899,7 +900,7 @@ export default function TexEditorClient(props: Props) {
     setCopySummaryStatus("");
 
     try {
-      const response = await fetch(`/api/projects/${props.projectId}/compile/live?rootFile=${encodeURIComponent(currentFilePath)}`, {
+      const response = await fetch(`/api/projects/${props.projectId}/compile/live?rootFile=${encodeURIComponent(currentFilePath)}&compileMode=${compileMode}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1006,9 +1007,18 @@ export default function TexEditorClient(props: Props) {
     function handleCompileMenuAction(event: Event) {
       const customEvent = event as CustomEvent<{ action?: string }>;
       const action = customEvent.detail?.action;
+      if (action === "compile-current-file" || action === "compile-clean") {
+        void runSmartCompile("clean");
+        return;
+      }
 
-      if (action === "compile-current-file") {
-        void runSmartCompile();
+      if (action === "compile-fast") {
+        void runSmartCompile("fast");
+        return;
+      }
+
+      if (action === "compile-rebuild") {
+        void runSmartCompile("rebuild");
         return;
       }
 
@@ -1606,7 +1616,7 @@ export default function TexEditorClient(props: Props) {
           {props.canEdit ? (
             <button
               type="button"
-              onClick={runSmartCompile}
+              onClick={() => runSmartCompile("clean")}
               disabled={isCompiling}
               className="fsx-button fsx-button-primary"
               style={{ display: "none" }}
