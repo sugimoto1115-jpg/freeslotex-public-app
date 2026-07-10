@@ -83,8 +83,26 @@ function normalizeRootFile(value: unknown) {
   return raw;
 }
 
-function detectCompileScript(tex: string, rootFile = "main.tex") {
+type CompileMode = "fast" | "clean" | "rebuild";
+
+function normalizeCompileMode(value: unknown): CompileMode {
+  if (value === "fast" || value === "clean" || value === "rebuild") return value;
+  return "clean";
+}
+
+function getCompilePrefix(mode: CompileMode) {
+  if (mode === "fast") return "";
+
+  if (mode === "rebuild") {
+    return "latexmk -C || true; rm -f *.aux *.bbl *.bcf *.blg *.fls *.fdb_latexmk *.idx *.ilg *.ind *.log *.out *.run.xml *.synctex.gz *.toc || true; ";
+  }
+
+  return "latexmk -C || true; ";
+}
+
+function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: CompileMode = "clean") {
   const qRootFile = shellQuote(rootFile);
+  const compilePrefix = getCompilePrefix(compileMode);
   const cls = tex.match(/\\documentclass(?:\[[^\]]*\])?\{([^}]+)\}/)?.[1] ?? "";
 
   const hasJapaneseOrFullwidth =
@@ -93,7 +111,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex") {
   if (/^ltjs(article|book|report)$/.test(cls) || tex.includes("\\usepackage{luatexja}")) {
     return {
       engine: "lualatex",
-      script: `latexmk -C || true; latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
+      script: `${compilePrefix}latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
     };
   }
 
@@ -101,7 +119,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex") {
     return {
       engine: "uplatex+dvipdfmx",
       script:
-        `latexmk -C || true; latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}`,
+        `${compilePrefix}latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}`,
     };
   }
 
@@ -109,20 +127,20 @@ function detectCompileScript(tex: string, rootFile = "main.tex") {
     return {
       engine: "platex+dvipdfmx",
       script:
-        `latexmk -C || true; latexmk -pdfdvi -latex='platex -kanji=utf8 -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}`,
+        `${compilePrefix}latexmk -pdfdvi -latex='platex -kanji=utf8 -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}`,
     };
   }
 
   if (hasJapaneseOrFullwidth) {
     return {
       engine: "lualatex-auto-unicode",
-      script: `latexmk -C || true; latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
+      script: `${compilePrefix}latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}`,
     };
   }
 
   return {
     engine: "pdflatex",
-    script: `latexmk -C || true; latexmk -pdf -interaction=nonstopmode -halt-on-error ${qRootFile}`,
+    script: `${compilePrefix}latexmk -pdf -interaction=nonstopmode -halt-on-error ${qRootFile}`,
   };
 }
 
@@ -1103,11 +1121,13 @@ export async function POST(request: NextRequest, { params }: Params) {
     const projectDir = resolveProjectDir(project.storage_path);
 
     let rootFile = "main.tex";
+    let compileMode: CompileMode = "clean";
     try {
       const formData = await request.formData().catch(() => null);
       rootFile = normalizeRootFile(
         formData?.get("rootFile") ?? formData?.get("relativePath") ?? "main.tex"
       );
+      compileMode = normalizeCompileMode(formData?.get("compileMode") ?? formData?.get("mode"));
     } catch {
       return redirectToEdit(request, id, { compile_error: "invalid_root_file" });
     }
@@ -1123,7 +1143,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       return redirectToEdit(request, id, { compile_error: "missing_main", rootFile });
     }
 
-    const { engine, script } = detectCompileScript(tex, rootFile);
+    const { engine, script } = detectCompileScript(tex, rootFile, compileMode);
 
   // Remove stale PDF before compile so a failed compile never leaves an old PDF visible.
   await rm(path.join(projectDir, rootPdfFile), { force: true }).catch(() => {});
