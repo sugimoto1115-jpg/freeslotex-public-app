@@ -178,20 +178,30 @@ function stripTexComments(tex: string) {
 }
 
 function detectTexAdvice(tex: string) {
-  const documentClassMatch = tex.match(/\\documentclass(?:\[([^\]]*)\])?\{([^}]+)\}/);
-  const classOptions = documentClassMatch?.[1] ?? "";
-  const cls = documentClassMatch?.[2] ?? "";
+  const uncommented = tex.replace(/(^|[^\\])%.*$/gm, "$1");
+  const cls = uncommented.match(/\\documentclass(?:\[[^\]]*\])?\{([^}]+)\}/)?.[1] ?? "";
+  const hasJapaneseOrFullwidth =
+    /[\u3000-\u30ff\u3400-\u9fff\uff00-\uffef]/.test(uncommented);
 
-  const lualatexReady = /^(ltjsarticle|ltjsbook|ltjsreport)$/.test(cls);
+  function hasPackage(name: string) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(
+      String.raw`\\usepackage(?:\[[^\]]*\])?\{[^}]*\b${escaped}\b[^}]*\}`
+    );
+    return re.test(uncommented);
+  }
+
+  const lualatexReady =
+    /^ltjs(article|book|report)$/.test(cls) ||
+    hasPackage("luatexja") ||
+    hasPackage("luatexja-preset") ||
+    hasPackage("luatexja-fontspec");
+
   const ptexReady =
     /^(u)?p?js(article|book|report)$/.test(cls) ||
-    /^(jarticle|jreport|jbook|tarticle|treport|tbook|gjisbook|jjssj|jjssj_20220603)$/.test(cls);
+    /^(jarticle|jbook|jreport|tarticle|tbook|treport|gjisbook|jjssj|jjssj_20220603)$/.test(cls);
 
-  const explicitPdfLaTeX = /(^|,)\s*pdfla?tex\s*(,|$)/i.test(classOptions);
-  const texWithoutComments = stripTexComments(tex);
-  const hasJapaneseOrFullwidth = /[\u3000-\u30ff\uff00-\uffef\u3400-\u9fff]/.test(texWithoutComments);
-
-  if (hasJapaneseOrFullwidth && !lualatexReady && !ptexReady && !explicitPdfLaTeX) {
+  if (hasJapaneseOrFullwidth && !lualatexReady && !ptexReady) {
     return "Japanese or full-width characters were detected. Use a Japanese TeX class such as \\\\documentclass[a4paper,11pt]{ltjsarticle}, jsarticle, or jarticle.";
   }
 
