@@ -190,20 +190,24 @@ export async function POST(request: NextRequest, { params }: Params) {
     return redirectToProject(request, id, { error: "missing_file" });
   }
 
-  if (uploadedFiles.length > 80) {
+  if (uploadedFiles.length > 500) {
     return redirectToProject(request, id, { error: "too_many_files" });
   }
 
-  const singleRelativePath =
-    uploadedFiles.length === 1 && typeof formData?.get("relativePath") === "string"
-      ? String(formData.get("relativePath"))
-      : null;
+    const relativePathValues = (formData?.getAll("relativePath") ?? []).map((value) =>
+      typeof value === "string" ? value : ""
+    );
+    const hasPerFileRelativePaths = relativePathValues.length === uploadedFiles.length;
+    const singleRelativePath =
+      uploadedFiles.length === 1 && relativePathValues.length >= 1
+        ? relativePathValues[0]
+        : null;
 
   const projectDir = resolveProjectDir(project.storage_path);
   const preparedFiles: { uploaded: File; relativePath: string; targetPath: string }[] = [];
   const seenRelativePaths = new Set<string>();
 
-  for (const uploaded of uploadedFiles) {
+  for (const [index, uploaded] of uploadedFiles.entries()) {
     if (uploaded.size <= 0) {
       return redirectToProject(request, id, { error: "empty_file" });
     }
@@ -215,7 +219,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     let relativePath = "";
 
     try {
-      relativePath = normalizeUploadPath(singleRelativePath, uploaded.name);
+      relativePath = normalizeUploadPath(hasPerFileRelativePaths ? relativePathValues[index] : singleRelativePath, uploaded.name);
     } catch {
       return redirectToProject(request, id, { error: "bad_upload_path" });
     }

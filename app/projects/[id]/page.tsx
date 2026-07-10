@@ -5,6 +5,7 @@ import * as authLib from "@/lib/auth";
 import path from "node:path";
 import { readdir, stat } from "node:fs/promises";
 import ProjectMembersSection from "./ProjectMembersSection";
+import ProjectUploadClient from "./ProjectUploadClient";
 
 export const runtime = "nodejs";
 
@@ -571,28 +572,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
               </div>
             </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <form
-                  action={`/api/projects/${id}/files/upload`}
-                  method="post"
-                  encType="multipart/form-data"
-                  style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
-                >
-                  <input
-                    type="file"
-                    name="file"
-                    multiple
-                    accept=".tex,.bib,.sty,.cls,.md,.txt,.json,.csv,.tsv,.yml,.yaml,.png,.jpg,.jpeg,.pdf,.eps,.svg"
-                    className="fsx-button"
-                    required
-                  />
-                  <label className="fsx-panel-note" style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                    <input type="checkbox" name="overwrite" value="1" />
-                    overwrite
-                  </label>
-                  <button type="submit" className="fsx-button">
-                    Upload file(s)
-                  </button>
-                </form>
+                <ProjectUploadClient projectId={id} />
 
                 <Link
                   href={editorUrl}
