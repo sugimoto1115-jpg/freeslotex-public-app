@@ -141,7 +141,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: Co
     };
   }
 
-  if (/^(jarticle|jreport|jbook|tarticle|treport|tbook|gjisbook)$/.test(cls)) {
+  if (/^(jarticle|jreport|jbook|tarticle|treport|tbook|gjisbook|jjssj|jjssj_20220603)$/.test(cls)) {
     return {
       engine: "platex+dvipdfmx",
       script:

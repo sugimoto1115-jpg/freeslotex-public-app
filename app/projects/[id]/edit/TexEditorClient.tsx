@@ -185,7 +185,7 @@ function detectTexAdvice(tex: string) {
   const lualatexReady = /^(ltjsarticle|ltjsbook|ltjsreport)$/.test(cls);
   const ptexReady =
     /^(u)?p?js(article|book|report)$/.test(cls) ||
-    /^(jarticle|jreport|jbook|tarticle|treport|tbook|gjisbook)$/.test(cls);
+    /^(jarticle|jreport|jbook|tarticle|treport|tbook|gjisbook|jjssj|jjssj_20220603)$/.test(cls);
 
   const explicitPdfLaTeX = /(^|,)\s*pdfla?tex\s*(,|$)/i.test(classOptions);
   const texWithoutComments = stripTexComments(tex);
