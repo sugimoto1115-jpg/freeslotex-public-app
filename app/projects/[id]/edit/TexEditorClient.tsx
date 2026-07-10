@@ -157,7 +157,8 @@ function detectTexAdvice(tex: string) {
   const lualatexReady =
     /^ltjs(article|book|report)$/.test(cls) || tex.includes("\\usepackage{luatexja}");
   const ptexReady =
-    /^(u)?p?js(article|book|report)$/.test(cls) || /^(jarticle|jbook|jreport)$/.test(cls);
+    /^(u)?p?js(article|book|report)$/.test(cls) ||
+    /^(jarticle|jreport|jbook|tarticle|treport|tbook|gjisbook)$/.test(cls);
 
   if (hasJapaneseOrFullwidth && !lualatexReady && !ptexReady) {
     return "Japanese or full-width characters were detected. For reliable compilation, use \\\\documentclass[a4paper,11pt]{ltjsarticle}.";
