@@ -151,18 +151,48 @@ function compileErrorMessage(code: string | null | undefined) {
   return "Compile failed.";
 }
 
+function stripTexComments(tex: string) {
+  return tex
+    .split(/\r\n|\r|\n/)
+    .map((line) => {
+      let escaped = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+
+        if (ch === "\\" && !escaped) {
+          escaped = true;
+          continue;
+        }
+
+        if (ch === "%" && !escaped) {
+          return line.slice(0, i);
+        }
+
+        escaped = false;
+      }
+
+      return line;
+    })
+    .join("\n");
+}
+
 function detectTexAdvice(tex: string) {
-  const cls = tex.match(/\\documentclass(?:\[[^\]]*\])?\{([^}]+)\}/)?.[1] ?? "";
-  const hasJapaneseOrFullwidth =
-    /[\u3000-\u30ff\u3400-\u9fff\uff00-\uffef]/.test(tex);
-  const lualatexReady =
-    /^ltjs(article|book|report)$/.test(cls) || tex.includes("\\usepackage{luatexja}");
+  const documentClassMatch = tex.match(/\\documentclass(?:\[([^\]]*)\])?\{([^}]+)\}/);
+  const classOptions = documentClassMatch?.[1] ?? "";
+  const cls = documentClassMatch?.[2] ?? "";
+
+  const lualatexReady = /^(ltjsarticle|ltjsbook|ltjsreport)$/.test(cls);
   const ptexReady =
     /^(u)?p?js(article|book|report)$/.test(cls) ||
     /^(jarticle|jreport|jbook|tarticle|treport|tbook|gjisbook)$/.test(cls);
 
-  if (hasJapaneseOrFullwidth && !lualatexReady && !ptexReady) {
-    return "Japanese or full-width characters were detected. For reliable compilation, use \\\\documentclass[a4paper,11pt]{ltjsarticle}.";
+  const explicitPdfLaTeX = /(^|,)\s*pdfla?tex\s*(,|$)/i.test(classOptions);
+  const texWithoutComments = stripTexComments(tex);
+  const hasJapaneseOrFullwidth = /[\u3000-\u30ff\uff00-\uffef\u3400-\u9fff]/.test(texWithoutComments);
+
+  if (hasJapaneseOrFullwidth && !lualatexReady && !ptexReady && !explicitPdfLaTeX) {
+    return "Japanese or full-width characters were detected. Use a Japanese TeX class such as \\\\documentclass[a4paper,11pt]{ltjsarticle}, jsarticle, or jarticle.";
   }
 
   return null;
