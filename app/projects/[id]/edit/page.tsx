@@ -56,7 +56,7 @@ function resolveProjectDir(storagePath: string) {
 
 function parseOutline(tex: string): OutlineItem[] {
   const items: OutlineItem[] = [];
-  const re = /\\(part|chapter|section|subsection|subsubsection)\*?\{([^}]*)\}/g;
+  const re = /\\(part|chapter|section|subsection|subsubsection)\*?(?:\[[^\]]*\])?\{([^}]*)\}/g;
 
   for (const match of tex.matchAll(re)) {
     const index = match.index ?? 0;
