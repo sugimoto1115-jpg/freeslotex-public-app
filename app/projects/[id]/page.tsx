@@ -594,6 +594,19 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
           ) : (
             <div className="fsx-table-wrap">
               <div className="fsx-table-scroll">
+<form
+                  id={`bulk-delete-form-${id}`}
+                  action={`/api/projects/${id}/files/delete`}
+                  method="post"
+                  style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", margin: "8px 0" }}
+                >
+                  <input type="hidden" name="fileSort" value={workspaceFileSort} />
+                  <button type="submit" className="fsx-button">
+                    Delete selected
+                  </button>
+                  <span className="fsx-panel-note">Select files below, then delete them together.</span>
+                </form>
+
                 <table className="fsx-table" style={{ fontSize: 12, lineHeight: 1.15 }}>
                   <thead>
                     <tr>
@@ -606,6 +619,8 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
                     </tr>
                   </thead>
                   <tbody>
+                
+
                     {workspaceEntries.map((entry) => (
                       <tr key={entry.relativePath} style={{ height: 28 }}>
                         <td style={{ padding: "3px 10px" }}>
@@ -622,12 +637,36 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
                         <td style={{ padding: "3px 10px" }}>{formatDate(entry.updatedAt)}</td>
                           <td style={{ padding: "3px 10px" }}>
                             {entry.kind === "file" ? (
-                              <form action={`/api/projects/${id}/files/delete`} method="post" style={{ margin: 0 }}>
-                                <input type="hidden" name="relativePath" value={entry.relativePath} />
-                                <button type="submit" className="fsx-button" style={{ height: 22, minHeight: 0, padding: "0 7px", fontSize: 11, lineHeight: 1 }}>
-                                  Delete
-                                </button>
-                              </form>
+                              <div
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                <input
+                                  form={`bulk-delete-form-${id}`}
+                                  type="checkbox"
+                                  name="relativePath"
+                                  value={entry.relativePath}
+                                  aria-label={`Select ${entry.relativePath}`}
+                                  title={`Select ${entry.relativePath}`}
+                                  style={{ margin: 0 }}
+                                />
+
+                                <form
+                                  action={`/api/projects/${id}/files/delete`}
+                                  method="post"
+                                  style={{ margin: 0, display: "inline-flex" }}
+                                >
+                                  <input type="hidden" name="relativePath" value={entry.relativePath} />
+                                  <input type="hidden" name="fileSort" value={workspaceFileSort} />
+                                  <button type="submit" className="fsx-button" style={{ height: 22, minHeight: 0, padding: "0 7px", fontSize: 11, lineHeight: 1 }}>
+                                    Delete
+                                  </button>
+                                </form>
+                              </div>
                             ) : (
                               "-"
                             )}

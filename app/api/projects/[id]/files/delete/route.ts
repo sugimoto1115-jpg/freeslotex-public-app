@@ -151,28 +151,63 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const formData = await request.formData().catch(() => null);
+  const fileSort =
+    typeof formData?.get("fileSort") === "string" ? String(formData.get("fileSort")) : "";
 
-  let relativePath = "";
+  const relativePathValues = (formData?.getAll("relativePath") ?? []).filter(
+    (value): value is string => typeof value === "string" && value.trim().length > 0
+  );
+
+  function redirectWithSort(search: Record<string, string>) {
+    if (fileSort) search.fileSort = fileSort;
+    return redirectToProject(request, id, search);
+  }
+
+  if (relativePathValues.length === 0) {
+    return redirectWithSort({ error: "bad_path" });
+  }
+
+  if (relativePathValues.length > 200) {
+    return redirectWithSort({ error: "too_many_files" });
+  }
+
+  const relativePaths: string[] = [];
 
   try {
-    relativePath = normalizeRelativePath(
-      typeof formData?.get("relativePath") === "string"
-        ? String(formData.get("relativePath"))
-        : ""
-    );
+    for (const value of relativePathValues) {
+      relativePaths.push(normalizeRelativePath(value));
+    }
   } catch {
-    return redirectToProject(request, id, { error: "bad_path" });
+    return redirectWithSort({ error: "bad_path" });
+  }
+
+  const seenRelativePaths = new Set<string>();
+
+  for (const relativePath of relativePaths) {
+    if (seenRelativePaths.has(relativePath)) {
+      return redirectWithSort({ error: "bad_path" });
+    }
+
+    seenRelativePaths.add(relativePath);
   }
 
   const projectDir = resolveProjectDir(project.storage_path);
-  const targetPath = resolveProjectFile(projectDir, relativePath);
-  const st = await stat(targetPath).catch(() => null);
+  const preparedFiles = relativePaths.map((relativePath) => ({
+    relativePath,
+    targetPath: resolveProjectFile(projectDir, relativePath),
+  }));
 
-  if (!st || !st.isFile()) {
-    return redirectToProject(request, id, { error: "not_file" });
+  for (const prepared of preparedFiles) {
+    const st = await stat(prepared.targetPath).catch(() => null);
+
+    if (!st || !st.isFile()) {
+      return redirectWithSort({ error: "not_file" });
+    }
   }
 
-  await unlink(targetPath);
+  for (const prepared of preparedFiles) {
+    await unlink(prepared.targetPath);
+  }
 
   await query(
     `
@@ -183,5 +218,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     [projectId]
   );
 
-  return redirectToProject(request, id, { deleted: relativePath });
+  return redirectWithSort({
+    deleted:
+      preparedFiles.length === 1
+        ? preparedFiles[0].relativePath
+        : `${preparedFiles.length} files`,
+  });
 }
