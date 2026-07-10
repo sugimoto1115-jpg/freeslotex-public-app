@@ -636,7 +636,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
                         <td style={{ padding: "3px 10px" }}>{formatBytes(entry.size)}</td>
                         <td style={{ padding: "3px 10px" }}>{formatDate(entry.updatedAt)}</td>
                           <td style={{ padding: "3px 10px" }}>
-                            {entry.kind === "file" ? (
+                            {entry.kind === "file" || entry.kind === "dir" ? (
                               <div
                                 style={{
                                   display: "inline-flex",

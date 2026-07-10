@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
-import { stat, unlink } from "node:fs/promises";
+import { rm, stat, unlink } from "node:fs/promises";
 import { getCurrentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 
@@ -192,21 +192,37 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const projectDir = resolveProjectDir(project.storage_path);
-  const preparedFiles = relativePaths.map((relativePath) => ({
-    relativePath,
-    targetPath: resolveProjectFile(projectDir, relativePath),
-  }));
+  const preparedFiles: {
+    relativePath: string;
+    targetPath: string;
+    kind: "file" | "dir";
+  }[] = [];
 
-  for (const prepared of preparedFiles) {
-    const st = await stat(prepared.targetPath).catch(() => null);
+  for (const relativePath of relativePaths) {
+    const targetPath = resolveProjectFile(projectDir, relativePath);
+    const st = await stat(targetPath).catch(() => null);
 
-    if (!st || !st.isFile()) {
-      return redirectWithSort({ error: "not_file" });
+    if (!st || (!st.isFile() && !st.isDirectory())) {
+      return redirectWithSort({ error: "not_path" });
     }
+
+    preparedFiles.push({
+      relativePath,
+      targetPath,
+      kind: st.isDirectory() ? "dir" : "file",
+    });
   }
 
-  for (const prepared of preparedFiles) {
-    await unlink(prepared.targetPath);
+  const deleteTargets = [...preparedFiles].sort(
+    (a, b) => b.relativePath.split("/").length - a.relativePath.split("/").length
+  );
+
+  for (const prepared of deleteTargets) {
+    if (prepared.kind === "dir") {
+      await rm(prepared.targetPath, { recursive: true, force: false });
+    } else {
+      await unlink(prepared.targetPath);
+    }
   }
 
   await query(
