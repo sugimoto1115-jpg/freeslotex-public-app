@@ -53,7 +53,7 @@ function roleClass(role: string) {
 type WorkspaceSortKey = "project" | "name" | "created" | "updated";
 
 const workspaceSortOptions: { key: WorkspaceSortKey; label: string }[] = [
-  { key: "project", label: "Project No." },
+  { key: "project", label: "My No." },
   { key: "name", label: "Name" },
   { key: "created", label: "Created" },
   { key: "updated", label: "Updated" },
@@ -216,7 +216,7 @@ function ProjectCard({ project }: { project: ProjectRow }) {
 
           <div className="fsx-meta fsx-meta-line" style={{ gap: 18 }}>
             {project.role === "owner" && project.owner_project_no != null ? (
-              <span>Project No. <code>{project.owner_project_no}</code></span>
+              <span>My No. <code>{project.owner_project_no}</code></span>
             ) : null}
             <span>Updated: {fmtDate(project.updated_at)}</span>
             <span>Created: {fmtDate(project.created_at)}</span>

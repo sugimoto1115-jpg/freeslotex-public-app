@@ -447,6 +447,37 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
       (project[projectKeyColumn] as string | number | undefined) ??
       id;
 
+    let ownerProjectNo: number | null = null;
+
+    if (projectColumns.has("owner_user_id") && projectColumns.has("created_at")) {
+      const ownerProjectNoResult = await client.query(
+        `
+          SELECT count(*)::int AS owner_project_no
+          FROM ${quoteIdent("projects")} p2
+          JOIN ${quoteIdent("projects")} p_current
+            ON p_current.${quoteIdent(projectKeyColumn)} = $1
+          WHERE p2.${quoteIdent("owner_user_id")} = p_current.${quoteIdent("owner_user_id")}
+            AND (
+              p2.${quoteIdent("created_at")} < p_current.${quoteIdent("created_at")}
+              OR (
+                p2.${quoteIdent("created_at")} = p_current.${quoteIdent("created_at")}
+                AND p2.${quoteIdent(projectKeyColumn)} <= p_current.${quoteIdent(projectKeyColumn)}
+              )
+            )
+        `,
+        [project[projectKeyColumn] ?? projectId]
+      );
+
+      const rawOwnerProjectNo = ownerProjectNoResult.rows[0]?.owner_project_no;
+
+      if (typeof rawOwnerProjectNo === "number") {
+        ownerProjectNo = rawOwnerProjectNo;
+      } else if (typeof rawOwnerProjectNo === "string") {
+        const parsedOwnerProjectNo = Number(rawOwnerProjectNo);
+        ownerProjectNo = Number.isFinite(parsedOwnerProjectNo) ? parsedOwnerProjectNo : null;
+      }
+    }
+
     const projectName =
       (typeof project.name === "string" && project.name.trim()) ||
       (typeof project.title === "string" && project.title.trim()) ||
@@ -495,7 +526,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
               <div className="fsx-breadcrumb">
                 <Link href="/projects">Back to Projects</Link>
                 <span>/</span>
-                <span>Project ID: <span className="fsx-code">{String(projectId)}</span></span>
+                <span>My No.: <span className="fsx-code">{ownerProjectNo ?? "-"}</span></span>
               </div>
 
               <h1 className="fsx-detail-title">{projectName}</h1>
