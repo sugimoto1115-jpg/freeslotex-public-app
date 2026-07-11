@@ -108,9 +108,19 @@ function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: Co
   const compilePrefix = getCompilePrefix(compileMode);
   const dvipdfmxCompilePrefix = getDvipdfmxCompilePrefix(compileMode);
   const cls = tex.match(/\\documentclass(?:\[[^\]]*\])?\{([^}]+)\}/)?.[1] ?? "";
+  const hasBeamerDvipdfmx =
+    cls === "beamer" && /\bdvipdfmx\b/.test(tex);
 
   const hasJapaneseOrFullwidth =
     /[\u3000-\u30ff\u3400-\u9fff\uff00-\uffef]/.test(tex);
+
+  if (hasBeamerDvipdfmx) {
+    return {
+      engine: "uplatex+dvipdfmx",
+      script:
+        `${dvipdfmxCompilePrefix}${clearPdf}latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}${finishCompile}`,
+    };
+  }
 
   if (/^ltjs(article|book|report)$/.test(cls) || tex.includes("\\usepackage{luatexja}")) {
     return {
