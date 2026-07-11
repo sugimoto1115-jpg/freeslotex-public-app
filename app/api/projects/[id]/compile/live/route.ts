@@ -103,7 +103,8 @@ function getDvipdfmxCompilePrefix(mode: CompileMode) {
 function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: CompileMode = "clean") {
   const qRootFile = shellQuote(rootFile);
   const qPdfFile = shellQuote(rootFile.replace(/\.tex$/i, ".pdf"));
-  const finishCompile = `; rc=$?; if [ -f ${qPdfFile} ]; then exit 0; fi; exit $rc`;
+  const clearPdf = `rm -f ${qPdfFile}; `;
+  const finishCompile = `; rc=$?; if [ -f ${qPdfFile} ] && head -c 5 ${qPdfFile} 2>/dev/null | grep -q '^%PDF-' && pdfinfo ${qPdfFile} >/dev/null 2>&1; then exit 0; fi; rm -f ${qPdfFile}; if [ "$rc" -eq 0 ]; then exit 1; fi; exit "$rc"`;
   const compilePrefix = getCompilePrefix(compileMode);
   const dvipdfmxCompilePrefix = getDvipdfmxCompilePrefix(compileMode);
   const cls = tex.match(/\\documentclass(?:\[[^\]]*\])?\{([^}]+)\}/)?.[1] ?? "";
@@ -114,7 +115,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: Co
   if (/^ltjs(article|book|report)$/.test(cls) || tex.includes("\\usepackage{luatexja}")) {
     return {
       engine: "lualatex",
-      script: `${compilePrefix}latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}${finishCompile}`,
+      script: `${compilePrefix}${clearPdf}latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}${finishCompile}`,
     };
   }
 
@@ -122,7 +123,7 @@ function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: Co
     return {
       engine: "uplatex+dvipdfmx",
       script:
-        `${dvipdfmxCompilePrefix}latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}${finishCompile}`,
+        `${dvipdfmxCompilePrefix}${clearPdf}latexmk -pdfdvi -latex='uplatex -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}${finishCompile}`,
     };
   }
 
@@ -130,20 +131,20 @@ function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: Co
     return {
       engine: "platex+dvipdfmx",
       script:
-        `${dvipdfmxCompilePrefix}latexmk -pdfdvi -latex='platex -kanji=utf8 -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}${finishCompile}`,
+        `${dvipdfmxCompilePrefix}${clearPdf}latexmk -pdfdvi -latex='platex -kanji=utf8 -interaction=nonstopmode -halt-on-error %O %S' -e '$dvipdf="dvipdfmx %O -o %D %S";' ${qRootFile}${finishCompile}`,
     };
   }
 
   if (hasJapaneseOrFullwidth) {
     return {
       engine: "lualatex-auto-unicode",
-      script: `${compilePrefix}latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}${finishCompile}`,
+      script: `${compilePrefix}${clearPdf}latexmk -lualatex -interaction=nonstopmode -halt-on-error ${qRootFile}${finishCompile}`,
     };
   }
 
   return {
     engine: "pdflatex",
-    script: `${compilePrefix}latexmk -pdf -interaction=nonstopmode -halt-on-error ${qRootFile}${finishCompile}`,
+    script: `${compilePrefix}${clearPdf}latexmk -pdf -interaction=nonstopmode -halt-on-error ${qRootFile}${finishCompile}`,
   };
 }
 
