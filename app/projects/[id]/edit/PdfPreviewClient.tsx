@@ -246,6 +246,11 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
 
         const loadingTask = pdfjsLib.getDocument({
           data: new Uint8Array(arrayBuffer),
+          cMapUrl: "/pdfjs/cmaps/",
+          cMapPacked: true,
+          standardFontDataUrl: "/pdfjs/standard_fonts/",
+          useSystemFonts: true,
+          disableFontFace: false,
         });
 
         const loadedPdf = await loadingTask.promise;
