@@ -125,11 +125,22 @@ function detectCompileScript(tex: string, rootFile = "main.tex", compileMode: Co
   const compilePrefix = getCompilePrefix(compileMode);
   const dvipdfmxCompilePrefix = getDvipdfmxCompilePrefix(compileMode);
   const cls = tex.match(/\\documentclass(?:\[[^\]]*\])?\{([^}]+)\}/)?.[1] ?? "";
+  const requiresXeLaTeX =
+    /\\RequireXeTeX/.test(tex) ||
+    /\\usepackage(?:\[[^\]]*\])?\{(?:zxjatype|xeCJK)\}/.test(tex);
+
   const hasBeamerDvipdfmx =
     cls === "beamer" && /\bdvipdfmx\b/.test(tex);
 
   const hasJapaneseOrFullwidth =
     /[\u3000-\u30ff\u3400-\u9fff\uff00-\uffef]/.test(tex);
+
+  if (requiresXeLaTeX) {
+    return {
+      engine: "xelatex",
+      script: `${compilePrefix}${clearPdf}latexmk -xelatex -interaction=nonstopmode -halt-on-error ${qRootFile}${finishCompile}`,
+    };
+  }
 
   if (hasBeamerDvipdfmx) {
     return {
