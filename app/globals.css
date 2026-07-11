@@ -1825,3 +1825,9 @@ a {
   padding-top: 1px !important;
   padding-bottom: 1px !important;
 }
+
+/* Keep sparse Explorer rows packed at the top instead of stretching them vertically. */
+.fsx-explorer-tree {
+  align-content: start;
+  grid-auto-rows: max-content;
+}
