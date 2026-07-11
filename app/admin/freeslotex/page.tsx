@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 
 type UserJsonRow = {
   user_json: Record<string, unknown>;
+  project_count: number | string | null;
 };
 
 function textField(row: Record<string, unknown>, key: string) {
@@ -79,8 +80,16 @@ export default async function FreeSloTeXAdminPage({
   const error = resolvedSearchParams.error;
 
   const usersResult = await query<UserJsonRow>(`
-    select to_jsonb(u) as user_json
+    select
+      to_jsonb(u) as user_json,
+      coalesce(pc.project_count, 0)::int as project_count
     from users u
+    left join (
+      select owner_user_id, count(*)::int as project_count
+      from projects
+      where owner_user_id is not null
+      group by owner_user_id
+    ) pc on pc.owner_user_id = u.id
     order by u.id desc
     limit 200
   `);
@@ -91,6 +100,8 @@ export default async function FreeSloTeXAdminPage({
       const email = textField(user, "email");
       const plan = await getEffectiveFsPlanForEmail(email);
 
+      const projectCountRaw = Number(row.project_count ?? 0);
+
       return {
         id: textField(user, "id"),
         email,
@@ -100,6 +111,7 @@ export default async function FreeSloTeXAdminPage({
         updatedAt: textField(user, "updated_at"),
         plan,
         planText: fsPlanLabel(plan),
+        projectCount: Number.isFinite(projectCountRaw) ? projectCountRaw : 0,
       };
     }),
   );
@@ -146,6 +158,7 @@ export default async function FreeSloTeXAdminPage({
                 <th>ID</th>
                 <th>Email</th>
                 <th>Plan</th>
+                <th>Projects</th>
                 <th>Change plan</th>
                   <th>Reset password</th>
                 <th>Status</th>
@@ -164,6 +177,7 @@ export default async function FreeSloTeXAdminPage({
                       {user.planText}
                     </span>
                   </td>
+                  <td>{user.projectCount}</td>
                   <td>
                     <form
                       className="fsx-plan-form"
