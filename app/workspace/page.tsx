@@ -53,7 +53,7 @@ function roleClass(role: string) {
 type WorkspaceSortKey = "project" | "name" | "created" | "updated";
 
 const workspaceSortOptions: { key: WorkspaceSortKey; label: string }[] = [
-  { key: "project", label: "My No." },
+  { key: "project", label: "No." },
   { key: "name", label: "Name" },
   { key: "created", label: "Created" },
   { key: "updated", label: "Updated" },
@@ -216,7 +216,7 @@ function ProjectCard({ project }: { project: ProjectRow }) {
 
           <div className="fsx-meta fsx-meta-line" style={{ gap: 18 }}>
             {project.role === "owner" && project.owner_project_no != null ? (
-              <span>My No. <code>{project.owner_project_no}</code></span>
+              <span>No. <code>{project.owner_project_no}</code></span>
             ) : null}
             <span>Updated: {fmtDate(project.updated_at)}</span>
             <span>Created: {fmtDate(project.created_at)}</span>
@@ -370,7 +370,7 @@ export default async function WorkspacePage({
             </p>
           ) : null}
             <p className="fsx-panel-note" style={{ marginTop: 4 }}>
-              <Link href="/account/password">Change password</Link>
+              <Link className="fsx-admin-inline-link" href="/account/password">Change password</Link>
             </p>
           {fsPlan === "admin" ? (
             <p className="fsx-admin-workspace-link">
@@ -450,9 +450,6 @@ export default async function WorkspacePage({
         <div className="fsx-panel-head">
           <div>
             <h2 className="fsx-panel-title">Private projects</h2>
-            <p className="fsx-panel-note">
-              These projects are visible only in your own workspace.
-            </p>
           </div>
         </div>
 
