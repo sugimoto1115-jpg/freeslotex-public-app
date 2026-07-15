@@ -307,6 +307,9 @@ export default function TexEditorClient(props: Props) {
 
 
   const [softWrap, setSoftWrap] = useState(false);
+  const [editorColorMode, setEditorColorMode] =
+    useState<"auto" | "light" | "dark">("auto");
+  const [prefersDarkColorScheme, setPrefersDarkColorScheme] = useState(false);
   const [showParagraphInOutline, setShowParagraphInOutline] = useState(true);
   const [outlinePreferencesLoaded, setOutlinePreferencesLoaded] = useState(false);
   const [leftOutlineHeight, setLeftOutlineHeight] = useState(300);
@@ -528,6 +531,16 @@ export default function TexEditorClient(props: Props) {
   const editorBodyWidth = "100%";
   const editorLineHeightPx = editorFontSize * 1.55;
   const lineNumberFontSize = Math.max(10, editorFontSize - 3);
+  const editorUsesDarkColors =
+    editorColorMode === "dark" ||
+    (editorColorMode === "auto" && prefersDarkColorScheme);
+  const editorTextareaBackgroundColor = editorUsesDarkColors
+    ? "#111827"
+    : props.canEdit
+      ? "#ffffff"
+      : "#f9fafb";
+  const editorTextColor = editorUsesDarkColors ? "#f8fafc" : "#0f172a";
+  const editorCaretColor = editorUsesDarkColors ? "#ffffff" : "#0f172a";
 
   useEffect(() => {
     try {
@@ -541,11 +554,36 @@ export default function TexEditorClient(props: Props) {
       const rawSoftWrap = window.localStorage.getItem("freeslotex.softWrap");
       if (rawSoftWrap === "1") setSoftWrap(true);
       if (rawSoftWrap === "0") setSoftWrap(false);
+
+      const rawEditorColorMode = window.localStorage.getItem(
+        "freeslotex.editorColorMode",
+      );
+
+      if (rawEditorColorMode === "light" || rawEditorColorMode === "dark") {
+        setEditorColorMode(rawEditorColorMode);
+      } else {
+        setEditorColorMode("auto");
+      }
     } catch {
       // Ignore storage errors. The editor still works with default settings.
     } finally {
       setEditorPreferencesLoaded(true);
     }
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    function handleColorSchemeChange() {
+      setPrefersDarkColorScheme(mediaQuery.matches);
+    }
+
+    handleColorSchemeChange();
+    mediaQuery.addEventListener("change", handleColorSchemeChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleColorSchemeChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -569,6 +607,19 @@ export default function TexEditorClient(props: Props) {
   }, [editorPreferencesLoaded, softWrap]);
 
   useEffect(() => {
+    if (!editorPreferencesLoaded) return;
+
+    try {
+      window.localStorage.setItem(
+        "freeslotex.editorColorMode",
+        editorColorMode,
+      );
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [editorColorMode, editorPreferencesLoaded]);
+
+  useEffect(() => {
     function handleSetEditorFontSize(event: Event) {
       const customEvent = event as CustomEvent<{ fontSize?: number }>;
       const fontSize = Number(customEvent.detail?.fontSize);
@@ -587,12 +638,35 @@ export default function TexEditorClient(props: Props) {
       }
     }
 
+    function handleSetEditorColorMode(event: Event) {
+      const customEvent = event as CustomEvent<{
+        colorMode?: "auto" | "light" | "dark";
+      }>;
+      const colorMode = customEvent.detail?.colorMode;
+
+      if (
+        colorMode === "auto" ||
+        colorMode === "light" ||
+        colorMode === "dark"
+      ) {
+        setEditorColorMode(colorMode);
+      }
+    }
+
     window.addEventListener("freeslotex:set-editor-font-size", handleSetEditorFontSize);
     window.addEventListener("freeslotex:set-soft-wrap", handleSetSoftWrap);
+    window.addEventListener(
+      "freeslotex:set-editor-color-mode",
+      handleSetEditorColorMode,
+    );
 
     return () => {
       window.removeEventListener("freeslotex:set-editor-font-size", handleSetEditorFontSize);
       window.removeEventListener("freeslotex:set-soft-wrap", handleSetSoftWrap);
+      window.removeEventListener(
+        "freeslotex:set-editor-color-mode",
+        handleSetEditorColorMode,
+      );
     };
   }, []);
 
@@ -2056,7 +2130,9 @@ export default function TexEditorClient(props: Props) {
                         overflowX: softWrap ? "hidden" : "auto",
                         overflowY: "auto",
                         boxSizing: "border-box",
-                        background: "transparent",
+                        background: editorTextareaBackgroundColor,
+                        color: editorTextColor,
+                        caretColor: editorCaretColor,
                       }}
                     />
                   </div>

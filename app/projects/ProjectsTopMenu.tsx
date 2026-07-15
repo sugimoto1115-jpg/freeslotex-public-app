@@ -53,6 +53,14 @@ const viewFontSizeMenuItems = ["12px", "14px", "16px", "18px", "20px", "22px", "
 
 const viewWrapMenuItems = ["Wrap Off", "Wrap On"];
 
+const viewEditorColorMenuItems = [
+  "Automatic",
+  "Light",
+  "Dark",
+];
+
+type ViewEditorColorMode = "auto" | "light" | "dark";
+
 const fileMenuItems = [
   "Save",
   "Save as...",
@@ -851,6 +859,7 @@ const INSERT_SNIPPET_EVENT = "freeslotex:insert-snippet";
 const REVEAL_EDITOR_RANGE_EVENT = "freeslotex:reveal-editor-range";
 const SET_EDITOR_FONT_SIZE_EVENT = "freeslotex:set-editor-font-size";
 const SET_SOFT_WRAP_EVENT = "freeslotex:set-soft-wrap";
+const SET_EDITOR_COLOR_MODE_EVENT = "freeslotex:set-editor-color-mode";
 const COMPILE_MENU_ACTION_EVENT = "freeslotex:compile-menu-action";
 
 type MenuPosition = {
@@ -874,6 +883,8 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   const [findPanelPosition, setFindPanelPosition] = useState({ top: 34, left: 12 });
   const findInputRef = useRef<HTMLInputElement | null>(null);
   const [viewSoftWrap, setViewSoftWrap] = useState(false);
+  const [viewEditorColorMode, setViewEditorColorMode] =
+    useState<ViewEditorColorMode>("auto");
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({ top: 42, left: 180 });
   const [submenuPosition, setSubmenuPosition] = useState<MenuPosition>({ top: 42, left: 420 });
   const menuRootRef = useRef<HTMLElement | null>(null);
@@ -934,9 +945,20 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
 
       const rawSoftWrap = window.localStorage.getItem("freeslotex.softWrap");
       setViewSoftWrap(rawSoftWrap === "1");
+
+      const rawEditorColorMode = window.localStorage.getItem(
+        "freeslotex.editorColorMode",
+      );
+
+      if (rawEditorColorMode === "light" || rawEditorColorMode === "dark") {
+        setViewEditorColorMode(rawEditorColorMode);
+      } else {
+        setViewEditorColorMode("auto");
+      }
     } catch {
       setViewEditorFontSize(14);
       setViewSoftWrap(false);
+      setViewEditorColorMode("auto");
     }
   }
 
@@ -2196,7 +2218,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
             style={{
               padding: "4px 8px",
               color: "#64748b",
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
             }}
           >
@@ -2245,7 +2267,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
             style={{
               padding: "6px 8px 4px",
               color: "#64748b",
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
             }}
           >
@@ -2289,6 +2311,57 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
               </button>
             );
           })}
+
+          <div
+            style={{
+              padding: "6px 8px 4px",
+              color: "#64748b",
+              fontSize: 12,
+              fontWeight: 700,
+            }}
+          >
+            Editor colors
+          </div>
+
+          {viewEditorColorMenuItems.map((label) => {
+            const colorMode: ViewEditorColorMode =
+              label === "Light" ? "light" : label === "Dark" ? "dark" : "auto";
+            const isActive = viewEditorColorMode === colorMode;
+
+            return (
+              <button
+                key={label}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setViewEditorColorMode(colorMode);
+                  window.dispatchEvent(
+                    new CustomEvent(SET_EDITOR_COLOR_MODE_EVENT, {
+                      detail: { colorMode },
+                    }),
+                  );
+                  setOpenMenu(null);
+                  setActiveSubmenu(null);
+                }}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  border: 0,
+                  borderRadius: 7,
+                  padding: "6px 8px",
+                  background: isActive ? "#dbeafe" : "transparent",
+                  color: isActive ? "#1e3a8a" : "#334155",
+                  fontSize: 12,
+                  fontWeight: isActive ? 700 : 500,
+                  textAlign: "left",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+
           <div
             aria-hidden="true"
             style={{
