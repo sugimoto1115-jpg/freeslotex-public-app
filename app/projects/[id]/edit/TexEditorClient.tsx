@@ -1953,7 +1953,9 @@ export default function TexEditorClient(props: Props) {
                 flex: `0 0 ${leftOutlineHeight}px`,
                 minHeight: 120,
                 maxHeight: 700,
-                overflow: "auto",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
               }}
             >
             <div className="fsx-panel-head" style={{ marginBottom: 6 }}>
@@ -1980,7 +1982,18 @@ export default function TexEditorClient(props: Props) {
             {visibleOutline.length === 0 ? (
               <div className="fsx-empty-box">No outline items.</div>
             ) : (
-              <div className="fsx-outline-tree" role="tree" aria-label="Document outline">
+              <div
+                className="fsx-outline-tree"
+                role="tree"
+                aria-label="Document outline"
+                style={{
+                  flex: "1 1 auto",
+                  minHeight: 0,
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  maxHeight: "none",
+                }}
+              >
                 {visibleOutline.map((item, index) => (
                   <button
                     key={`${item.level}-${item.line}-${index}`}
