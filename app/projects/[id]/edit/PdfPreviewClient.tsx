@@ -35,6 +35,8 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
   const [pdf, setPdf] = useState<PdfDoc | null>(null);
   const [zoom, setZoom] = useState("fit");
   const [zoomPreferencesLoaded, setZoomPreferencesLoaded] = useState(false);
+  const [textSelectionEnabled, setTextSelectionEnabled] = useState(false);
+  const [textSelectionPreferencesLoaded, setTextSelectionPreferencesLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [previewHeight, setPreviewHeight] = useState(820);
   const [previewHeightPreferencesLoaded, setPreviewHeightPreferencesLoaded] = useState(false);
@@ -49,32 +51,33 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
 
     if (!container || !host) return null;
 
-    const canvases = Array.from(
-      host.querySelectorAll<HTMLCanvasElement>("canvas[data-page-number]")
+    const pages = Array.from(
+      host.querySelectorAll<HTMLDivElement>("[data-pdf-page-number]")
     );
 
-    if (canvases.length === 0) return null;
+    if (pages.length === 0) return null;
 
     const maxScroll = Math.max(1, container.scrollHeight - container.clientHeight);
     const scrollRatio = container.scrollTop / maxScroll;
     const containerTop = container.getBoundingClientRect().top;
 
-    let targetCanvas = canvases[0];
+    let targetPage = pages[0];
 
-    for (const canvas of canvases) {
-      const rect = canvas.getBoundingClientRect();
+    for (const page of pages) {
+      const rect = page.getBoundingClientRect();
 
       if (rect.bottom >= containerTop + 10) {
-        targetCanvas = canvas;
+        targetPage = page;
         break;
       }
     }
 
-    const pageNumber = Number(targetCanvas.dataset.pageNumber ?? "1") || 1;
+    const pageNumber =
+      Number(targetPage.dataset.pdfPageNumber ?? "1") || 1;
 
     return {
       pageNumber,
-      offsetWithinPage: container.scrollTop - targetCanvas.offsetTop,
+      offsetWithinPage: container.scrollTop - targetPage.offsetTop,
       scrollRatio,
     };
   }
@@ -87,15 +90,15 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
 
     if (!container || !host) return;
 
-    const targetCanvas = host.querySelector<HTMLCanvasElement>(
-      `canvas[data-page-number="${scrollState.pageNumber}"]`
+    const targetPage = host.querySelector<HTMLDivElement>(
+      `[data-pdf-page-number="${scrollState.pageNumber}"]`
     );
 
     const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
 
-    if (targetCanvas) {
+    if (targetPage) {
       container.scrollTop = clamp(
-        targetCanvas.offsetTop + scrollState.offsetWithinPage,
+        targetPage.offsetTop + scrollState.offsetWithinPage,
         0,
         maxScroll
       );
@@ -152,6 +155,37 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
       // Ignore storage errors.
     }
   }, [zoomPreferencesLoaded, zoom]);
+
+  useEffect(() => {
+    try {
+      const savedTextSelection = window.localStorage.getItem(
+        "freeslotex.pdfTextSelection"
+      );
+
+      if (savedTextSelection === "0") {
+        setTextSelectionEnabled(false);
+      } else if (savedTextSelection === "1") {
+        setTextSelectionEnabled(true);
+      }
+    } catch {
+      // Keep selectable PDF text disabled by default.
+    } finally {
+      setTextSelectionPreferencesLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!textSelectionPreferencesLoaded) return;
+
+    try {
+      window.localStorage.setItem(
+        "freeslotex.pdfTextSelection",
+        textSelectionEnabled ? "1" : "0"
+      );
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [textSelectionEnabled, textSelectionPreferencesLoaded]);
 
   useEffect(() => {
     const fitToViewport = () => {
@@ -277,7 +311,10 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
   }, [projectId, pdfExists, refreshKey]);
 
   useEffect(() => {
+    if (!textSelectionPreferencesLoaded) return;
+
     let cancelled = false;
+    const textLayers: Array<{ cancel: () => void }> = [];
 
     async function renderPdf() {
       const host = canvasHostRef.current;
@@ -291,6 +328,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
       setMessage("Rendering PDF...");
 
       try {
+        const pdfjsLib = await import("pdfjs-dist");
         const containerWidth = Math.max(280, container.clientWidth - 32);
 
         for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
@@ -305,33 +343,76 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
               : Number(zoom);
 
           const viewport = page.getViewport({ scale });
+          const pageWrapper = document.createElement("div");
           const canvas = document.createElement("canvas");
+          const textLayerDiv = document.createElement("div");
           const context = canvas.getContext("2d");
 
           if (!context) continue;
 
-          canvas.dataset.pageNumber = String(pageNumber);
+          pageWrapper.className = "fsx-pdf-page";
+          pageWrapper.dataset.pdfPageNumber = String(pageNumber);
+          pageWrapper.style.position = "relative";
+          pageWrapper.style.width = `${viewport.width}px`;
+          pageWrapper.style.height = `${viewport.height}px`;
+          pageWrapper.style.margin = "0 auto 14px auto";
+          pageWrapper.style.setProperty(
+            "--total-scale-factor",
+            String(viewport.scale)
+          );
+          pageWrapper.style.setProperty("--scale-round-x", "1px");
+          pageWrapper.style.setProperty("--scale-round-y", "1px");
 
           const deviceScale = window.devicePixelRatio || 1;
 
           canvas.width = Math.floor(viewport.width * deviceScale);
           canvas.height = Math.floor(viewport.height * deviceScale);
-          canvas.style.width = `${Math.floor(viewport.width)}px`;
-          canvas.style.height = `${Math.floor(viewport.height)}px`;
+          canvas.style.width = `${viewport.width}px`;
+          canvas.style.height = `${viewport.height}px`;
           canvas.style.display = "block";
-          canvas.style.margin = "0 auto 14px auto";
+          canvas.style.margin = "0";
           canvas.style.background = "white";
           canvas.style.boxShadow = "0 1px 5px rgba(15, 23, 42, 0.18)";
 
+          textLayerDiv.className = "textLayer";
+
           context.setTransform(deviceScale, 0, 0, deviceScale, 0, 0);
 
-          host.appendChild(canvas);
+          pageWrapper.appendChild(canvas);
+          pageWrapper.appendChild(textLayerDiv);
+          host.appendChild(pageWrapper);
 
           await page.render({
             canvas,
             canvasContext: context,
             viewport,
           }).promise;
+
+          if (cancelled) return;
+
+          if (textSelectionEnabled) {
+            try {
+              const textContent = await page.getTextContent();
+
+              if (cancelled) return;
+
+              const textLayer = new pdfjsLib.TextLayer({
+                textContentSource: textContent,
+                container: textLayerDiv,
+                viewport,
+              });
+
+              textLayers.push(textLayer);
+              await textLayer.render();
+            } catch (textLayerError) {
+              if (!cancelled) {
+                console.warn(
+                  "PDF selectable text layer rendering failed.",
+                  textLayerError
+                );
+              }
+            }
+          }
         }
 
         if (!cancelled) {
@@ -355,8 +436,21 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
 
     return () => {
       cancelled = true;
+
+      for (const textLayer of textLayers) {
+        try {
+          textLayer.cancel();
+        } catch {
+          // Ignore cancellation errors during redraw or unmount.
+        }
+      }
     };
-  }, [pdf, zoom]);
+  }, [
+    pdf,
+    textSelectionEnabled,
+    textSelectionPreferencesLoaded,
+    zoom,
+  ]);
 
   const currentZoomStepIndex = zoomSteps.indexOf(zoom);
   const effectiveZoomStepIndex =
@@ -439,6 +533,30 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
           +
         </button>
       </div>
+
+      <button
+        type="button"
+        className={
+          textSelectionEnabled
+            ? "fsx-button fsx-button-primary"
+            : "fsx-button"
+        }
+        onClick={() => setTextSelectionEnabled((value) => !value)}
+        aria-pressed={textSelectionEnabled}
+        title={
+          textSelectionEnabled
+            ? "Disable selectable PDF text"
+            : "Enable selectable PDF text"
+        }
+        style={{
+          padding: "0 6px",
+          fontSize: 11,
+          lineHeight: 1,
+          minHeight: 20,
+        }}
+      >
+        Text select: {textSelectionEnabled ? "ON" : "OFF"}
+      </button>
 
       {pdfExists ? (
         <>
