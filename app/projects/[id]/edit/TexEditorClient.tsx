@@ -1489,6 +1489,11 @@ export default function TexEditorClient(props: Props) {
     });
   }
 
+    const editorScrollTailPadding = Math.max(
+      4,
+      Math.floor(editorHeight / 2)
+    );
+
   return (
     <main className="fsx-main fsx-editor-main" style={{ maxWidth: "none", width: "calc(100vw - 4px)", margin: "0 auto", padding: "1px 2px 0" }}>
       <section className="fsx-hero">
@@ -2100,6 +2105,7 @@ export default function TexEditorClient(props: Props) {
                       aria-hidden="true"
                       style={{
                         padding: "4px 3px 4px 2px",
+                        paddingBottom: editorScrollTailPadding,
                         borderRight: "1px solid #e5e7eb",
                         background: "#f8fafc",
                         color: "#94a3b8",
@@ -2133,6 +2139,7 @@ export default function TexEditorClient(props: Props) {
                         minWidth: 0,
                         resize: "none",
                         padding: 4,
+                        paddingBottom: editorScrollTailPadding,
                         border: "none",
                         outline: "none",
                         fontFamily:
