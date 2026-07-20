@@ -615,6 +615,10 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
         ref={containerRef}
         style={{
           height: `${previewHeight}px`,
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+          boxSizing: "border-box",
           overflow: "auto",
           border: "1px solid #d1d5db",
           borderRadius: 16,

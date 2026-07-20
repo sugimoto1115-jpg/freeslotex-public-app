@@ -2205,7 +2205,18 @@ export default function TexEditorClient(props: Props) {
         />
 
         <aside style={{ display: "grid", gap: 1, minWidth: 0 }}>
-            <section className="fsx-panel" style={{ padding: 1, position: "sticky", top: 1 }}>
+            <section
+              className="fsx-panel"
+              style={{
+                padding: 1,
+                position: "sticky",
+                top: 1,
+                width: "100%",
+                minWidth: 0,
+                maxWidth: "100%",
+                boxSizing: "border-box",
+              }}
+            >
 
               {rightPaneTab === "pdf" ? (
                 <PdfPreviewClient
