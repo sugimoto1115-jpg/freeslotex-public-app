@@ -50,7 +50,32 @@ function resolveProjectDir(storagePath: string) {
 }
 
 function safeFilename(name: string) {
-  return name.replace(/[^\w.\-]+/g, "_").slice(0, 80) || "main";
+  return name.replace(/[^\w.\-]+/g, "_").slice(0, 80) || "main.pdf";
+}
+
+function contentDispositionFilename(
+  projectName: string,
+  pdfFile: string,
+) {
+  const pdfName = path.basename(pdfFile);
+  const projectPrefix = projectName
+    .trim()
+    .replace(/[\\/:*?"<>|\u0000-\u001f\u007f]+/g, "_")
+    .replace(/\s+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80);
+
+  const downloadName = projectPrefix
+    ? `${projectPrefix}_${pdfName}`
+    : pdfName;
+
+  const fallback = safeFilename(downloadName);
+  const encoded = encodeURIComponent(downloadName).replace(
+    /['()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+
+  return `filename="${fallback}"; filename*=UTF-8''${encoded}`;
 }
 
 function normalizePdfFile(value: unknown) {
@@ -148,7 +173,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     status: 200,
     headers: {
       "content-type": "application/pdf",
-      "content-disposition": `${disposition}; filename="${safeFilename(project.name)}.pdf"`,
+      "content-disposition": `${disposition}; ${contentDispositionFilename(project.name, pdfFile)}`,
       "cache-control": "no-store",
     },
   });
