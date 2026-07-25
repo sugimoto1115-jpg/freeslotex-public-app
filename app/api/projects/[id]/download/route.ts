@@ -16,6 +16,7 @@ type UserRow = {
 
 type ProjectRow = {
   id: number;
+  name: string;
   owner_user_id: number | null;
   status: string;
   storage_path: string | null;
@@ -311,7 +312,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   const projectResult = await query<ProjectRow>(
     `
-      select p.id, p.owner_user_id, p.status, p.storage_path
+      select p.id, p.name, p.owner_user_id, p.status, p.storage_path
       from projects p
       left join project_members pm
         on pm.project_id = p.id
@@ -363,13 +364,16 @@ export async function GET(request: NextRequest, { params }: Params) {
     );
 
     const zipBuffer = makeZip(zipEntries);
-    const fileName = `${sanitizeZipName(`project-${projectId}`)}.zip`;
+    const fileName = `${sanitizeZipName(project.name)}.zip`;
+    const fallbackFileName = /^[\x20-\x7e]+$/.test(fileName)
+      ? fileName
+      : "project.zip";
 
     return new NextResponse(new Uint8Array(zipBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+        "Content-Disposition": `attachment; filename="${fallbackFileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
         "Content-Length": String(zipBuffer.length),
         "Cache-Control": "no-store",
       },
