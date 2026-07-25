@@ -77,10 +77,10 @@ function getCompilePrefix(mode: CompileMode) {
   if (mode === "fast") return "";
 
   if (mode === "rebuild") {
-    return "latexmk -C || true; rm -f *.aux *.bbl *.bcf *.blg *.fls *.fdb_latexmk *.idx *.ilg *.ind *.log *.out *.run.xml *.synctex.gz *.toc || true; ";
+    return "latexmk -c || true; rm -f *.dvi *.xdv *.aux *.bbl *.bcf *.blg *.fls *.fdb_latexmk *.idx *.ilg *.ind *.log *.out *.run.xml *.synctex.gz *.toc || true; ";
   }
 
-  return "latexmk -C || true; ";
+  return "latexmk -c || true; rm -f *.dvi *.xdv || true; ";
 }
 
 
