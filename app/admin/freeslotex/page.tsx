@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DeleteUserButton from "./DeleteUserButton";
 import { getCurrentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { fsPlanLabel } from "@/lib/freeslotex/entitlements";
@@ -77,6 +78,8 @@ export default async function FreeSloTeXAdminPage({
 
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const updated = resolvedSearchParams.updated;
+  const deleted = resolvedSearchParams.deleted;
+  const cleanup = resolvedSearchParams.cleanup;
   const error = resolvedSearchParams.error;
 
   const usersResult = await query<UserJsonRow>(`
@@ -140,6 +143,19 @@ export default async function FreeSloTeXAdminPage({
           </div>
         ) : null}
 
+        {deleted ? (
+          <div className="fsx-admin-flash fsx-admin-flash-ok">
+            Account and owned projects deleted:{" "}
+            {Array.isArray(deleted) ? deleted[0] : deleted}
+          </div>
+        ) : null}
+
+        {cleanup ? (
+          <div className="fsx-admin-flash fsx-admin-flash-error">
+            The account was deleted, but quarantined files require manual cleanup.
+          </div>
+        ) : null}
+
         {error ? (
           <div className="fsx-admin-flash fsx-admin-flash-error">
             Error: {Array.isArray(error) ? error[0] : error}
@@ -160,11 +176,12 @@ export default async function FreeSloTeXAdminPage({
                 <th>Plan</th>
                 <th>Projects</th>
                 <th>Change plan</th>
-                  <th>Reset password</th>
+                <th>Reset password</th>
                 <th>Status</th>
                 <th>Display name</th>
                 <th>Created</th>
                 <th>Updated</th>
+                <th>Delete account</th>
               </tr>
             </thead>
             <tbody>
@@ -201,22 +218,34 @@ export default async function FreeSloTeXAdminPage({
                       </button>
                     </form>
                   </td>
-                    <td>
-                      <form
-                        className="fsx-plan-form"
-                        method="post"
-                        action="/admin/freeslotex/reset-password"
-                      >
-                        <input type="hidden" name="email" value={user.email} />
-                        <button className="fsx-plan-save" type="submit">
-                          Reset
-                        </button>
-                      </form>
-                    </td>
+                  <td>
+                    <form
+                      className="fsx-plan-form"
+                      method="post"
+                      action="/admin/freeslotex/reset-password"
+                    >
+                      <input type="hidden" name="email" value={user.email} />
+                      <button className="fsx-plan-save" type="submit">
+                        Reset
+                      </button>
+                    </form>
+                  </td>
                   <td>{user.status}</td>
                   <td>{user.displayName || "-"}</td>
                   <td>{fmtDate(user.createdAt)}</td>
                   <td>{fmtDate(user.updatedAt)}</td>
+                  <td>
+                    <DeleteUserButton
+                      userId={user.id}
+                      email={user.email}
+                      projectCount={user.projectCount}
+                      disabled={
+                        user.plan === "admin" ||
+                        user.email.toLowerCase() ===
+                          currentUser.email.toLowerCase()
+                      }
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
