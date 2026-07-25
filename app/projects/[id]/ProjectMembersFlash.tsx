@@ -12,22 +12,28 @@ function resolveFlash(
   errorValue: string | null,
 ): Flash {
   if (okValue === "saved") {
-    return { kind: "ok", text: "?????????????????" };
+    return { kind: "ok", text: "Project member access was updated." };
   }
 
   switch (errorValue) {
     case "invalid_email":
-      return { kind: "error", text: "????????????????????" };
+      return { kind: "error", text: "Please enter a valid email address." };
     case "no_user":
-      return { kind: "error", text: "??????????????????????" };
+      return {
+        kind: "error",
+        text: "No registered FreeSloTeX user was found for that email address.",
+      };
     case "forbidden":
-      return { kind: "error", text: "????????????????" };
+      return {
+        kind: "error",
+        text: "You do not have permission to manage project members.",
+      };
     case "invalid_role":
-      return { kind: "error", text: "???????????????" };
+      return { kind: "error", text: "Please select a valid member role." };
     case "bad_project":
-      return { kind: "error", text: "??????ID??????" };
+      return { kind: "error", text: "The project ID is invalid." };
     case "unknown":
-      return { kind: "error", text: "??????????????" };
+      return { kind: "error", text: "The project member update failed." };
     default:
       return null;
   }
