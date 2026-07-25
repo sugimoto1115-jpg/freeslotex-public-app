@@ -34,6 +34,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
 
   const [pdf, setPdf] = useState<PdfDoc | null>(null);
   const [zoom, setZoom] = useState("fit");
+  const [fitRefreshKey, setFitRefreshKey] = useState(0);
   const [zoomPreferencesLoaded, setZoomPreferencesLoaded] = useState(false);
   const [textSelectionEnabled, setTextSelectionEnabled] = useState(false);
   const [textSelectionPreferencesLoaded, setTextSelectionPreferencesLoaded] = useState(false);
@@ -446,6 +447,7 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
       }
     };
   }, [
+    fitRefreshKey,
     pdf,
     textSelectionEnabled,
     textSelectionPreferencesLoaded,
@@ -496,7 +498,13 @@ export default function PdfPreviewClient({ projectId, pdfExists, pdfFile = "main
         <button
           type="button"
           className={zoom === "fit" ? "fsx-button fsx-button-primary" : "fsx-button"}
-          onClick={() => setZoom("fit")}
+          onClick={() => {
+            if (zoom === "fit") {
+              setFitRefreshKey((value) => value + 1);
+            } else {
+              setZoom("fit");
+            }
+          }}
           style={{ padding: "0 6px", fontSize: 11, lineHeight: 1, minHeight: 20 }}
         >
           Fit width
