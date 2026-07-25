@@ -112,6 +112,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       ON lower(u.email) = lower(s.user_email)
     WHERE s.session_token_hash = $1
       AND s.expires_at > now()
+      AND u.status = 'active'
     LIMIT 1
     `,
     [sessionTokenHash],

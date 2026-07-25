@@ -1,5 +1,6 @@
 import Link from "next/link";
 import DeleteUserButton from "./DeleteUserButton";
+import AccountStatusButton from "./AccountStatusButton";
 import { getCurrentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { fsPlanLabel } from "@/lib/freeslotex/entitlements";
@@ -80,6 +81,8 @@ export default async function FreeSloTeXAdminPage({
   const updated = resolvedSearchParams.updated;
   const deleted = resolvedSearchParams.deleted;
   const cleanup = resolvedSearchParams.cleanup;
+  const statusUpdated = resolvedSearchParams.status_updated;
+  const statusValue = resolvedSearchParams.status_value;
   const error = resolvedSearchParams.error;
 
   const usersResult = await query<UserJsonRow>(`
@@ -153,6 +156,15 @@ export default async function FreeSloTeXAdminPage({
         {cleanup ? (
           <div className="fsx-admin-flash fsx-admin-flash-error">
             The account was deleted, but quarantined files require manual cleanup.
+          </div>
+        ) : null}
+
+        {statusUpdated ? (
+          <div className="fsx-admin-flash fsx-admin-flash-ok">
+            Account status updated:{" "}
+            {Array.isArray(statusUpdated) ? statusUpdated[0] : statusUpdated}
+            {" → "}
+            {Array.isArray(statusValue) ? statusValue[0] : statusValue}
           </div>
         ) : null}
 
@@ -230,7 +242,28 @@ export default async function FreeSloTeXAdminPage({
                       </button>
                     </form>
                   </td>
-                  <td>{user.status}</td>
+                  <td>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        minWidth: 128,
+                      }}
+                    >
+                      <span>{user.status}</span>
+                      <AccountStatusButton
+                        userId={user.id}
+                        email={user.email}
+                        status={user.status}
+                        disabled={
+                          user.plan === "admin" ||
+                          user.email.toLowerCase() ===
+                            currentUser.email.toLowerCase()
+                        }
+                      />
+                    </div>
+                  </td>
                   <td>{user.displayName || "-"}</td>
                   <td>{fmtDate(user.createdAt)}</td>
                   <td>{fmtDate(user.updatedAt)}</td>
