@@ -59,6 +59,80 @@ const viewEditorColorMenuItems = [
   "Dark",
 ];
 
+type MenuLanguage = "ja" | "zh-CN";
+
+const zhCnMenuLabels: Record<string, string> = {
+  "見出し": "标题",
+  "箇条書き": "列表",
+  "参照・引用": "交叉引用与文献",
+  "文書構造": "文档结构",
+  "配置・引用環境": "排版与引用环境",
+  "そのまま出力": "原样输出",
+  "日本語 TeX preamble": "日文 TeX 导言区",
+  "数式モード": "数学模式",
+  "数式フォント": "数学字体",
+  "数式パッケージ": "数学宏包",
+  "分数・根号・添字": "分数、根式与上下标",
+  "ギリシャ文字": "希腊字母",
+  "数学関数": "数学函数",
+  "和・積分記号等": "求和、积分符号等",
+  "演算子": "运算符",
+  "関係子": "关系符号",
+  "数学記号": "数学符号",
+  "矢印": "箭头",
+  "括弧・区切り": "括号与分隔符",
+  "アクセント・装飾": "重音与修饰",
+  "文中に挿入 / $...$": "行内插入 / $...$",
+  "1行出力 / \\[...\\]": "单行显示 / \\[...\\]",
+  "1行出力番号付き / equation 環境": "单行带编号 / equation 环境",
+  "複数行番号なし / align* 環境": "多行无编号 / align* 环境",
+  "複数行番号付き / align 環境": "多行带编号 / align 环境",
+  "mathrm ローマン体": "mathrm 罗马体",
+  "mathbf 太字": "mathbf 粗体",
+  "bm 太字数式": "bm 数学粗体",
+  "boldsymbol 太字記号": "boldsymbol 粗体符号",
+  "mathcal カリグラフィ": "mathcal 花体",
+  "mathbb 黒板太字": "mathbb 黑板粗体",
+  "mathscr スクリプト": "mathscr 手写体",
+  "mathtt タイプライタ": "mathtt 等宽字体",
+  "amsmath, amssymb 基本": "amsmath, amssymb 基础",
+  "mathrsfs スクリプト": "mathrsfs 手写体",
+  "bbm 黒板太字記号": "bbm 黑板粗体符号",
+  "数式フォント一式": "数学字体套件",
+  "分数 / \\frac{}{}": "分数 / \\frac{}{}",
+  "平方根 / \\sqrt{}": "平方根 / \\sqrt{}",
+  "n 乗根 / \\sqrt[]{}": "n 次根 / \\sqrt[]{}",
+  "下付き / _{}": "下标 / _{}",
+  "上付き / ^{}": "上标 / ^{}",
+  "上下付き / _{}^{}": "上下标 / _{}^{}",
+  "amsthm + theorem 定義": "amsthm + theorem 定义",
+  "LuaLaTeX 日本語標準": "LuaLaTeX 日文标准",
+  "LuaLaTeX 数学・図表": "LuaLaTeX 数学与图表",
+  "LuaLaTeX 定理環境付き": "LuaLaTeX 含定理环境",
+  "日本語レポート雛形": "日文报告模板",
+  "ラベル / \\label{}": "标签 / \\label{}",
+  "参照 / \\ref{}": "引用 / \\ref{}",
+  "数式 / \\eqref{}": "公式 / \\eqref{}",
+  "ページ / \\pageref{}": "页码 / \\pageref{}",
+  "文献 / \\cite{}": "文献 / \\cite{}",
+  "文献リスト / thebibliography": "参考文献列表 / thebibliography",
+  "脚注 / \\footnote{}": "脚注 / \\footnote{}",
+  "中央 / center": "居中 / center",
+  "左寄せ / flushleft": "左对齐 / flushleft",
+  "右寄せ / flushright": "右对齐 / flushright",
+  "引用 / quote": "引用 / quote",
+  "長い引用 / quotation": "长篇引用 / quotation",
+  "ミニページ / minipage": "小页面 / minipage",
+  "複数行 / verbatim": "多行 / verbatim",
+  "行内 / \\verb|...|": "行内 / \\verb|...|",
+  "フォント / \\texttt{}": "字体 / \\texttt{}"
+};
+
+function displayMenuLabel(label: string, language: MenuLanguage) {
+  if (language !== "zh-CN") return label;
+  return zhCnMenuLabels[label] ?? label;
+}
+
 type ViewEditorColorMode = "auto" | "light" | "dark";
 
 const fileMenuItems = [
@@ -874,6 +948,7 @@ type ProjectsTopMenuProps = {
 export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const [menuLanguage, setMenuLanguage] = useState<MenuLanguage>("ja");
   const [viewEditorFontSize, setViewEditorFontSize] = useState(14);
   const [showFindPanel, setShowFindPanel] = useState(false);
   const [findPanelMode, setFindPanelMode] = useState<"find" | "replace">("find");
@@ -890,6 +965,20 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
   const menuRootRef = useRef<HTMLElement | null>(null);
   const [topSmartCompileBusy, setTopSmartCompileBusy] = useState(false);
   const [topFastCompileBusy, setTopFastCompileBusy] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedLanguage = window.localStorage.getItem(
+        "freeslotex.menuLanguage",
+      );
+
+      if (savedLanguage === "zh-CN") {
+        setMenuLanguage("zh-CN");
+      }
+    } catch {
+      // Keep Japanese menu labels when storage is unavailable.
+    }
+  }, []);
 
   useEffect(() => {
     function handleCompileState(event: Event) {
@@ -931,6 +1020,20 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [openMenu]);
+
+  function changeMenuLanguage(nextLanguage: MenuLanguage) {
+    setMenuLanguage(nextLanguage);
+    setActiveSubmenu(null);
+
+    try {
+      window.localStorage.setItem(
+        "freeslotex.menuLanguage",
+        nextLanguage,
+      );
+    } catch {
+      // The current selection still works for this page.
+    }
+  }
 
   function refreshViewPreferences() {
     try {
@@ -1814,9 +1917,69 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                   font: "inherit",
                 }}
               >
-                {item.label}
+                {displayMenuLabel(item.label, menuLanguage)}
               </button>
             ))}
+            <div
+              aria-hidden="true"
+              style={{
+                height: 1,
+                margin: "4px 6px",
+                background: "#e2e8f0",
+              }}
+            />
+
+            <div
+              style={{
+                padding: "4px 10px 2px",
+                color: "#64748b",
+                fontSize: 11,
+                fontWeight: 700,
+              }}
+            >
+              TeX Insert / Math language
+            </div>
+
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={menuLanguage === "ja"}
+              onClick={() => changeMenuLanguage("ja")}
+              style={{
+                border: 0,
+                borderRadius: 8,
+                background:
+                  menuLanguage === "ja" ? "#e2e8f0" : "transparent",
+                textAlign: "left",
+                padding: "6px 10px",
+                cursor: "pointer",
+                font: "inherit",
+                fontWeight: menuLanguage === "ja" ? 700 : 500,
+              }}
+            >
+              日本語
+            </button>
+
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={menuLanguage === "zh-CN"}
+              onClick={() => changeMenuLanguage("zh-CN")}
+              style={{
+                border: 0,
+                borderRadius: 8,
+                background:
+                  menuLanguage === "zh-CN" ? "#e2e8f0" : "transparent",
+                textAlign: "left",
+                padding: "6px 10px",
+                cursor: "pointer",
+                font: "inherit",
+                fontWeight: menuLanguage === "zh-CN" ? 700 : 500,
+              }}
+            >
+              简体中文
+            </button>
+
           </div>
         ) : null}
 
@@ -1857,7 +2020,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                   font: "inherit",
                 }}
               >
-                {item.label}
+                {displayMenuLabel(item.label, menuLanguage)}
               </button>
             ))}
           </div>
@@ -2188,7 +2351,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {label}
+              {displayMenuLabel(label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -2452,7 +2615,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {label}
+              {displayMenuLabel(label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -2507,7 +2670,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -2562,7 +2725,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -2617,7 +2780,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -2672,7 +2835,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -2728,7 +2891,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -2785,7 +2948,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -2840,7 +3003,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -2895,7 +3058,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -2950,7 +3113,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3007,7 +3170,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3062,7 +3225,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3119,7 +3282,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3176,7 +3339,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3233,7 +3396,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3290,7 +3453,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3347,7 +3510,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3404,7 +3567,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3459,7 +3622,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3514,7 +3677,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3569,7 +3732,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3624,7 +3787,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3681,7 +3844,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
@@ -3736,7 +3899,7 @@ export default function ProjectsTopMenu({ accountLabel }: ProjectsTopMenuProps) 
                 whiteSpace: "nowrap",
               }}
             >
-              {item.label}
+              {displayMenuLabel(item.label, menuLanguage)}
             </button>
           ))}
         </div>
