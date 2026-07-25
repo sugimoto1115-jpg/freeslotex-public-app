@@ -294,6 +294,14 @@ const snippetGroups: SnippetGroup[] = [
   },
 ];
 
+function sortPdfFiles(files: Iterable<string>) {
+  return Array.from(new Set(files)).sort((a, b) => {
+    if (a === "main.pdf" && b !== "main.pdf") return -1;
+    if (b === "main.pdf" && a !== "main.pdf") return 1;
+    return a.localeCompare(b);
+  });
+}
+
 export default function TexEditorClient(props: Props) {
   const [tex, setTex] = useState(props.mainTex);
   const [currentFilePath, setCurrentFilePath] = useState("main.tex");
@@ -341,6 +349,22 @@ export default function TexEditorClient(props: Props) {
   const [liveEngine, setLiveEngine] = useState(props.engine ?? "");
   const [compileStatusMessage, setCompileStatusMessage] = useState("");
   const [pdfRefreshKey, setPdfRefreshKey] = useState(0);
+  const [selectedPdfFile, setSelectedPdfFile] = useState("main.pdf");
+  const [knownPdfFiles, setKnownPdfFiles] = useState<string[]>(() => {
+    const files = props.files
+      .filter(
+        (entry) =>
+          entry.kind === "file" &&
+          entry.relativePath.toLowerCase().endsWith(".pdf")
+      )
+      .map((entry) => entry.relativePath);
+
+    if (props.pdfExists) {
+      files.push("main.pdf");
+    }
+
+    return sortPdfFiles(files);
+  });
   const [editorPreferencesLoaded, setEditorPreferencesLoaded] = useState(false);
   const [layoutPreferencesLoaded, setLayoutPreferencesLoaded] = useState(false);
 
@@ -718,7 +742,13 @@ export default function TexEditorClient(props: Props) {
     : `${currentFilePath}_copy.tex`;
   const currentPdfFile = currentFilePath.replace(/\.tex$/i, ".pdf");
   const encodedCurrentPdfFile = encodeURIComponent(currentPdfFile);
+  const selectedPdfExists = knownPdfFiles.includes(selectedPdfFile);
   const currentFileCanBeSaved = props.canEdit && isEditableTextPath(currentFilePath);
+
+  useEffect(() => {
+    setSelectedPdfFile(currentPdfFile);
+    setPdfRefreshKey((value) => value + 1);
+  }, [currentPdfFile]);
 
   function syncLineNumberScroll(event: import("react").UIEvent<HTMLTextAreaElement>) {
     if (lineGutterRef.current) {
@@ -1047,8 +1077,16 @@ export default function TexEditorClient(props: Props) {
       setLiveFsxLogTail(data.fsxLogTail ?? "");
       setLiveTexLogTail(data.texLogTail ?? "");
       if (data.compileError !== "quota_exceeded") {
-        setLivePdfExists(Boolean(data.pdfExists));
-        setRightPaneTab(data.ok && Boolean(data.pdfExists) ? "pdf" : "terminal");
+        const nextPdfExists = Boolean(data.pdfExists);
+
+        setLivePdfExists(nextPdfExists);
+        setSelectedPdfFile(currentPdfFile);
+        setKnownPdfFiles((files) =>
+          nextPdfExists
+            ? sortPdfFiles([...files, currentPdfFile])
+            : files.filter((file) => file !== currentPdfFile)
+        );
+        setRightPaneTab(data.ok && nextPdfExists ? "pdf" : "terminal");
         setPdfRefreshKey((value) => value + 1);
       }
       setCompileStatusMessage(
@@ -2228,7 +2266,8 @@ export default function TexEditorClient(props: Props) {
               {rightPaneTab === "pdf" ? (
                 <PdfPreviewClient
                   toolbarPrefix={
-                    <div
+                    <>
+                      <div
                       role="tablist"
                       aria-label="Right pane tabs"
                       style={{ display: "flex", alignItems: "center", gap: 4 }}
@@ -2253,12 +2292,44 @@ export default function TexEditorClient(props: Props) {
                       >
                         Terminal
                       </button>
-                    </div>
+                      </div>
+
+                      {knownPdfFiles.length > 1 ? (
+                        <select
+                          aria-label="PDF file to preview"
+                          title="Choose a PDF to preview"
+                          value={selectedPdfFile}
+                          onChange={(event) => {
+                            setSelectedPdfFile(event.target.value);
+                            setRightPaneTab("pdf");
+                            setPdfRefreshKey((value) => value + 1);
+                          }}
+                          style={{
+                            height: 20,
+                            minHeight: 20,
+                            width: 100,
+                            minWidth: 100,
+                            maxWidth: 100,
+                            padding: "0 20px 0 7px",
+                            border: "1px solid #cbd5e1",
+                            borderRadius: 999,
+                            background: "#ffffff",
+                            fontSize: 11,
+                          }}
+                        >
+                          {knownPdfFiles.map((file) => (
+                            <option key={file} value={file}>
+                              {file}
+                            </option>
+                          ))}
+                        </select>
+                      ) : null}
+                    </>
                   }
                   projectId={props.projectId}
-                  pdfExists={livePdfExists}
+                  pdfExists={selectedPdfExists}
                   refreshKey={pdfRefreshKey}
-                  pdfFile={currentPdfFile}
+                  pdfFile={selectedPdfFile}
                 />
               ) : (
           <section ref={compileTerminalPanelRef} className="fsx-panel" style={{ padding: 6 }}>
