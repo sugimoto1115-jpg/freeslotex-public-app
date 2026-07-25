@@ -554,6 +554,10 @@ export default function TexEditorClient(props: Props) {
   );
   const editorBodyWidth = "100%";
   const editorLineHeightPx = editorFontSize * 1.55;
+  const editorLineCount = useMemo(
+    () => Math.max(1, tex.split(/\r\n|\r|\n/).length),
+    [tex],
+  );
   const lineNumberFontSize = Math.max(10, editorFontSize - 3);
   const editorUsesDarkColors =
     editorColorMode === "dark" ||
@@ -694,10 +698,37 @@ export default function TexEditorClient(props: Props) {
     };
   }, []);
 
-  const lineNumberText = useMemo(() => {
-    const lineCount = Math.max(1, tex.split(/\r\n|\r|\n/).length);
-    return Array.from({ length: lineCount }, (_, index) => String(index + 1)).join("\n");
-  }, [tex]);
+  const lineNumberGroups = useMemo(() => {
+    const regularEnd = Math.min(editorLineCount, 999);
+    const fourDigitEnd = Math.min(editorLineCount, 9999);
+
+    const regular = Array.from(
+      { length: regularEnd },
+      (_, index) => String(index + 1),
+    ).join("\n");
+
+    const fourDigit =
+      editorLineCount >= 1000
+        ? Array.from(
+            { length: fourDigitEnd - 999 },
+            (_, index) => String(index + 1000),
+          ).join("\n")
+        : "";
+
+    const fiveDigit =
+      editorLineCount >= 10000
+        ? Array.from(
+            { length: editorLineCount - 9999 },
+            (_, index) => String(index + 10000),
+          ).join("\n")
+        : "";
+
+    return {
+      regular,
+      fourDigit,
+      fiveDigit,
+    };
+  }, [editorLineCount]);
 
   useEffect(() => {
     try {
@@ -2157,7 +2188,42 @@ export default function TexEditorClient(props: Props) {
                         userSelect: "none",
                       }}
                     >
-                      {lineNumberText}
+                      {[
+                        <span
+                          key="regular"
+                          style={{
+                            display: "block",
+                            fontSize: lineNumberFontSize,
+                            lineHeight: `${editorLineHeightPx}px`,
+                          }}
+                        >
+                          {lineNumberGroups.regular}
+                        </span>,
+                        lineNumberGroups.fourDigit ? (
+                          <span
+                            key="four-digit"
+                            style={{
+                              display: "block",
+                              fontSize: 9,
+                              lineHeight: `${editorLineHeightPx}px`,
+                            }}
+                          >
+                            {lineNumberGroups.fourDigit}
+                          </span>
+                        ) : null,
+                        lineNumberGroups.fiveDigit ? (
+                          <span
+                            key="five-digit"
+                            style={{
+                              display: "block",
+                              fontSize: 8,
+                              lineHeight: `${editorLineHeightPx}px`,
+                            }}
+                          >
+                            {lineNumberGroups.fiveDigit}
+                          </span>
+                        ) : null,
+                      ]}
                     </div>
 
                     <input type="hidden" name="relativePath" value={currentFilePath} />
