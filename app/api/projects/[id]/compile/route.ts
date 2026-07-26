@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { readFile, writeFile, rm } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -10,6 +11,28 @@ import { getCompileQuotaForEmail, recordCompileUsageForEmail } from "@/lib/frees
 export const runtime = "nodejs";
 
 const execFileAsync = promisify(execFile);
+
+async function forceRemoveDockerContainer(containerName: string) {
+  try {
+    await execFileAsync("docker", ["rm", "-f", containerName], {
+      timeout: 15_000,
+      maxBuffer: 1024 * 1024,
+    });
+  } catch (error: any) {
+    const detail = [
+      String(error?.message ?? ""),
+      String(error?.stdout ?? ""),
+      String(error?.stderr ?? ""),
+    ].join("\n");
+
+    if (!/No such container/i.test(detail)) {
+      console.error("Failed to remove Docker compile container:", {
+        containerName,
+        detail,
+      });
+    }
+  }
+}
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -1192,10 +1215,14 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const uid = typeof process.getuid === "function" ? process.getuid() : 1000;
   const gid = typeof process.getgid === "function" ? process.getgid() : 1000;
+  const containerName =
+    `freeslotex-compile-${projectId}-${randomUUID()}`;
 
   const args = [
     "run",
     "--rm",
+    "--name",
+    containerName,
     "--network",
     "none",
     "--user",
@@ -1252,6 +1279,8 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     return redirectToEdit(request, id, { compiled: "1", engine });
   } catch (error: any) {
+    await forceRemoveDockerContainer(containerName);
+
     const log = [
       `FreeSloTeX compile failed`,
       `started_at: ${startedAt.toISOString()}`,
