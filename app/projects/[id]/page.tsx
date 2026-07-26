@@ -369,13 +369,36 @@ async function collectWorkspaceEntries(
 
 type ProjectPageProps = {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ fileSort?: string | string[] | undefined }>;
+  searchParams?: Promise<{
+    fileSort?: string | string[] | undefined;
+    renamed?: string | string[] | undefined;
+    rename_error?: string | string[] | undefined;
+  }>;
 };
 
 export default async function ProjectDetailPage({ params, searchParams }: ProjectPageProps) {
   const { id } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const workspaceFileSort = normalizeWorkspaceFileSort(resolvedSearchParams.fileSort);
+  const renamed =
+    resolvedSearchParams.renamed === "1" ||
+    (Array.isArray(resolvedSearchParams.renamed) &&
+      resolvedSearchParams.renamed[0] === "1");
+  const renameErrorRaw = Array.isArray(resolvedSearchParams.rename_error)
+    ? resolvedSearchParams.rename_error[0]
+    : resolvedSearchParams.rename_error;
+  const renameErrorMessage =
+    renameErrorRaw === "invalid_name"
+      ? "Project name must contain 1 to 100 characters."
+      : renameErrorRaw === "not_owner"
+        ? "Only the project owner can rename this project."
+        : renameErrorRaw === "not_active"
+          ? "Only an active project can be renamed."
+          : renameErrorRaw === "not_found"
+            ? "Project was not found."
+            : renameErrorRaw
+              ? "Project rename failed."
+              : "";
 
   const userId = await resolveCurrentUserId();
   if (userId === null) {
@@ -483,6 +506,10 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
       (typeof project.title === "string" && project.title.trim()) ||
       `Project ${projectId}`;
 
+    const canRenameProject =
+      Number(project.owner_user_id) === Number(userId) &&
+      String(project.status ?? "") === "active";
+
     const storagePath =
       typeof project.storage_path === "string" ? project.storage_path : "";
 
@@ -533,6 +560,47 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
               <p className="fsx-detail-subtitle">
                 Edit files, compile TeX, and manage project members.
               </p>
+
+              {canRenameProject ? (
+                <form
+                  action={`/api/projects/${id}/rename`}
+                  method="post"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    marginTop: 10,
+                  }}
+                >
+                  <label
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span className="fsx-muted">Project name</span>
+                    <input
+                      className="fsx-input"
+                      type="text"
+                      name="name"
+                      required
+                      maxLength={100}
+                      defaultValue={projectName}
+                      aria-label="New project name"
+                      style={{
+                        width: 280,
+                        maxWidth: "65vw",
+                        padding: "6px 8px",
+                      }}
+                    />
+                  </label>
+                  <button type="submit" className="fsx-button">
+                    Rename
+                  </button>
+                </form>
+              ) : null}
             </div>
 
             <div className="fsx-actions">
@@ -553,6 +621,26 @@ export default async function ProjectDetailPage({ params, searchParams }: Projec
             </div>
           </div>
         </section>
+
+        {renamed ? (
+          <div
+            className="fsx-alert"
+            style={{
+              marginBottom: 12,
+              borderColor: "#bbf7d0",
+              background: "#f0fdf4",
+              color: "#166534",
+            }}
+          >
+            Project name updated.
+          </div>
+        ) : null}
+
+        {renameErrorMessage ? (
+          <div className="fsx-alert" style={{ marginBottom: 12 }}>
+            {renameErrorMessage}
+          </div>
+        ) : null}
 
         <section className="fsx-stat-grid">
           <div className="fsx-stat-card">
