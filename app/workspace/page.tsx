@@ -446,44 +446,59 @@ export default async function WorkspacePage({
         </div>
       </div>
 
-      <section className="fsx-panel">
-        <div className="fsx-panel-head">
-          <div>
-            <h2 className="fsx-panel-title">Private projects</h2>
-          </div>
+      <details className="fsx-panel" open>
+        <summary
+          style={{
+            cursor: "pointer",
+            fontWeight: 800,
+            fontSize: 20,
+            lineHeight: 1.3,
+          }}
+        >
+          Private projects ({privateProjects.length})
+        </summary>
+
+        <div style={{ marginTop: 14 }}>
+          {privateProjects.length === 0 ? (
+            <div className="fsx-empty-box">No private projects yet.</div>
+          ) : (
+            <div className="fsx-grid" style={{ gap: 10 }}>
+              {privateProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+          )}
         </div>
+      </details>
 
-        {privateProjects.length === 0 ? (
-          <div className="fsx-empty-box">No private projects yet.</div>
-        ) : (
-          <div className="fsx-grid" style={{ gap: 10 }}>
-            {privateProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        )}
-      </section>
+      <details className="fsx-panel" open>
+        <summary
+          style={{
+            cursor: "pointer",
+            fontWeight: 800,
+            fontSize: 20,
+            lineHeight: 1.3,
+          }}
+        >
+          Shared projects ({sharedProjects.length})
+        </summary>
 
-      <section className="fsx-panel">
-        <div className="fsx-panel-head">
-          <div>
-            <h2 className="fsx-panel-title">Shared projects</h2>
-            <p className="fsx-panel-note">
-              These projects are visible because you are listed as a member.
-            </p>
-          </div>
+        <div style={{ marginTop: 14 }}>
+          <p className="fsx-panel-note" style={{ marginTop: 0 }}>
+            These projects are visible because you are listed as a member.
+          </p>
+
+          {sharedProjects.length === 0 ? (
+            <div className="fsx-empty-box">No shared projects yet.</div>
+          ) : (
+            <div className="fsx-grid" style={{ gap: 10 }}>
+              {sharedProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+          )}
         </div>
-
-        {sharedProjects.length === 0 ? (
-          <div className="fsx-empty-box">No shared projects yet.</div>
-        ) : (
-          <div className="fsx-grid" style={{ gap: 10 }}>
-            {sharedProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        )}
-      </section>
+      </details>
     </main>
   );
 }
