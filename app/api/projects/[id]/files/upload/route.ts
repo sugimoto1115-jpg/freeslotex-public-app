@@ -22,27 +22,66 @@ type ProjectAccessRow = {
   my_role: "owner" | "editor" | "viewer" | null;
 };
 
-const ALLOWED_EXTENSIONS = new Set([
+const ALLOWED_EXTENSION_LIST = [
   ".tex",
   ".bib",
   ".sty",
   ".cls",
-  ".md",
-  ".txt",
-  ".json",
-  ".csv",
-  ".tsv",
-  ".yml",
-  ".yaml",
+  ".bst",
   ".png",
   ".jpg",
   ".jpeg",
   ".pdf",
   ".eps",
-  ".svg",
-  ".bb",
-  ".xbb",
+  ".csv",
+  ".tsv",
+  ".txt",
+  ".dat",
+] as const;
+
+const ALLOWED_EXTENSIONS = new Set<string>(ALLOWED_EXTENSION_LIST);
+
+const DANGEROUS_EMBEDDED_EXTENSIONS = new Set([
+  ".exe",
+  ".dll",
+  ".so",
+  ".com",
+  ".msi",
+  ".scr",
+  ".bat",
+  ".cmd",
+  ".sh",
+  ".bash",
+  ".ps1",
+  ".js",
+  ".mjs",
+  ".cjs",
+  ".py",
+  ".pl",
+  ".php",
+  ".cgi",
+  ".jar",
+  ".class",
+  ".vbs",
+  ".wsf",
 ]);
+
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
+const MAX_TOTAL_UPLOAD_BYTES = 100 * 1024 * 1024;
+const MAX_UPLOAD_FILES = 500;
+
+function hasDangerousEmbeddedExtension(relativePath: string) {
+  const baseName = path.posix.basename(
+    relativePath.replace(/\\/g, "/"),
+  ).toLowerCase();
+
+  const parts = baseName.split(".");
+  if (parts.length <= 2) return false;
+
+  return parts
+    .slice(1, -1)
+    .some((part) => DANGEROUS_EMBEDDED_EXTENSIONS.has(`.${part}`));
+}
 
 function makeUrl(request: NextRequest, pathname: string) {
   const host =
@@ -97,7 +136,11 @@ function normalizeUploadPath(value: string | null | undefined, fallbackName: str
   }
 
   const ext = path.extname(raw).toLowerCase();
-  if (!ALLOWED_EXTENSIONS.has(ext)) {
+
+  if (
+    !ALLOWED_EXTENSIONS.has(ext) ||
+    hasDangerousEmbeddedExtension(raw)
+  ) {
     throw new Error("Unsupported file type.");
   }
 
@@ -192,8 +235,19 @@ export async function POST(request: NextRequest, { params }: Params) {
     return redirectToProject(request, id, { error: "missing_file" });
   }
 
-  if (uploadedFiles.length > 500) {
+  if (uploadedFiles.length > MAX_UPLOAD_FILES) {
     return redirectToProject(request, id, { error: "too_many_files" });
+  }
+
+  const totalUploadBytes = uploadedFiles.reduce(
+    (total, uploaded) => total + uploaded.size,
+    0,
+  );
+
+  if (totalUploadBytes > MAX_TOTAL_UPLOAD_BYTES) {
+    return redirectToProject(request, id, {
+      error: "total_too_large",
+    });
   }
 
     const relativePathValues = (formData?.getAll("relativePath") ?? []).map((value) =>
@@ -214,7 +268,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       return redirectToProject(request, id, { error: "empty_file" });
     }
 
-    if (uploaded.size > 25 * 1024 * 1024) {
+    if (uploaded.size > MAX_FILE_BYTES) {
       return redirectToProject(request, id, { error: "too_large" });
     }
 
