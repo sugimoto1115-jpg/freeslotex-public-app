@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { getEffectiveFsPlanForEmail } from "@/lib/freeslotex/serverPlan";
+import { sendGraphMail } from "@/lib/graphMail";
 
 export const runtime = "nodejs";
 
 type TargetUserRow = {
   id: number;
   email: string;
+  display_name: string | null;
   status: string;
 };
 
@@ -22,6 +24,10 @@ function makeUrl(request: NextRequest, pathname: string) {
     "https";
 
   return new URL(pathname, `${proto}://${host}`);
+}
+
+function getAppOrigin(request: NextRequest) {
+  return process.env.APP_ORIGIN || makeUrl(request, "/").origin;
 }
 
 function redirectToAdmin(
@@ -87,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     const targetResult = await client.query<TargetUserRow>(
       `
-        select id, email, status
+        select id, email, display_name, status
         from users
         where id = $1
         for update
@@ -130,6 +136,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const currentStatus = target.status.trim().toLowerCase();
+    const validTransition =
+      (currentStatus === "pending" && requestedStatus === "active") ||
+      (currentStatus === "active" && requestedStatus === "suspended") ||
+      (currentStatus === "suspended" && requestedStatus === "active");
+
+    if (!validTransition) {
+      await client.query("ROLLBACK");
+      transactionStarted = false;
+
+      return redirectToAdmin(request, {
+        error: "invalid_account_status_transition",
+      });
+    }
+
     await client.query(
       `
         update users
@@ -155,10 +176,40 @@ export async function POST(request: NextRequest) {
     await client.query("COMMIT");
     transactionStarted = false;
 
-    return redirectToAdmin(request, {
+    const responseParams: Record<string, string> = {
       status_updated: target.email,
       status_value: requestedStatus,
-    });
+    };
+
+    if (
+      target.status.trim().toLowerCase() === "pending" &&
+      requestedStatus === "active"
+    ) {
+      try {
+        const loginUrl = `${getAppOrigin(request)}/login`;
+        const displayName = target.display_name || target.email;
+
+        await sendGraphMail({
+          to: target.email,
+          subject: "Your FreeSloTeX account has been approved",
+          text: [
+            `Hello ${displayName},`,
+            "",
+            "Your FreeSloTeX account has been approved.",
+            "",
+            "You can sign in using the email address and password you entered during registration:",
+            loginUrl,
+            "",
+            "FreeSloTeX Support",
+          ].join("\n"),
+        });
+      } catch (mailError) {
+        console.error("Approval notification email failed:", mailError);
+        responseParams.error = "approval_email_failed_after_approval";
+      }
+    }
+
+    return redirectToAdmin(request, responseParams);
   } catch (error) {
     if (transactionStarted) {
       await client.query("ROLLBACK").catch(() => {});

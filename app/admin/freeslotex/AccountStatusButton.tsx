@@ -18,21 +18,25 @@ export default function AccountStatusButton({
   const normalizedStatus = status.trim().toLowerCase();
 
   const nextStatus =
-    normalizedStatus === "active"
-      ? "suspended"
-      : normalizedStatus === "suspended"
-        ? "active"
-        : "";
+    normalizedStatus === "pending"
+      ? "active"
+      : normalizedStatus === "active"
+        ? "suspended"
+        : normalizedStatus === "suspended"
+          ? "active"
+          : "";
 
   const unavailable = disabled || !nextStatus;
   const label =
     disabled
       ? "Protected"
-      : nextStatus === "suspended"
-        ? "Suspend"
-        : nextStatus === "active"
-          ? "Enable"
-          : "Unavailable";
+      : normalizedStatus === "pending"
+        ? "Approve"
+        : nextStatus === "suspended"
+          ? "Suspend"
+          : nextStatus === "active"
+            ? "Enable"
+            : "Unavailable";
 
   function confirmChange(event: FormEvent<HTMLFormElement>) {
     if (unavailable) {
@@ -41,18 +45,25 @@ export default function AccountStatusButton({
     }
 
     const message =
-      nextStatus === "suspended"
+      normalizedStatus === "pending"
         ? [
-            `Suspend ${email}?`,
+            `Approve ${email}?`,
             "",
-            "The user will be signed out and will not be able to log in.",
-            "Projects and files will remain for investigation.",
+            "The account will become active.",
+            "An approval email will be sent to the applicant.",
           ].join("\n")
-        : [
-            `Enable ${email}?`,
-            "",
-            "The user will be allowed to log in again.",
-          ].join("\n");
+        : nextStatus === "suspended"
+          ? [
+              `Suspend ${email}?`,
+              "",
+              "The user will be signed out and will not be able to log in.",
+              "Projects and files will remain for investigation.",
+            ].join("\n")
+          : [
+              `Enable ${email}?`,
+              "",
+              "The user will be allowed to log in again.",
+            ].join("\n");
 
     if (!window.confirm(message)) {
       event.preventDefault();
@@ -76,11 +87,13 @@ export default function AccountStatusButton({
         title={
           disabled
             ? "The current account and Admin accounts are protected."
-            : nextStatus === "suspended"
-              ? `Suspend ${email}`
-              : nextStatus === "active"
-                ? `Enable ${email}`
-                : "Unsupported account status"
+            : normalizedStatus === "pending"
+              ? `Approve ${email}`
+              : nextStatus === "suspended"
+                ? `Suspend ${email}`
+                : nextStatus === "active"
+                  ? `Enable ${email}`
+                  : "Unsupported account status"
         }
         style={
           unavailable

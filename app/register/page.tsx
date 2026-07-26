@@ -3,12 +3,17 @@ import Link from "next/link";
 type PageProps = {
   searchParams?: Promise<{
     error?: string;
+    pending?: string;
+    notification?: string;
   }>;
 };
 
 export default async function RegisterPage({ searchParams }: PageProps) {
   const sp = (await searchParams) ?? {};
   const error = typeof sp.error === "string" ? sp.error : undefined;
+  const pending = sp.pending === "1";
+  const notification =
+    typeof sp.notification === "string" ? sp.notification : "";
 
   return (
     <main className="fsx-shell">
@@ -18,8 +23,8 @@ export default async function RegisterPage({ searchParams }: PageProps) {
             <div className="fsx-eyebrow">FreeSloTeX</div>
             <h1 className="fsx-title">Create your account</h1>
             <p className="fsx-subtitle">
-              Create an account to manage private TeX projects and shared
-              collaboration projects.
+              Submit an account request to manage private TeX projects and
+              shared collaboration projects.
             </p>
           </div>
 
@@ -31,7 +36,7 @@ export default async function RegisterPage({ searchParams }: PageProps) {
         <section className="fsx-panel" style={{ maxWidth: 680 }}>
           <h2 className="fsx-panel-title">Account settings</h2>
           <p className="fsx-panel-note">
-            After registration, you can sign in and open your My workspace.
+            New accounts require administrator approval before sign-in.
           </p>
 
           {error ? (
@@ -40,6 +45,36 @@ export default async function RegisterPage({ searchParams }: PageProps) {
             </div>
           ) : null}
 
+          {pending ? (
+            <div
+              className="fsx-alert"
+              style={{
+                marginTop: 14,
+                borderColor: "#bbf7d0",
+                background: "#f0fdf4",
+                color: "#166534",
+              }}
+            >
+              Registration request received. Your account is waiting for
+              administrator approval. You will receive an email after approval.
+            </div>
+          ) : null}
+
+          {pending && notification === "failed" ? (
+            <div className="fsx-alert" style={{ marginTop: 14 }}>
+              Your request was saved, but the automatic administrator
+              notification could not be sent. The request is still visible in
+              the administrator page.
+            </div>
+          ) : null}
+
+          {pending ? (
+            <div className="fsx-form-card">
+              <Link href="/login" className="fsx-button">
+                Back to sign in
+              </Link>
+            </div>
+          ) : (
           <form action="/api/register" method="post" className="fsx-form-card">
             <label>
               <span className="fsx-label">Display name</span>
@@ -90,7 +125,7 @@ export default async function RegisterPage({ searchParams }: PageProps) {
 
             <div className="fsx-actions" style={{ marginTop: 18 }}>
               <button type="submit" className="fsx-button fsx-button-primary">
-                Create account
+                Submit registration request
               </button>
 
               <Link href="/login" className="fsx-button">
@@ -98,6 +133,7 @@ export default async function RegisterPage({ searchParams }: PageProps) {
               </Link>
             </div>
           </form>
+          )}
         </section>
       </div>
     </main>

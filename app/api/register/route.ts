@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  createSession,
   hashPassword,
-  makeSessionCookieOptions,
   validateEmail,
   validatePassword,
 } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { sendGraphMail } from "@/lib/graphMail";
 
 function makeUrl(request: NextRequest, path: string) {
   const host =
@@ -25,6 +24,20 @@ function redirectWithError(request: NextRequest, message: string) {
   const url = makeUrl(request, "/register");
   url.searchParams.set("error", message);
   return NextResponse.redirect(url, 303);
+}
+
+function redirectToPending(
+  request: NextRequest,
+  notification: "sent" | "failed",
+) {
+  const url = makeUrl(request, "/register");
+  url.searchParams.set("pending", "1");
+  url.searchParams.set("notification", notification);
+  return NextResponse.redirect(url, 303);
+}
+
+function getAppOrigin(request: NextRequest) {
+  return process.env.APP_ORIGIN || makeUrl(request, "/").origin;
 }
 
 export async function POST(request: NextRequest) {
@@ -81,20 +94,51 @@ export async function POST(request: NextRequest) {
         created_at,
         updated_at
       )
-      VALUES ($1, $2, $3, 'active', now(), now())
+      VALUES ($1, $2, $3, 'pending', now(), now())
       `,
       [email, passwordHash, displayName]
     );
 
-    const { rawToken, expiresAt } = await createSession(email);
+    let notification: "sent" | "failed" = "sent";
 
-    const response = NextResponse.redirect(makeUrl(request, "/projects"), 303);
-    response.cookies.set({
-      ...makeSessionCookieOptions(expiresAt),
-      value: rawToken,
-    });
+    try {
+      const adminEmail = validateEmail(
+        process.env.FREESLOTEX_REGISTRATION_ADMIN_EMAIL ?? "",
+      );
 
-    return response;
+      if (!adminEmail) {
+        throw new Error(
+          "FREESLOTEX_REGISTRATION_ADMIN_EMAIL is not configured.",
+        );
+      }
+
+      const adminUrl = `${getAppOrigin(request)}/admin/freeslotex`;
+
+      await sendGraphMail({
+        to: adminEmail,
+        subject: "New FreeSloTeX account approval request",
+        text: [
+          "A new FreeSloTeX account approval request was submitted.",
+          "",
+          `Display name: ${displayName || "-"}`,
+          `Email: ${email}`,
+          `Submitted at: ${new Date().toISOString()}`,
+          "",
+          "Review the request in the FreeSloTeX admin page:",
+          adminUrl,
+          "",
+          "FreeSloTeX Support",
+        ].join("\n"),
+      });
+    } catch (mailError) {
+      notification = "failed";
+      console.error(
+        "Registration approval notification failed:",
+        mailError,
+      );
+    }
+
+    return redirectToPending(request, notification);
   } catch (error) {
     console.error("POST /api/register failed:", error);
     return redirectWithError(request, "登録処理に失敗しました。");

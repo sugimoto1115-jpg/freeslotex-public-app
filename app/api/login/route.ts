@@ -51,6 +51,13 @@ export async function POST(request: NextRequest) {
 
     const user = result.rows[0];
 
+    if (user.status === "pending") {
+      return redirectWithError(
+        request,
+        "このアカウントは管理者の承認待ちです。",
+      );
+    }
+
     if (user.status !== "active") {
       return redirectWithError(request, "このアカウントは現在利用できません。");
     }
