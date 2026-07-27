@@ -323,6 +323,7 @@ export default function TexEditorClient(props: Props) {
   const [leftOutlineHeight, setLeftOutlineHeight] = useState(300);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lineGutterRef = useRef<HTMLDivElement | null>(null);
+  const [lineNumberHeights, setLineNumberHeights] = useState<number[]>([]);
   const compileTerminalPanelRef = useRef<HTMLElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
   const [leftWidth, setLeftWidth] = useState(280);
@@ -554,10 +555,11 @@ export default function TexEditorClient(props: Props) {
   );
   const editorBodyWidth = "100%";
   const editorLineHeightPx = editorFontSize * 1.55;
-  const editorLineCount = useMemo(
-    () => Math.max(1, tex.split(/\r\n|\r|\n/).length),
+  const editorLines = useMemo(
+    () => tex.split(/\r\n|\r|\n/),
     [tex],
   );
+  const editorLineCount = Math.max(1, editorLines.length);
   const lineNumberFontSize = Math.max(10, editorFontSize - 3);
   const editorUsesDarkColors =
     editorColorMode === "dark" ||
@@ -698,37 +700,122 @@ export default function TexEditorClient(props: Props) {
     };
   }, []);
 
-  const lineNumberGroups = useMemo(() => {
-    const regularEnd = Math.min(editorLineCount, 999);
-    const fourDigitEnd = Math.min(editorLineCount, 9999);
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
 
-    const regular = Array.from(
-      { length: regularEnd },
-      (_, index) => String(index + 1),
-    ).join("\n");
+    let animationFrame = 0;
 
-    const fourDigit =
-      editorLineCount >= 1000
-        ? Array.from(
-            { length: fourDigitEnd - 999 },
-            (_, index) => String(index + 1000),
-          ).join("\n")
-        : "";
+    function measureWrappedLineHeights() {
+      const targetTextarea = textareaRef.current;
+      if (!targetTextarea) return;
 
-    const fiveDigit =
-      editorLineCount >= 10000
-        ? Array.from(
-            { length: editorLineCount - 9999 },
-            (_, index) => String(index + 10000),
-          ).join("\n")
-        : "";
+      if (!softWrap) {
+        setLineNumberHeights((current) =>
+          current.length === 0 ? current : [],
+        );
+        return;
+      }
 
-    return {
-      regular,
-      fourDigit,
-      fiveDigit,
+      if (targetTextarea.clientWidth <= 0) return;
+
+      const computedStyle = window.getComputedStyle(targetTextarea);
+      const mirror = document.createElement("div");
+
+      mirror.style.position = "absolute";
+      mirror.style.visibility = "hidden";
+      mirror.style.pointerEvents = "none";
+      mirror.style.left = "-10000px";
+      mirror.style.top = "0";
+      mirror.style.width = `${targetTextarea.clientWidth}px`;
+      mirror.style.height = "auto";
+      mirror.style.boxSizing = "border-box";
+      mirror.style.paddingLeft = computedStyle.paddingLeft;
+      mirror.style.paddingRight = computedStyle.paddingRight;
+      mirror.style.border = "0";
+      mirror.style.margin = "0";
+      mirror.style.fontFamily = computedStyle.fontFamily;
+      mirror.style.fontSize = computedStyle.fontSize;
+      mirror.style.fontStyle = computedStyle.fontStyle;
+      mirror.style.fontWeight = computedStyle.fontWeight;
+      mirror.style.letterSpacing = computedStyle.letterSpacing;
+      mirror.style.lineHeight = computedStyle.lineHeight;
+      mirror.style.tabSize = computedStyle.tabSize;
+      mirror.style.whiteSpace = "pre-wrap";
+      mirror.style.overflowWrap = "break-word";
+      mirror.style.wordBreak = computedStyle.wordBreak;
+      mirror.style.overflow = "hidden";
+
+      const fragment = document.createDocumentFragment();
+      const rows = editorLines.map((line) => {
+        const row = document.createElement("div");
+
+        row.style.display = "block";
+        row.style.minHeight = `${editorLineHeightPx}px`;
+        row.style.margin = "0";
+        row.style.padding = "0";
+        row.style.border = "0";
+        row.style.whiteSpace = "pre-wrap";
+        row.style.overflowWrap = "break-word";
+        row.style.wordBreak = computedStyle.wordBreak;
+        row.textContent = line || "\u200b";
+
+        fragment.appendChild(row);
+        return row;
+      });
+
+      mirror.appendChild(fragment);
+      document.body.appendChild(mirror);
+
+      const nextHeights = rows.map((row) =>
+        Math.max(
+          editorLineHeightPx,
+          row.getBoundingClientRect().height,
+        ),
+      );
+
+      mirror.remove();
+
+      setLineNumberHeights((current) => {
+        const unchanged =
+          current.length === nextHeights.length &&
+          current.every(
+            (height, index) =>
+              Math.abs(height - nextHeights[index]) < 0.25,
+          );
+
+        return unchanged ? current : nextHeights;
+      });
+    }
+
+    function scheduleMeasurement() {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(
+        measureWrappedLineHeights,
+      );
+    }
+
+    scheduleMeasurement();
+
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(scheduleMeasurement);
+
+    resizeObserver?.observe(textarea);
+    window.addEventListener("resize", scheduleMeasurement);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", scheduleMeasurement);
     };
-  }, [editorLineCount]);
+  }, [
+    editorFontSize,
+    editorLineHeightPx,
+    editorLines,
+    softWrap,
+  ]);
 
   useEffect(() => {
     try {
@@ -2188,42 +2275,37 @@ export default function TexEditorClient(props: Props) {
                         userSelect: "none",
                       }}
                     >
-                      {[
-                        <span
-                          key="regular"
-                          style={{
-                            display: "block",
-                            fontSize: lineNumberFontSize,
-                            lineHeight: `${editorLineHeightPx}px`,
-                          }}
-                        >
-                          {lineNumberGroups.regular}
-                        </span>,
-                        lineNumberGroups.fourDigit ? (
+                      {editorLines.map((_, index) => {
+                        const lineNumber = index + 1;
+                        const numberFontSize =
+                          lineNumber >= 10000
+                            ? 8
+                            : lineNumber >= 1000
+                              ? 9
+                              : lineNumberFontSize;
+                        const lineHeight =
+                          softWrap
+                            ? lineNumberHeights[index] ??
+                              editorLineHeightPx
+                            : editorLineHeightPx;
+
+                        return (
                           <span
-                            key="four-digit"
+                            key={lineNumber}
                             style={{
                               display: "block",
-                              fontSize: 9,
+                              boxSizing: "border-box",
+                              height: `${lineHeight}px`,
+                              minHeight: `${editorLineHeightPx}px`,
+                              overflow: "hidden",
+                              fontSize: numberFontSize,
                               lineHeight: `${editorLineHeightPx}px`,
                             }}
                           >
-                            {lineNumberGroups.fourDigit}
+                            {lineNumber}
                           </span>
-                        ) : null,
-                        lineNumberGroups.fiveDigit ? (
-                          <span
-                            key="five-digit"
-                            style={{
-                              display: "block",
-                              fontSize: 8,
-                              lineHeight: `${editorLineHeightPx}px`,
-                            }}
-                          >
-                            {lineNumberGroups.fiveDigit}
-                          </span>
-                        ) : null,
-                      ]}
+                        );
+                      })}
                     </div>
 
                     <input type="hidden" name="relativePath" value={currentFilePath} />
