@@ -1826,8 +1826,9 @@ a {
   padding-bottom: 1px !important;
 }
 
-/* Keep sparse Explorer rows packed at the top instead of stretching them vertically. */
-.fsx-explorer-tree {
+/* Keep sparse Explorer and Outline rows packed at the top instead of stretching them vertically. */
+.fsx-explorer-tree,
+.fsx-outline-tree {
   align-content: start;
   grid-auto-rows: max-content;
 }
