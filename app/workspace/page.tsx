@@ -1,5 +1,8 @@
 import Link from "next/link";
-import ArchiveProjectButton from "./ArchiveProjectButton";
+import WorkspaceProjectGroups, {
+  type WorkspaceProjectGroupRow,
+  type WorkspaceProjectRow,
+} from "./WorkspaceProjectGroups";
 import path from "node:path";
 import { mkdir, readdir, rm, symlink, lstat, writeFile } from "node:fs/promises";
 import { requireUser, getCurrentUser as getLabtexCurrentUser } from "@/lib/auth";
@@ -9,46 +12,6 @@ import { getEffectiveFsPlanForEmail } from "@/lib/freeslotex/serverPlan";
 import { getCompileQuotaForEmail } from "@/lib/freeslotex/compileQuota";
 
 export const runtime = "nodejs";
-
-type ProjectRow = {
-  id: number;
-  name: string;
-  visibility: string;
-  status: string;
-  storage_path: string;
-  created_at: string;
-  updated_at: string;
-  role: string;
-  owner_user_id: number;
-    owner_project_no: number | null;
-  member_count: number;
-  folder_kind: "private" | "shared";
-  source_exists?: boolean;
-};
-
-function fmtDate(value: string) {
-  return new Intl.DateTimeFormat("ja-JP", {
-    timeZone: "Asia/Tokyo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
-function roleLabel(role: string) {
-  if (role === "owner") return "Owner";
-  if (role === "editor") return "Editor";
-  if (role === "viewer") return "Viewer";
-  return role;
-}
-
-function roleClass(role: string) {
-  if (role === "owner") return "fsx-pill fsx-pill-owner";
-  if (role === "editor") return "fsx-pill fsx-pill-editor";
-  return "fsx-pill";
-}
 
 type WorkspaceSortKey = "project" | "name" | "created" | "updated";
 
@@ -78,11 +41,11 @@ function dateMs(value: string) {
   return Number.isFinite(ms) ? ms : 0;
 }
 
-function projectNo(project: ProjectRow) {
+function projectNo(project: WorkspaceProjectRow) {
   return typeof project.owner_project_no === "number" ? project.owner_project_no : Number.POSITIVE_INFINITY;
 }
 
-function sortProjects(projects: ProjectRow[], sort: WorkspaceSortKey) {
+function sortProjects(projects: WorkspaceProjectRow[], sort: WorkspaceSortKey) {
   return [...projects].sort((a, b) => {
     if (sort === "project") {
       const diff = projectNo(a) - projectNo(b);
@@ -142,7 +105,7 @@ async function clearGeneratedLinks(dir: string) {
   }
 }
 
-async function refreshUserWorkspace(userId: number, projects: ProjectRow[]) {
+async function refreshUserWorkspace(userId: number, projects: WorkspaceProjectRow[]) {
   const root = userWorkspaceRoot(userId);
   const privateDir = path.join(root, "private");
   const sharedDir = path.join(root, "shared");
@@ -200,51 +163,6 @@ async function refreshUserWorkspace(userId: number, projects: ProjectRow[]) {
   return root;
 }
 
-function ProjectCard({ project }: { project: ProjectRow }) {
-  return (
-    <section className="fsx-card" style={{ padding: "12px 18px" }}>
-      <div className="fsx-card-head" style={{ gap: 12 }}>
-        <div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-            <Link href={`/projects/${project.id}`} className="fsx-project-name">
-              {project.name}
-            </Link>
-            <span className={roleClass(project.role)}>{roleLabel(project.role)}</span>
-            <span className="fsx-pill">{project.visibility}</span>
-            <span className="fsx-pill">{project.folder_kind}</span>
-          </div>
-
-          <div className="fsx-meta fsx-meta-line" style={{ gap: 18 }}>
-            {project.role === "owner" && project.owner_project_no != null ? (
-              <span>No. <code>{project.owner_project_no}</code></span>
-            ) : null}
-            <span>Updated: {fmtDate(project.updated_at)}</span>
-            <span>Created: {fmtDate(project.created_at)}</span>
-            <span>Status: {project.status}</span>
-          </div>
-
-          {!project.source_exists ? (
-            <p className="fsx-panel-note" style={{ color: "#b45309" }}>
-              Source folder is missing.
-            </p>
-          ) : null}
-        </div>
-
-        <div className="fsx-actions">
-          <Link href={`/projects/${project.id}`} className="fsx-button fsx-button-primary">
-            Open
-          </Link>
-
-          {project.role === "owner" ? (
-            <ArchiveProjectButton projectId={project.id} projectName={project.name} />
-          ) : null}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-
 type WorkspaceCompileQuota = {
   ok?: boolean;
   plan?: string;
@@ -263,13 +181,33 @@ function formatWorkspaceCompileQuota(quota: WorkspaceCompileQuota) {
   return `Free plan: Today ${usedToday}/${quota.freeDailyLimit} compiles`;
 }
 
+function firstParam(
+  value: string | string[] | undefined,
+) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default async function WorkspacePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ sort?: string | string[] | undefined }>;
+  searchParams?: Promise<{
+    sort?: string | string[];
+    group_error?: string | string[];
+    group_created?: string | string[];
+    group_renamed?: string | string[];
+    group_deleted?: string | string[];
+    group_moved?: string | string[];
+  }>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const workspaceSort = normalizeWorkspaceSort(resolvedSearchParams.sort);
+  const groupFlash = {
+    error: firstParam(resolvedSearchParams.group_error),
+    created: firstParam(resolvedSearchParams.group_created),
+    renamed: firstParam(resolvedSearchParams.group_renamed),
+    deleted: firstParam(resolvedSearchParams.group_deleted),
+    moved: firstParam(resolvedSearchParams.group_moved),
+  };
 
   const user = await requireUser();
 
@@ -289,7 +227,7 @@ export default async function WorkspacePage({
 
   const userId = Number(userResult.rows[0].id);
 
-  const projectsResult = await query<ProjectRow>(
+  const projectsResult = await query<WorkspaceProjectRow>(
     `
     WITH member_counts AS (
       SELECT project_id, count(*)::int AS member_count
@@ -316,6 +254,7 @@ export default async function WorkspacePage({
         ) AS owner_project_no,
       pm.role,
       coalesce(mc.member_count, 0)::int as member_count,
+      wgi.group_id,
       CASE
         WHEN p.owner_user_id = $1 AND coalesce(mc.member_count, 0) = 1
           THEN 'private'
@@ -326,6 +265,9 @@ export default async function WorkspacePage({
       ON pm.project_id = p.id
     LEFT JOIN member_counts mc
       ON mc.project_id = p.id
+    LEFT JOIN workspace_project_group_items wgi
+      ON wgi.project_id = p.id
+     AND wgi.user_id = $1
     WHERE pm.user_id = $1
       AND p.status = 'active'
     ORDER BY p.updated_at DESC, p.id DESC
@@ -333,7 +275,40 @@ export default async function WorkspacePage({
     [userId]
   );
 
-  const projects = sortProjects(projectsResult.rows, workspaceSort);
+  const groupsResult = await query<WorkspaceProjectGroupRow>(
+    `
+      SELECT
+        id,
+        user_id,
+        name,
+        created_at::text AS created_at,
+        updated_at::text AS updated_at
+      FROM workspace_project_groups
+      WHERE user_id = $1
+      ORDER BY lower(name), id
+    `,
+    [userId]
+  );
+
+  const projects = sortProjects(
+    projectsResult.rows.map((project) => ({
+      ...project,
+      id: Number(project.id),
+      owner_user_id: Number(project.owner_user_id),
+      group_id:
+        project.group_id == null
+          ? null
+          : Number(project.group_id),
+    })),
+    workspaceSort
+  );
+
+  const workspaceGroups = groupsResult.rows.map((group) => ({
+    ...group,
+    id: Number(group.id),
+    user_id: Number(group.user_id),
+  }));
+
   const root = await refreshUserWorkspace(userId, projects);
   const privateProjects = sortProjects(
     projects.filter((p) => p.folder_kind === "private"),
@@ -446,59 +421,13 @@ export default async function WorkspacePage({
         </div>
       </div>
 
-      <details className="fsx-panel" open>
-        <summary
-          style={{
-            cursor: "pointer",
-            fontWeight: 800,
-            fontSize: 20,
-            lineHeight: 1.3,
-          }}
-        >
-          Private projects ({privateProjects.length})
-        </summary>
-
-        <div style={{ marginTop: 14 }}>
-          {privateProjects.length === 0 ? (
-            <div className="fsx-empty-box">No private projects yet.</div>
-          ) : (
-            <div className="fsx-grid" style={{ gap: 10 }}>
-              {privateProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </div>
-          )}
-        </div>
-      </details>
-
-      <details className="fsx-panel" open>
-        <summary
-          style={{
-            cursor: "pointer",
-            fontWeight: 800,
-            fontSize: 20,
-            lineHeight: 1.3,
-          }}
-        >
-          Shared projects ({sharedProjects.length})
-        </summary>
-
-        <div style={{ marginTop: 14 }}>
-          <p className="fsx-panel-note" style={{ marginTop: 0 }}>
-            These projects are visible because you are listed as a member.
-          </p>
-
-          {sharedProjects.length === 0 ? (
-            <div className="fsx-empty-box">No shared projects yet.</div>
-          ) : (
-            <div className="fsx-grid" style={{ gap: 10 }}>
-              {sharedProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </div>
-          )}
-        </div>
-      </details>
+      <WorkspaceProjectGroups
+        groups={workspaceGroups}
+        privateProjects={privateProjects}
+        sharedProjects={sharedProjects}
+        sort={workspaceSort}
+        flash={groupFlash}
+      />
     </main>
   );
 }
