@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import ArchiveProjectButton from "./ArchiveProjectButton";
 
 export type WorkspaceSortKey =
@@ -55,6 +55,7 @@ type Props = {
   sharedProjects: WorkspaceProjectRow[];
   sort: WorkspaceSortKey;
   flash: FlashState;
+  children: ReactNode;
 };
 
 function fmtDate(value: string) {
@@ -660,7 +661,7 @@ function GroupManagement({
           lineHeight: 1.3,
         }}
       >
-        Group folders ({groups.length})
+        Project group settings ({groups.length})
       </summary>
 
       <p
@@ -977,6 +978,7 @@ export default function WorkspaceProjectGroups({
   sharedProjects,
   sort,
   flash,
+  children,
 }: Props) {
   const message = flashMessage(flash);
   const allProjects = [...privateProjects, ...sharedProjects];
@@ -1036,6 +1038,8 @@ export default function WorkspaceProjectGroups({
         onClearSelection={() => setSelectedProjects(new Set())}
         onSelectAll={selectAllProjects}
       />
+
+      {children}
 
       <ProjectSection
         title="Private projects"

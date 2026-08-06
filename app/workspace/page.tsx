@@ -372,32 +372,43 @@ export default async function WorkspacePage({
         </div>
       </section>
 
-      <section className="fsx-panel">
-        <div className="fsx-panel-head">
-          <div>
-            <h2 className="fsx-panel-title">My workspace: user-{userId}</h2>
-            <p className="fsx-panel-note">
-              This is the personal workspace folder prepared for your account.
-            </p>
+      <details className="fsx-panel">
+        <summary
+          style={{
+            cursor: "pointer",
+            fontWeight: 800,
+            fontSize: 20,
+            lineHeight: 1.3,
+          }}
+        >
+          Workspace storage
+        </summary>
+
+        <div style={{ marginTop: 14 }}>
+          <div className="fsx-card" style={{ marginTop: 12 }}>
+            <strong>Folders</strong>
+            <div className="fsx-meta fsx-meta-line">
+              <span><code>private/</code> your own projects</span>
+              <span><code>shared/</code> projects shared with you</span>
+            </div>
           </div>
+
+          <details className="fsx-advanced" open>
+            <summary>Server folder</summary>
+            <div style={{ marginTop: 8, wordBreak: "break-all" }}>
+              <span className="fsx-code">{root}</span>
+            </div>
+          </details>
         </div>
+      </details>
 
-        <div className="fsx-card" style={{ marginTop: 12 }}>
-          <strong>Folders</strong>
-          <div className="fsx-meta fsx-meta-line">
-            <span><code>private/</code> your own projects</span>
-            <span><code>shared/</code> projects shared with you</span>
-          </div>
-        </div>
-
-        <details className="fsx-advanced" open>
-          <summary>Server folder</summary>
-          <div style={{ marginTop: 8, wordBreak: "break-all" }}>
-            <span className="fsx-code">{root}</span>
-          </div>
-        </details>
-      </section>
-
+      <WorkspaceProjectGroups
+        groups={workspaceGroups}
+        privateProjects={privateProjects}
+        sharedProjects={sharedProjects}
+        sort={workspaceSort}
+        flash={groupFlash}
+      >
       <div className="fsx-row">
         <div className="fsx-count">
           {privateProjects.length} private / {sharedProjects.length} shared
@@ -420,14 +431,7 @@ export default async function WorkspacePage({
           Signed in as <strong>{user.email}</strong>
         </div>
       </div>
-
-      <WorkspaceProjectGroups
-        groups={workspaceGroups}
-        privateProjects={privateProjects}
-        sharedProjects={sharedProjects}
-        sort={workspaceSort}
-        flash={groupFlash}
-      />
+      </WorkspaceProjectGroups>
     </main>
   );
 }
