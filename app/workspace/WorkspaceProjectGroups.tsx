@@ -928,7 +928,7 @@ function ProjectSection({
               <details
                 key={group.id ?? "unclassified"}
                 className="fsx-card"
-                open
+                open={group.id === null}
                 style={{ padding: "11px 13px" }}
               >
                 <summary
