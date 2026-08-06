@@ -520,11 +520,13 @@ function BulkMoveControls({
   groups,
   sort,
   selectedIds,
+  onSelectAll,
   onClear,
 }: {
   groups: WorkspaceProjectGroupRow[];
   sort: WorkspaceSortKey;
   selectedIds: number[];
+  onSelectAll: () => void;
   onClear: () => void;
 }) {
   const [target, setTarget] = useState("__choose__");
@@ -546,6 +548,7 @@ function BulkMoveControls({
         flex: "1 1 auto",
         minWidth: "max-content",
         margin: 0,
+        marginLeft: "1em",
         whiteSpace: "nowrap",
       }}
     >
@@ -571,14 +574,27 @@ function BulkMoveControls({
         className="fsx-input"
         style={{
           minHeight: 34,
-          width: 280,
-          flex: "0 0 280px",
+          width: 170,
+          flex: "0 0 170px",
           padding: "4px 8px",
         }}
       >
         <option value="__choose__">Choose destination…</option>
         <GroupSelectOptions groups={groups} />
       </select>
+
+      <button
+        type="button"
+        className="fsx-button"
+        onClick={onSelectAll}
+        style={{
+          minHeight: 34,
+          padding: "4px 10px",
+          flex: "0 0 auto",
+        }}
+      >
+        Select all projects
+      </button>
 
       <button
         type="submit"
@@ -635,57 +651,30 @@ function GroupManagement({
   );
 
   return (
-    <section className="fsx-panel">
-      <div className="fsx-panel-head" style={{ marginBottom: 12 }}>
-        <div>
-          <h2 className="fsx-panel-title">Group folders</h2>
-          <p className="fsx-panel-note">
-            Create folders with your own names. Empty folders remain
-            available in every project&apos;s Folder menu.
-          </p>
-        </div>
-      </div>
-
-      <form
-        action="/api/workspace/groups"
-        method="post"
+    <details className="fsx-panel">
+      <summary
         style={{
-          display: "flex",
-          gap: 8,
-          alignItems: "center",
-          flexWrap: "wrap",
+          cursor: "pointer",
+          fontWeight: 800,
+          fontSize: 20,
+          lineHeight: 1.3,
         }}
       >
-        <input type="hidden" name="action" value="create" />
-        <input type="hidden" name="sort" value={sort} />
+        Group folders ({groups.length})
+      </summary>
 
-        <input
-          type="text"
-          name="name"
-          required
-          maxLength={100}
-          placeholder="New group folder name"
-          className="fsx-input"
-          style={{
-            minHeight: 38,
-            width: "min(380px, 100%)",
-            padding: "6px 10px",
-          }}
-        />
-
-        <button
-          type="submit"
-          className="fsx-button fsx-button-primary"
-          style={{ minHeight: 38 }}
-        >
-          Create group
-        </button>
-      </form>
+      <p
+        className="fsx-panel-note"
+        style={{ marginTop: 8, marginBottom: 12 }}
+      >
+        Create folders with your own names. Empty folders remain
+        available in every project&apos;s Folder menu.
+      </p>
 
       <div
         className="fsx-card"
         style={{
-          marginTop: 12,
+          marginTop: 0,
           padding: "8px 12px",
           display: "flex",
           alignItems: "center",
@@ -696,24 +685,55 @@ function GroupManagement({
           whiteSpace: "nowrap",
         }}
       >
-        <button
-          type="button"
-          className="fsx-button"
-          onClick={onSelectAll}
-          disabled={projects.length === 0}
+        <form
+          action="/api/workspace/groups"
+          method="post"
           style={{
-            minHeight: 34,
-            padding: "4px 10px",
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            flexWrap: "nowrap",
+            margin: 0,
             flex: "0 0 auto",
           }}
         >
-          Select all projects
-        </button>
+          <input type="hidden" name="action" value="create" />
+          <input type="hidden" name="sort" value={sort} />
+
+          <input
+            type="text"
+            name="name"
+            required
+            maxLength={100}
+            placeholder="New group folder name"
+            aria-label="New group folder name"
+            className="fsx-input"
+            style={{
+              minHeight: 34,
+              width: 160,
+              flex: "0 0 160px",
+              padding: "4px 8px",
+            }}
+          />
+
+          <button
+            type="submit"
+            className="fsx-button fsx-button-primary"
+            style={{
+              minHeight: 34,
+              padding: "4px 10px",
+              flex: "0 0 auto",
+            }}
+          >
+            Create group
+          </button>
+        </form>
 
         <BulkMoveControls
           groups={groups}
           sort={sort}
           selectedIds={selectedIds}
+          onSelectAll={onSelectAll}
           onClear={onClearSelection}
         />
       </div>
@@ -851,7 +871,7 @@ Projects will not be deleted. They will return to Unclassified.`,
           ))}
         </div>
       )}
-    </section>
+    </details>
   );
 }
 
